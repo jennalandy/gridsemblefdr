@@ -1,13 +1,13 @@
 Package: gridsemblefdr
-Title: What the Package Does (One Line, Title Case)
+Title: Estimating Local and Tail End False Discovery Rates With Ensemble Methods
 Version: 0.0.0.9000
 Authors@R: 
-    person(given = "First",
-           family = "Last",
+    person(given = "Jenna",
+           family = "Landy",
            role = c("aut", "cre"),
-           email = "first.last@example.com",
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
+           email = "jlandy@g.harvard.edu",
+           comment = c(ORCID = "0000-0002-1411-8750"))
+Description: Estimates local (fdr) and tail-end (Fdr) false discovery rates with ensemble methods, where the models ensembled over are those that perform best on simulated, labeled data similar based on the true, unlabelled data.
 License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
     license
 Encoding: UTF-8
