@@ -8,11 +8,13 @@ Authors@R:
            email = "jlandy@g.harvard.edu",
            comment = c(ORCID = "0000-0002-1411-8750"))
 Description: Estimates local (fdr) and tail-end (Fdr) false discovery rates with ensemble methods, where the models ensembled over are those that perform best on simulated, labeled data similar based on the true, unlabelled data.
-License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
-    license
+License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.1
 URL: https://github.com/jennalandy/gridsemblefdr
 BugReports: https://github.com/jennalandy/gridsemblefdr/issues
+Imports: 
+    dplyr,
+    locfdr
