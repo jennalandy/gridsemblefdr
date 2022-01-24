@@ -37,3 +37,35 @@ test_that("run_locfdr_row works", {
     c('fdr','Fdr','pi0')
   )
 })
+
+test_that("run_qvalue_row works", {
+  qvalue_out <- run_qvalue_row(
+    t = test_statistics,
+    qvalue_grid = data.frame(
+      transf = c('probit'),
+      adj = c(0.8),
+      pi0.method = c('bootstrap'),
+      smooth.log.pi0 = c(TRUE)
+    ),
+    row = 1
+  )
+
+  if (is.null(qvalue_out)) {
+    qvalue_out <- run_qvalue_row(
+      t = test_statistics,
+      qvalue_grid = data.frame(
+        transf = c('probit'),
+        adj = c(0.8),
+        pi0.method = c('bootstrap'),
+        smooth.log.pi0 = c(TRUE)
+      ),
+      row = 1,
+      lambda0 = TRUE
+    )
+  }
+
+  expect_equal(
+    names(qvalue_out),
+    c('fdr','Fdr','pi0')
+  )
+})

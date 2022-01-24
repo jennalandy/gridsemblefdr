@@ -14,7 +14,11 @@ run_fdrtool_row(t, fdrtool_grid, row)
 \item{row}{row of fdrtool_grid, i.e. which set of hyperparameters to run fdrtool with}
 }
 \value{
-
+\itemize{
+\item fdr - estimated local false discovery rates
+\item Fdr - estimated left tail-end false discovery rates
+\item pi0 - estimated proportion of tests that are null
+}
 }
 \description{
 Run fdrtool with a specific set of parameters

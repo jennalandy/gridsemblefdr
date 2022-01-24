@@ -2,6 +2,8 @@
 
 export(build_fdrtool_grid)
 export(build_locfdr_grid)
+export(build_qvalue_grid)
+export(run_qvalue_row)
 importFrom(dplyr,case_when)
 importFrom(fdrtool,fdrtool)
 importFrom(locfdr,locfdr)

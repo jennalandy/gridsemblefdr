@@ -31,3 +31,17 @@ test_that("build_fdrtool_grid works", {
     0
   )
 })
+
+test_that("build_qvalue_grid works", {
+  default_qvalue_grid <- build_qvalue_grid(
+    t = test_statistics
+  )
+  expect_equal(
+    names(default_qvalue_grid),
+    c('transf','adj','pi0.method','smooth.log.pi0')
+  )
+  expect_gt(
+    nrow(default_qvalue_grid),
+    0
+  )
+})

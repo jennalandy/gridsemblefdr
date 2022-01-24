@@ -49,6 +49,7 @@ reduce_locfdr_grid <- function(t, locfdr_grid, verbose = FALSE) {
 #' @param pct0 vector of options for pct0 hyperparameter
 #' @param nulltype vector of options for nulltype hyperparameter
 #' @param type vector of options for type hyperparameter
+#' @param verbose
 #'
 #' @return dataframe where each row is a possible set of hyperparameters for
 #' locfdr on a specific set of test statistics

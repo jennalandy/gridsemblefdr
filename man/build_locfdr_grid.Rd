@@ -23,6 +23,8 @@ build_locfdr_grid(
 \item{nulltype}{vector of options for nulltype hyperparameter}
 
 \item{type}{vector of options for type hyperparameter}
+
+\item{verbose}{}
 }
 \value{
 dataframe where each row is a possible set of hyperparameters for

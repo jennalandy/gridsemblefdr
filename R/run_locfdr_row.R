@@ -6,6 +6,11 @@
 #' @param row row of locfdr_grid, i.e. which set of hyperparameters to run locfdr with
 #'
 #' @return
+#' \itemize{
+#'   \item fdr - estimated local false discovery rates
+#'   \item Fdr - estimated left tail-end false discovery rates
+#'   \item pi0 - estimated proportion of tests that are null
+#' }
 #'
 #' @examples
 #'
