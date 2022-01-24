@@ -18,5 +18,5 @@ dataframe where each row is a possible set of hyperparameters for locfdr
 }
 \description{
 Reduces grid to parameter combinations
-that can run on the provided data without error
+that can run locfdr on the provided data without error
 }

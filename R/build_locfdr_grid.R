@@ -1,6 +1,6 @@
 #' @title Reduce locfdr grid
 #' @description Reduces grid to parameter combinations
-#' that can run on the provided data without error
+#' that can run locfdr on the provided data without error
 #'
 #' @param t vector of test statistics
 #' @param locfdr_grid data frame where each
@@ -39,7 +39,7 @@ reduce_locfdr_grid <- function(t, locfdr_grid, verbose = FALSE) {
   return (locfdr_grid[ok_rows,])
 }
 
-#' @title Build Locfdr Grid
+#' @title Build locfdr Grid
 #' @description Build a grid of possible hyperparameters for locfdr
 #' from separate vectors of hyperparameter options. Final grid only considers
 #' hyperparameters that can be run on provided data without error.

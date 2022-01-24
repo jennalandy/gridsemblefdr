@@ -2,7 +2,7 @@
 % Please edit documentation in R/build_locfdr_grid.R
 \name{build_locfdr_grid}
 \alias{build_locfdr_grid}
-\title{Build Locfdr Grid}
+\title{Build locfdr Grid}
 \usage{
 build_locfdr_grid(
   t,

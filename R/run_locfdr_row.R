@@ -1,5 +1,5 @@
 #' @title Run locfdr
-#' @description Run locfdr with a Set of Parameters
+#' @description Run locfdr with a specific set of parameters
 #'
 #' @param t vector of test statistics
 #' @param locfdr_grid data frame where each row is a set of hyperparameters
