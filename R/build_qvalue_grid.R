@@ -7,8 +7,6 @@
 #' @param verbose
 #'
 #' @return dataframe where each row is a possible set of hyperparameters for qvalue
-#'
-#' @examples
 reduce_qvalue_grid <- function(t, qvalue_grid, verbose = FALSE) {
 
   ok_rows <- c()
@@ -64,8 +62,6 @@ reduce_qvalue_grid <- function(t, qvalue_grid, verbose = FALSE) {
 #' @return dataframe where each row is a possible set of hyperparameters for
 #' qvalue on a specific set of test statistics
 #' @export
-#'
-#' @examples
 build_qvalue_grid <- function(
   t,
   transf = c('probit', 'logit'),

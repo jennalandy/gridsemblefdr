@@ -7,8 +7,6 @@
 #' @param verbose
 #'
 #' @return dataframe where each row is a possible set of hyperparameters for locfdr
-#'
-#' @examples
 reduce_locfdr_grid <- function(t, locfdr_grid, verbose = FALSE) {
 
   ok_rows <- c()
@@ -54,8 +52,6 @@ reduce_locfdr_grid <- function(t, locfdr_grid, verbose = FALSE) {
 #' @return dataframe where each row is a possible set of hyperparameters for
 #' locfdr on a specific set of test statistics
 #' @export
-#'
-#' @examples
 build_locfdr_grid <- function(
   t,
   pct = c(0,2,4,6)/1000,

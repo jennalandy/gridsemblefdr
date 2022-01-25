@@ -6,7 +6,7 @@
 \usage{
 build_qvalue_grid(
   t,
-  trasf = c("probit", "logit"),
+  transf = c("probit", "logit"),
   adj = c(0.8, 0.9, 1, 1.1, 1.2),
   pi0.method = c("bootstrap", "smoother"),
   smooth.log.pi0 = c(TRUE, FALSE),
@@ -16,7 +16,7 @@ build_qvalue_grid(
 \arguments{
 \item{t}{vector of test statistics}
 
-\item{trasf}{vector of options for trasf hyperparameter}
+\item{transf}{vector of options for transf hyperparameter}
 
 \item{adj}{vector of options for adj hyperparameter}
 

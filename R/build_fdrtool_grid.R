@@ -7,8 +7,6 @@
 #' @param verbose
 #'
 #' @return dataframe where each row is a possible set of hyperparameters for fdrtool
-#'
-#' @examples
 reduce_fdrtool_grid <- function(t, fdrtool_grid, verbose = FALSE) {
 
   ok_rows <- c()
@@ -51,8 +49,6 @@ reduce_fdrtool_grid <- function(t, fdrtool_grid, verbose = FALSE) {
 #' @return dataframe where each row is a possible set of hyperparameters for
 #' fdrtool on a specific set of test statistics
 #' @export
-#'
-#' @examples
 build_fdrtool_grid <- function(
   t,
   cutoff.method = c('fndr','pct0','locfdr'),

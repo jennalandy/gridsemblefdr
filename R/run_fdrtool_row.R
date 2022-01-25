@@ -11,9 +11,7 @@
 #'   \item Fdr - estimated left tail-end false discovery rates
 #'   \item pi0 - estimated proportion of tests that are null
 #' }
-#'
-#' @examples
-#'
+#
 #' @importFrom fdrtool fdrtool
 run_fdrtool_row <- function(t, fdrtool_grid, row) {
   tryCatch(

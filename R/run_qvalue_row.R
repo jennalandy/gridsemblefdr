@@ -5,9 +5,7 @@
 #' @param df degrees of freedom to compute p-value from test statistics,
 #' assume standard normal if NULL
 #'
-#' @return
-#'
-#' @examples
+#' @return vector of p-values
 p_from_t <- function(t, df = NULL, sides = 'one') {
 
   if (is.null(df)) {
@@ -50,8 +48,6 @@ p_from_t <- function(t, df = NULL, sides = 'one') {
 #' }
 #'
 #' @export
-#'
-#' @examples
 run_qvalue_row <- function(
   t, qvalue_grid, row,
   lambda0 = FALSE, df = NULL,

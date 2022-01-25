@@ -20,6 +20,3 @@ vector of tail-end false discovery rates
 Calculate tail-end false discovery rate (Fdr)
 from local false discovery rate (fdr)
 }
-\examples{
-
-}

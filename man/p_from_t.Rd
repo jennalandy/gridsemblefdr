@@ -13,7 +13,7 @@ p_from_t(t, df = NULL, sides = "one")
 assume standard normal if NULL}
 }
 \value{
-
+vector of p-values
 }
 \description{
 get p-value from test statistic

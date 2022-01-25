@@ -23,6 +23,3 @@ run_fdrtool_row(t, fdrtool_grid, row)
 \description{
 Run fdrtool with a specific set of parameters
 }
-\examples{
-
-}

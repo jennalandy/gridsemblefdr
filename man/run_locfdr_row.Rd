@@ -23,6 +23,3 @@ run_locfdr_row(t, locfdr_grid, row)
 \description{
 Run locfdr with a specific set of parameters
 }
-\examples{
-
-}

@@ -12,8 +12,6 @@
 #'   \item pi0 - estimated proportion of tests that are null
 #' }
 #'
-#' @examples
-#'
 #' @importFrom locfdr locfdr
 #' @importFrom dplyr case_when
 run_locfdr_row <- function(t, locfdr_grid, row) {
