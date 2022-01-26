@@ -4,14 +4,7 @@
 \alias{run_qvalue_row}
 \title{Run qvalue}
 \usage{
-run_qvalue_row(
-  t,
-  qvalue_grid,
-  row,
-  lambda0 = FALSE,
-  df = NULL,
-  verbose = FALSE
-)
+run_qvalue_row(t, qvalue_grid, row, df = NULL, verbose = FALSE)
 }
 \arguments{
 \item{t}{vector of test statistics}
@@ -19,8 +12,6 @@ run_qvalue_row(
 \item{qvalue_grid}{data frame where each row is a set of hyperparameters}
 
 \item{row}{row of qvalue_grid, i.e. which set of hyperparameters to run qvalue with}
-
-\item{lambda0}{if TRUE, pi0 is not estimated (necessary to avoid some errors)}
 
 \item{df}{degrees of freedom to compute p-value from test statistics,
 assume standard normal if NULL}

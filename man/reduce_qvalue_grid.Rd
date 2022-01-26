@@ -4,7 +4,7 @@
 \alias{reduce_qvalue_grid}
 \title{Reduce qvalue grid}
 \usage{
-reduce_qvalue_grid(t, qvalue_grid, verbose = FALSE)
+reduce_qvalue_grid(t, qvalue_grid, df = NULL, verbose = FALSE)
 }
 \arguments{
 \item{t}{vector of test statistics}

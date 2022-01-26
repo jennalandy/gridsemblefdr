@@ -7,7 +7,7 @@
 #' @param verbose
 #'
 #' @return dataframe where each row is a possible set of hyperparameters for qvalue
-reduce_qvalue_grid <- function(t, qvalue_grid, verbose = FALSE) {
+reduce_qvalue_grid <- function(t, qvalue_grid, df = NULL, verbose = FALSE) {
 
   ok_rows <- c()
   for (i in 1:nrow(qvalue_grid)) {
@@ -15,18 +15,9 @@ reduce_qvalue_grid <- function(t, qvalue_grid, verbose = FALSE) {
     run_i <- run_qvalue_row(
       t = t,
       qvalue_grid = qvalue_grid,
-      row = i
+      row = i,
+      df = df
     )
-
-    # if null, try again with lambda = 0
-    if (is.null(run_i)) {
-      run_i <- run_qvalue_row(
-        t = t,
-        qvalue_grid = qvalue_grid,
-        row = i,
-        lambda0 = TRUE
-      )
-    }
 
     # keep this row in final grid if it ran without error,
     # and if it does not estimate fdrs as all 0 or all 1
