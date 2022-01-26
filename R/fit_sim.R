@@ -25,6 +25,12 @@ fit_sim <- function(t, type = 'symmetric') {
     upper = c(Inf, Inf, 0.999)
   )$par
 
+  parameters_list = list(
+    sigma_0 = parameters[1],
+    sigma_1 = parameters[2],
+    pi0 = parameters[3]
+  )
+
   if (type == 'asymmetric') {
     neg_log_likelihood <- get_neg_log_likelihood(
       t, type = 'asymmetric'
@@ -37,15 +43,30 @@ fit_sim <- function(t, type = 'symmetric') {
     pi_1L_init <- mean(t < 0)
 
     parameters <- optim(
-      c(sigma_0_init, sigma_1L_init, sigma_1R_init, pi_1L_init, pi_0_init),
+      c(
+        sigma_0_init, sigma_1L_init, sigma_1R_init,
+        pi_1L_init, pi_0_init
+      ),
       neg_log_likelihood,
       method = "L-BFGS-B",
       lower = c(0.0001, 0.1, 0.1, 0, 0),
       upper = c(Inf, Inf, Inf, 1, 0.999)
     )$par
+
+    parameters_list = list(
+      sigma_0 = parameters[1],
+      sigma_1l = parameters[2],
+      sigma_1r = parameters[3],
+      pi1l = parameters[4],
+      pi0 = parameters[5]
+    )
   }
 
-  return(parameters)
+  return(list(
+    'type' = type,
+    't' = t,
+    'parameters' = parameters_list
+  ))
 }
 
 
@@ -95,8 +116,44 @@ alternative <- function(
     )*exp( -t^2/(2*sigma_1L^2)) +
     (1-pi_1L)*2*as.numeric(t > 0)*(
       (t^2/sigma_1R^2)*(2*pi*sigma_1R^2)^(-1/2)
-    )*exp( -z^2/(2*sigma_1R^2))
+    )*exp( -t^2/(2*sigma_1R^2))
 
+  }
+}
+
+#' Acceptance Sample
+#'
+#' @param n sample size
+#' @param pdf distribution to sample from
+#' @param c accept/reject costant
+#' @param compare.dist comparison/proposal distribution, one of c('norm','uniform')
+#' @param compare.params parameters for compare.dist, either c(mean, sd) or c(min, max)
+#'
+#' @return vector of sampled values
+acceptance_sample <- function(
+  n, pdf, c = 10,
+  compare.dist = 'norm', compare.params = c(0, 1)
+) {
+  U = runif(n = n, min = 0, max = 1)
+  if (compare.dist == 'norm') {
+    X = rnorm(n = n, mean = compare.params[1], sd = compare.params[2])
+    accept <- (U <= pdf(X)/(
+      c * dnorm(x = X, mean  = compare.params[1], sd = compare.params[2])
+    ))
+  } else if (compare.dist == 'unif') {
+    X = runif(n = n, min = compare.params[1], max = compare.params[2])
+    accept <- (U <= pdf(X)/(
+      c * dunif(x = X, min  = compare.params[1], max = compare.params[2])
+    ))
+  }
+  if (sum(accept) == n) {
+    return(X)
+  } else {
+    return(c(X[accept], acceptance_sample(
+      n - sum(accept), pdf, c = c,
+      compare.dist = compare.dist,
+      compare.params = compare.params
+    )))
   }
 }
 
@@ -175,5 +232,58 @@ get_neg_log_likelihood <- function(Z, type = 'symmetric') {
         type = type
       ))}))
     }
+  }
+}
+
+
+#' Simulate from fit
+#'
+#' @param n sample size
+#' @param fit result of fit_sim()
+#' @param type one of c('symmetric','asymmetric')
+#'
+#' @return data frame of n simulated t-statistic truth pairs
+simulate_from_fit <- function(n, fit, type = 'symmetric') {
+
+  n0 <- round(fit$parameters$pi0*n)
+
+  if (type == 'symmetric'){
+    return(data.frame(
+      t = c(
+        sample_null(
+          n = n0,
+          sigma_0 = fit$parameters$sigma_0
+        ),
+        sample_alternative(
+          n = n-n0,
+          sigma_1 = fit$parameters$sigma_1,
+          type = 'symmetric'
+        )
+      ),
+      truth = c(
+        rep(0, n0),
+        rep(1, n-n0)
+      )
+    ))
+
+  } else {
+    return(data.frame(
+      t = c(
+        sample_null(
+          n = n0,
+          sigma_0 = fit$parameters$sigma_0
+        ),
+        sample_alternative(
+          n = n-n0,
+          sigma_1L = fit$parameters$sigma_1l,
+          sigma_1R = fit$parameters$sigma_1r,
+          type = 'asymmetric'
+        )
+      ),
+      truth = c(
+        rep(0, n0),
+        rep(1, n-n0)
+      )
+    ))
   }
 }
