@@ -4,10 +4,10 @@
 \alias{run_fdrtool_row}
 \title{Run fdrtool}
 \usage{
-run_fdrtool_row(t, fdrtool_grid, row)
+run_fdrtool_row(test_statistics, fdrtool_grid, row)
 }
 \arguments{
-\item{t}{vector of test statistics}
+\item{test_statistics}{vector of test statistics}
 
 \item{fdrtool_grid}{data frame where each row is a set of hyperparameters}
 

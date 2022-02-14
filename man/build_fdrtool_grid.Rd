@@ -5,18 +5,20 @@
 \title{Build fdrtool Grid}
 \usage{
 build_fdrtool_grid(
-  t,
+  test_statistics,
   cutoff.method = c("fndr", "pct0", "locfdr"),
   pct0 = 1/c(2:10),
   verbose = FALSE
 )
 }
 \arguments{
-\item{t}{vector of test statistics}
+\item{test_statistics}{vector of test statistics}
 
-\item{cutoff.method}{vector of options for cutoff method hyperparameter}
+\item{cutoff.method}{vector of options for cutoff method hyperparameter.
+\code{cutoff.method} is one of "fndr" (default), "pct0", "locfdr".}
 
-\item{pct0}{vector of options for pct0 hyperparameter}
+\item{pct0}{vector of options for pct0 hyperparameter. \code{pct0} is the
+fraction of data used for fitting null model - only if cutoff.method="pct0".}
 }
 \value{
 dataframe where each row is a possible set of hyperparameters for

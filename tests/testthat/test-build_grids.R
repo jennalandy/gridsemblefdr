@@ -6,7 +6,7 @@ test_statistics <- c(
 
 test_that("build_locfdr_grid works", {
   default_locfdr_grid <- build_locfdr_grid(
-    t = test_statistics
+    test_statistics = test_statistics
   )
   expect_equal(
     names(default_locfdr_grid),
@@ -20,7 +20,7 @@ test_that("build_locfdr_grid works", {
 
 test_that("build_fdrtool_grid works", {
   default_fdrtool_grid <- build_fdrtool_grid(
-    t = test_statistics
+    test_statistics = test_statistics
   )
   expect_equal(
     names(default_fdrtool_grid),
@@ -34,7 +34,7 @@ test_that("build_fdrtool_grid works", {
 
 test_that("build_qvalue_grid works", {
   default_qvalue_grid <- build_qvalue_grid(
-    t = test_statistics
+    test_statistics = test_statistics
   )
   expect_equal(
     names(default_qvalue_grid),

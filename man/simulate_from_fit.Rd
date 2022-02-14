@@ -4,18 +4,17 @@
 \alias{simulate_from_fit}
 \title{Simulate from fit}
 \usage{
-simulate_from_fit(n, fit, type = "symmetric")
+simulate_from_fit(n, fit)
 }
 \arguments{
 \item{n}{sample size}
 
 \item{fit}{result of fit_sim()}
-
-\item{type}{one of c('symmetric','asymmetric')}
 }
 \value{
 data frame of n simulated t-statistic truth pairs
 }
 \description{
-Simulate from fit
+simulate a dataset of size n from the mixture and record truth label
+of each value (null vs alternative)
 }

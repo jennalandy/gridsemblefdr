@@ -4,10 +4,10 @@
 \alias{run_qvalue_row}
 \title{Run qvalue}
 \usage{
-run_qvalue_row(t, qvalue_grid, row, df = NULL, verbose = FALSE)
+run_qvalue_row(test_statistics, qvalue_grid, row, df = NULL, verbose = FALSE)
 }
 \arguments{
-\item{t}{vector of test statistics}
+\item{test_statistics}{vector of test statistics}
 
 \item{qvalue_grid}{data frame where each row is a set of hyperparameters}
 

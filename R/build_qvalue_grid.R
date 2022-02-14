@@ -2,18 +2,25 @@
 #' @description Reduces grid to parameter combinations
 #' that can run qvalue on the provided data without error
 #'
-#' @param t vector of test statistics
-#' @param qvalue_grid data frame where each
+#' @param test_statistics vector of test statistics
+#' @param qvalue_grid data frame where each row is a possible set of hyperparameters for qvalue
 #' @param verbose
 #'
 #' @return dataframe where each row is a possible set of hyperparameters for qvalue
-reduce_qvalue_grid <- function(t, qvalue_grid, df = NULL, verbose = FALSE) {
+#'
+#' @importFrom magrittr %>%
+reduce_qvalue_grid <- function(
+  test_statistics,
+  qvalue_grid,
+  df = NULL,
+  verbose = FALSE
+) {
 
   ok_rows <- c()
   for (i in 1:nrow(qvalue_grid)) {
     # for each row, attempt to run qvalue
     run_i <- run_qvalue_row(
-      t = t,
+      test_statistics = test_statistics,
       qvalue_grid = qvalue_grid,
       row = i,
       df = df
@@ -43,22 +50,33 @@ reduce_qvalue_grid <- function(t, qvalue_grid, df = NULL, verbose = FALSE) {
 #' from separate vectors of hyperparameter options. Final grid only considers
 #' hyperparameters that can be run on provided data without error.
 #'
-#' @param t vector of test statistics
-#' @param transf vector of options for transf hyperparameter
-#' @param adj vector of options for adj hyperparameter
-#' @param pi0.method vector of options for pi0.method hyperparameter
-#' @param smooth.log.pi0 vector of options for smooth.log.pi0 hyperparameter
+#' @param test_statistics vector of test statistics
+#' @param transf vector of options for transf hyperparameter. `transf` is
+#' a transformation is applied to the p-values so that a local FDR estimate can
+#' be formed that does not involve edge effects of the [0,1] interval in which
+#' the p-values lie, either "probit" or "logit".
+#' @param adj vector of options for adj hyperparameter. `adj` is a numeric value
+#' that is applied as a multiple of the smoothing bandwidth used in the density
+#' estimation.
+#' @param pi0.method vector of options for pi0.method hyperparameter. `pi0.method`
+#' is the method for automatically choosing tuning parameter in the estimation of
+#' pi_0, the proportion of true null hypotheses, either "smoother" or "bootstrap".
+#' @param smooth.log.pi0 vector of options for smooth.log.pi0 hyperparameter.
+#' If `smooth.log.pi0` is TRUE and pi0.method = "smoother", pi_0 will be estimated
+#' by applying a smoother to a scatterplot of log(pi_0) estimates against the
+#' tuning parameter lambda.
 #' @param verbose
 #'
 #' @return dataframe where each row is a possible set of hyperparameters for
 #' qvalue on a specific set of test statistics
 #' @export
 build_qvalue_grid <- function(
-  t,
+  test_statistics,
   transf = c('probit', 'logit'),
-  adj = c(0.8,0.9,1,1.1,1.2), # default 1
+  adj = c(0.8,0.9,1,1.1,1.2),
   pi0.method = c('bootstrap','smoother'),
   smooth.log.pi0 = c(TRUE, FALSE),
+  df = NULL,
   verbose = FALSE
 ) {
 
@@ -77,8 +95,9 @@ build_qvalue_grid <- function(
   ]
 
   qvalue_grid_reduced <- reduce_qvalue_grid(
-    t = t,
+    test_statistics = test_statistics,
     qvalue_grid = qvalue_grid,
+    df = df,
     verbose = verbose
   )
 

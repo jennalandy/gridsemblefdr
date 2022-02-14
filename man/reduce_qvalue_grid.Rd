@@ -4,12 +4,12 @@
 \alias{reduce_qvalue_grid}
 \title{Reduce qvalue grid}
 \usage{
-reduce_qvalue_grid(t, qvalue_grid, df = NULL, verbose = FALSE)
+reduce_qvalue_grid(test_statistics, qvalue_grid, df = NULL, verbose = FALSE)
 }
 \arguments{
-\item{t}{vector of test statistics}
+\item{test_statistics}{vector of test statistics}
 
-\item{qvalue_grid}{data frame where each}
+\item{qvalue_grid}{data frame where each row is a possible set of hyperparameters for qvalue}
 
 \item{verbose}{}
 }

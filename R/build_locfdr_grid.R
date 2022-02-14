@@ -2,18 +2,22 @@
 #' @description Reduces grid to parameter combinations
 #' that can run locfdr on the provided data without error
 #'
-#' @param t vector of test statistics
-#' @param locfdr_grid data frame where each
+#' @param test_statistics vector of test statistics
+#' @param locfdr_grid data frame where each row is a possible set of hyperparameters for locfdr
 #' @param verbose
 #'
 #' @return dataframe where each row is a possible set of hyperparameters for locfdr
-reduce_locfdr_grid <- function(t, locfdr_grid, verbose = FALSE) {
+reduce_locfdr_grid <- function(
+  test_statistics,
+  locfdr_grid,
+  verbose = FALSE
+) {
 
   ok_rows <- c()
   for (i in 1:nrow(locfdr_grid)) {
     # for each row, attempt to run locfdr
     run_i <- run_locfdr_row(
-      t = t,
+      test_statistics = test_statistics,
       locfdr_grid = locfdr_grid,
       row = i
     )
@@ -42,18 +46,27 @@ reduce_locfdr_grid <- function(t, locfdr_grid, verbose = FALSE) {
 #' from separate vectors of hyperparameter options. Final grid only considers
 #' hyperparameters that can be run on provided data without error.
 #'
-#' @param t vector of test statistics
-#' @param pct vector of options for pct hyperparameter
-#' @param pct0 vector of options for pct0 hyperparameter
-#' @param nulltype vector of options for nulltype hyperparameter
-#' @param type vector of options for type hyperparameter
+#' @param test_statistics vector of test statistics
+#' @param pct vector of options for pct hyperparameter. `pct` is the
+#' excluded tail proportions of zz's when fitting f(z).
+#' pct=0 includes full range of zz's.
+#' @param pct0 vector of options for pct0 hyperparameter. `pct0` is the
+#' proportion of the zz distribution used in fitting the null density
+#' f0(z) by central matching. Scalar, range [pct0, 1-pct0] is used.
+#' @param nulltype vector of options for nulltype hyperparameter. `nulltype`
+#' is the type of null hypothesis assumed in estimating f0(z), for
+#' use in the fdr calculations. 0 is the theoretical null N(0,1),
+#' 1 is maximum likelihood estimation, 2 is central matching estimation,
+#' 3 is a split normal version of 2.
+#' @param type vector of options for type hyperparameter. `type` is the type of
+#' fitting used for f; 0 is a natural spline, 1 is a polynomial.
 #' @param verbose
 #'
 #' @return dataframe where each row is a possible set of hyperparameters for
 #' locfdr on a specific set of test statistics
 #' @export
 build_locfdr_grid <- function(
-  t,
+  test_statistics,
   pct = c(0,2,4,6)/1000,
   pct0 = 1/c(3:10),
   nulltype = 1:3,
@@ -78,7 +91,7 @@ build_locfdr_grid <- function(
   ]
 
   locfdr_grid_reduced <- reduce_locfdr_grid(
-    t = t,
+    test_statistics = test_statistics,
     locfdr_grid = locfdr_grid,
     verbose = verbose
   )

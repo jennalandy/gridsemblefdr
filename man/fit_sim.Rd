@@ -4,15 +4,15 @@
 \alias{fit_sim}
 \title{Fit for Simulation}
 \usage{
-fit_sim(t, type = "symmetric")
+fit_sim(test_statistics, type = "symmetric")
 }
 \arguments{
-\item{t}{vector of test statistics}
+\item{test_statistics}{vector of test statistics}
 
 \item{type}{one of c('symmetric','asymmetric')}
 }
 \value{
-vector of parameters for the fit densities
+vector of named parameters for the fit densities and type
 }
 \description{
 Fit a null and alternative distribution in order to

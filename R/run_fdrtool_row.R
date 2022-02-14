@@ -1,7 +1,7 @@
 #' @title Run fdrtool
 #' @description Run fdrtool with a specific set of parameters
 #'
-#' @param t vector of test statistics
+#' @param test_statistics vector of test statistics
 #' @param fdrtool_grid data frame where each row is a set of hyperparameters
 #' @param row row of fdrtool_grid, i.e. which set of hyperparameters to run fdrtool with
 #'
@@ -13,11 +13,17 @@
 #' }
 #
 #' @importFrom fdrtool fdrtool
-run_fdrtool_row <- function(t, fdrtool_grid, row) {
+run_fdrtool_row <- function(
+  test_statistics,
+  fdrtool_grid,
+  row
+) {
   tryCatch(
     {
       res <- fdrtool::fdrtool(
-        x = t, plot = 0, verbose = FALSE,
+        x = test_statistics,
+        plot = 0,
+        verbose = FALSE,
         cutoff.method = as.character(
           fdrtool_grid$cutoff.method[row]
         ),
@@ -26,7 +32,11 @@ run_fdrtool_row <- function(t, fdrtool_grid, row) {
 
       return(list(
         'fdr' = res$lfdr,
-        'Fdr' = Fdr_from_fdr(res$lfdr, t),
+        'Fdr' = Fdr_from_fdr(
+          fdr = res$lfdr,
+          test_statistics = test_statistics,
+          direction = 'left'
+        ),
         'pi0' = res$param[1, 'eta0']
       ))
     },

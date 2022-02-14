@@ -1,22 +1,22 @@
 #' @title P from T
 #' @description get p-value from test statistic
 #'
-#' @param t vector of t statistics
+#' @param test_statistics vector of t statistics
 #' @param df degrees of freedom to compute p-value from test statistics,
 #' assume standard normal if NULL
 #'
 #' @return vector of p-values
-p_from_t <- function(t, df = NULL, sides = 'one') {
+p_from_t <- function(test_statistics, df = NULL, sides = 'one') {
 
   if (is.null(df)) {
     # assume standard normal
-    one_sided <- lapply(t, function(z) {
+    one_sided <- lapply(test_statistics, function(z) {
       pnorm(-1*abs(z))
     }) %>%
       unlist()
   } else {
     # assume t_df
-    one_sided <-lapply(t, function(z) {
+    one_sided <-lapply(test_statistics, function(z) {
       pt(-1*abs(z), df = df)
     }) %>%
       unlist()
@@ -32,7 +32,7 @@ p_from_t <- function(t, df = NULL, sides = 'one') {
 #' @title Run qvalue
 #' @description Run fdrtool with a specific set of parameters
 #'
-#' @param t vector of test statistics
+#' @param test_statistics vector of test statistics
 #' @param qvalue_grid data frame where each row is a set of hyperparameters
 #' @param row row of qvalue_grid, i.e. which set of hyperparameters to run qvalue with
 #' @param df degrees of freedom to compute p-value from test statistics,
@@ -46,17 +46,19 @@ p_from_t <- function(t, df = NULL, sides = 'one') {
 #'   \item pi0 - estimated proportion of tests that are null
 #' }
 #'
-#' @export
+#' @importFrom qvalue qvalue
 run_qvalue_row <- function(
-  t, qvalue_grid, row,
+  test_statistics,
+  qvalue_grid,
+  row,
   df = NULL,
   verbose = FALSE
 ) {
 
   p <- p_from_t(
-    t = t,
+    test_statistics = test_statistics,
     df = df,
-    sides = 'one'
+    sides = 'two'
   )
 
   res <- NULL
@@ -99,7 +101,11 @@ run_qvalue_row <- function(
     # otherwise return results
     return(list(
       'fdr' = res$lfdr,
-      'Fdr' = Fdr_from_fdr(res$lfdr, t),
+      'Fdr' = Fdr_from_fdr(
+        fdr = res$lfdr,
+        test_statistics = test_statistics,
+        direction = 'left'
+      ),
       'pi0' = res$pi0
     ))
   }

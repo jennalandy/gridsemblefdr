@@ -2,7 +2,7 @@
 % Please edit documentation in R/fit_sim.R
 \name{alternative}
 \alias{alternative}
-\title{Alternative density}
+\title{Alternative pdf}
 \usage{
 alternative(
   t,
@@ -30,5 +30,5 @@ alternative(
 value of alternative density pdf at value t
 }
 \description{
-Alternative density
+Alternative pdf
 }

@@ -2,18 +2,18 @@
 % Please edit documentation in R/fit_sim.R
 \name{null}
 \alias{null}
-\title{Null density}
+\title{Null pdf}
 \usage{
 null(t, sigma_0)
 }
 \arguments{
 \item{t}{test statistic}
 
-\item{sigma_0}{variance of null distribution}
+\item{sigma_0}{variance of null density}
 }
 \value{
 value of null density pdf at value t
 }
 \description{
-Null density
+Null pdf
 }

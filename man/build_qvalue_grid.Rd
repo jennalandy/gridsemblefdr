@@ -5,24 +5,35 @@
 \title{Build qvalue Grid}
 \usage{
 build_qvalue_grid(
-  t,
+  test_statistics,
   transf = c("probit", "logit"),
   adj = c(0.8, 0.9, 1, 1.1, 1.2),
   pi0.method = c("bootstrap", "smoother"),
   smooth.log.pi0 = c(TRUE, FALSE),
+  df = NULL,
   verbose = FALSE
 )
 }
 \arguments{
-\item{t}{vector of test statistics}
+\item{test_statistics}{vector of test statistics}
 
-\item{transf}{vector of options for transf hyperparameter}
+\item{transf}{vector of options for transf hyperparameter. \code{transf} is
+a transformation is applied to the p-values so that a local FDR estimate can
+be formed that does not involve edge effects of the \link{0,1} interval in which
+the p-values lie, either "probit" or "logit".}
 
-\item{adj}{vector of options for adj hyperparameter}
+\item{adj}{vector of options for adj hyperparameter. \code{adj} is a numeric value
+that is applied as a multiple of the smoothing bandwidth used in the density
+estimation.}
 
-\item{pi0.method}{vector of options for pi0.method hyperparameter}
+\item{pi0.method}{vector of options for pi0.method hyperparameter. \code{pi0.method}
+is the method for automatically choosing tuning parameter in the estimation of
+pi_0, the proportion of true null hypotheses, either "smoother" or "bootstrap".}
 
-\item{smooth.log.pi0}{vector of options for smooth.log.pi0 hyperparameter}
+\item{smooth.log.pi0}{vector of options for smooth.log.pi0 hyperparameter.
+If \code{smooth.log.pi0} is TRUE and pi0.method = "smoother", pi_0 will be estimated
+by applying a smoother to a scatterplot of log(pi_0) estimates against the
+tuning parameter lambda.}
 
 \item{verbose}{}
 }

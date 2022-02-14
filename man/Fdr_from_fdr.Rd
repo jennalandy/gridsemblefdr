@@ -4,12 +4,12 @@
 \alias{Fdr_from_fdr}
 \title{Fdr from fdr}
 \usage{
-Fdr_from_fdr(fdr, t, direction = "left")
+Fdr_from_fdr(fdr, test_statistics, direction = "left")
 }
 \arguments{
 \item{fdr}{vector of local false discovery rate estimates}
 
-\item{t}{vector of test statistics}
+\item{test_statistics}{vector of test statistics}
 
 \item{direction}{direction of tail-end false discovery rate, c('left','right')}
 }

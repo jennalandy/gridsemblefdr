@@ -2,14 +2,14 @@
 % Please edit documentation in R/fit_sim.R
 \name{acceptance_sample}
 \alias{acceptance_sample}
-\title{Acceptance Sample}
+\title{Acceptance sample from a pdf}
 \usage{
 acceptance_sample(
   n,
   pdf,
   c = 10,
-  compare.dist = "norm",
-  compare.params = c(0, 1)
+  compare_dist = "norm",
+  compare_params = c(0, 1)
 )
 }
 \arguments{
@@ -17,15 +17,15 @@ acceptance_sample(
 
 \item{pdf}{distribution to sample from}
 
-\item{c}{accept/reject costant}
+\item{c}{accept/reject constant}
 
-\item{compare.dist}{comparison/proposal distribution, one of c('norm','uniform')}
+\item{compare_dist}{comparison/proposal distribution, one of c('norm','uniform')}
 
-\item{compare.params}{parameters for compare.dist, either c(mean, sd) or c(min, max)}
+\item{compare_params}{parameters for compare_dist, either c(mean, sd) or c(min, max)}
 }
 \value{
 vector of sampled values
 }
 \description{
-Acceptance Sample
+Acceptance sample from a pdf
 }

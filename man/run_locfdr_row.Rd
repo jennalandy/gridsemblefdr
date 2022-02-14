@@ -4,10 +4,10 @@
 \alias{run_locfdr_row}
 \title{Run locfdr}
 \usage{
-run_locfdr_row(t, locfdr_grid, row)
+run_locfdr_row(test_statistics, locfdr_grid, row)
 }
 \arguments{
-\item{t}{vector of test statistics}
+\item{test_statistics}{vector of test statistics}
 
 \item{locfdr_grid}{data frame where each row is a set of hyperparameters}
 

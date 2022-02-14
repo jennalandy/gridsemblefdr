@@ -1,7 +1,7 @@
 #' @title Run locfdr
 #' @description Run locfdr with a specific set of parameters
 #'
-#' @param t vector of test statistics
+#' @param test_statistics vector of test statistics
 #' @param locfdr_grid data frame where each row is a set of hyperparameters
 #' @param row row of locfdr_grid, i.e. which set of hyperparameters to run locfdr with
 #'
@@ -14,7 +14,7 @@
 #'
 #' @importFrom locfdr locfdr
 #' @importFrom dplyr case_when
-run_locfdr_row <- function(t, locfdr_grid, row) {
+run_locfdr_row <- function(test_statistics, locfdr_grid, row) {
 
   # consider pi0 estimation method that matches desired nulltype
   est_method <- dplyr::case_when(
@@ -27,7 +27,7 @@ run_locfdr_row <- function(t, locfdr_grid, row) {
     {
       # try to run locfdr with desired hyperparameters
       res <- locfdr::locfdr(
-        t,
+        test_statistics,
         pct = locfdr_grid$pct[row],
         pct0 = locfdr_grid$pct0[row],
         nulltype = locfdr_grid$nulltype[row],
@@ -37,7 +37,11 @@ run_locfdr_row <- function(t, locfdr_grid, row) {
 
       return(list(
         'fdr' = res$fdr,
-        'Fdr' = Fdr_from_fdr(res$fdr, t),
+        'Fdr' = Fdr_from_fdr(
+          fdr = res$fdr,
+          test_statistics = test_statistics,
+          direction = 'left'
+        ),
         'pi0' = res$fp0[est_method,'p0']
       ))
     },
@@ -52,7 +56,7 @@ run_locfdr_row <- function(t, locfdr_grid, row) {
         grepl('CM estimation failed', w)
       ) {
         res <- suppressWarnings(locfdr::locfdr(
-          t,
+          test_statistics,
           pct = locfdr_grid$pct[row],
           pct0 = locfdr_grid$pct0[row],
           nulltype = locfdr_grid$nulltype[row],
@@ -62,7 +66,11 @@ run_locfdr_row <- function(t, locfdr_grid, row) {
 
         return(list(
           'fdr' = res$fdr,
-          'Fdr' = Fdr_from_fdr(res$fdr, t),
+          'Fdr' = Fdr_from_fdr(
+            fdr = res$fdr,
+            test_statistics = test_statistics,
+            direction = 'left'
+          ),
           'pi0' = res$fp0[est_method,'p0']
         ))
       } else {

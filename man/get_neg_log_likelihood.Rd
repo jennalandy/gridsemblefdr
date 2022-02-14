@@ -4,12 +4,12 @@
 \alias{get_neg_log_likelihood}
 \title{Negative log likelihood of mixture density}
 \usage{
-get_neg_log_likelihood(Z, type = "symmetric")
+get_neg_log_likelihood(test_statistics, type = "symmetric")
 }
 \arguments{
-\item{type}{one of c('symmetric','asymmetric')}
+\item{test_statistics}{vector of test statistics}
 
-\item{t}{vector of test statistics}
+\item{type}{one of c('symmetric','asymmetric')}
 }
 \value{
 function of parameters vector that computes NLL for the data, t

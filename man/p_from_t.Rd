@@ -4,10 +4,10 @@
 \alias{p_from_t}
 \title{P from T}
 \usage{
-p_from_t(t, df = NULL, sides = "one")
+p_from_t(test_statistics, df = NULL, sides = "one")
 }
 \arguments{
-\item{t}{vector of t statistics}
+\item{test_statistics}{vector of t statistics}
 
 \item{df}{degrees of freedom to compute p-value from test statistics,
 assume standard normal if NULL}

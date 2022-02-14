@@ -2,7 +2,7 @@
 % Please edit documentation in R/fit_sim.R
 \name{mixture}
 \alias{mixture}
-\title{Mixture density}
+\title{Mixture pdf}
 \usage{
 mixture(
   z,
@@ -34,5 +34,5 @@ mixture(
 value of mixture density pdf at value t
 }
 \description{
-Mixture density
+Mixture pdf
 }

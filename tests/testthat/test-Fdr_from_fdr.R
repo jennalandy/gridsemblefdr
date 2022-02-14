@@ -11,6 +11,8 @@ test_that("Fdr_from_fdr works", {
     direction = 'left'
   )
 
+  expect_equal(length(my_Fdr), length(test_statistics))
+
   plot(
     test_statistics[order(test_statistics)],
     my_Fdr[order(test_statistics)],

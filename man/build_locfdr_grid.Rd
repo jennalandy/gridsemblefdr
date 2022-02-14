@@ -5,7 +5,7 @@
 \title{Build locfdr Grid}
 \usage{
 build_locfdr_grid(
-  t,
+  test_statistics,
   pct = c(0, 2, 4, 6)/1000,
   pct0 = 1/c(3:10),
   nulltype = 1:3,
@@ -14,15 +14,24 @@ build_locfdr_grid(
 )
 }
 \arguments{
-\item{t}{vector of test statistics}
+\item{test_statistics}{vector of test statistics}
 
-\item{pct}{vector of options for pct hyperparameter}
+\item{pct}{vector of options for pct hyperparameter. \code{pct} is the
+excluded tail proportions of zz's when fitting f(z).
+pct=0 includes full range of zz's.}
 
-\item{pct0}{vector of options for pct0 hyperparameter}
+\item{pct0}{vector of options for pct0 hyperparameter. \code{pct0} is the
+proportion of the zz distribution used in fitting the null density
+f0(z) by central matching. Scalar, range \link{pct0, 1-pct0} is used.}
 
-\item{nulltype}{vector of options for nulltype hyperparameter}
+\item{nulltype}{vector of options for nulltype hyperparameter. \code{nulltype}
+is the type of null hypothesis assumed in estimating f0(z), for
+use in the fdr calculations. 0 is the theoretical null N(0,1),
+1 is maximum likelihood estimation, 2 is central matching estimation,
+3 is a split normal version of 2.}
 
-\item{type}{vector of options for type hyperparameter}
+\item{type}{vector of options for type hyperparameter. \code{type} is the type of
+fitting used for f; 0 is a natural spline, 1 is a polynomial.}
 
 \item{verbose}{}
 }

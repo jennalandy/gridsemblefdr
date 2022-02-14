@@ -4,12 +4,12 @@
 \alias{reduce_fdrtool_grid}
 \title{Reduce fdrtool grid}
 \usage{
-reduce_fdrtool_grid(t, fdrtool_grid, verbose = FALSE)
+reduce_fdrtool_grid(test_statistics, fdrtool_grid, verbose = FALSE)
 }
 \arguments{
-\item{t}{vector of test statistics}
+\item{test_statistics}{vector of test statistics}
 
-\item{fdrtool_grid}{data frame where each}
+\item{fdrtool_grid}{data frame where each row is a possible set of hyperparameters for fdrtool}
 
 \item{verbose}{}
 }
