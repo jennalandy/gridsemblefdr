@@ -9,6 +9,7 @@
 #' @return dataframe where each row is a possible set of hyperparameters for qvalue
 #'
 #' @importFrom magrittr %>%
+#' @export
 reduce_qvalue_grid <- function(
   test_statistics,
   qvalue_grid,
@@ -29,7 +30,11 @@ reduce_qvalue_grid <- function(
     # keep this row in final grid if it ran without error,
     # and if it does not estimate fdrs as all 0 or all 1
     if (!is.null(run_i)) {
-      if ((sum(run_i$fdr != 1) > 0) & (sum(run_i$fdr != 0) > 0)) {
+      if (
+        (sum(run_i$fdr != 1) > 0) &
+        (sum(run_i$fdr != 0) > 0) &
+        run_i$pi0 <= 1
+      ) {
         ok_rows <- c(ok_rows, i)
       }
     }

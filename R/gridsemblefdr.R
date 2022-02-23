@@ -22,12 +22,12 @@
 #'
 #' @return
 #' \itemize{
-#'      \item `fdr` local false discovery rates
-#'      \item `Fdr` left tail false discovery rates
-#'      \item `pi0` proportion of null test statistics
-#'      \item `top_grid` dataframe containing hyperparameter sets
+#'      \item fdr local false discovery rates
+#'      \item Fdr left tail false discovery rates
+#'      \item pi0 proportion of null test statistics
+#'      \item top_grid dataframe containing hyperparameter sets
 #'      that were ensembled over and their metrics on simulated daa
-#'      \item `all_grids` dataframe containing all hyperparameter sets considered
+#'      \item all_grids dataframe containing all hyperparameter sets considered
 #'      and their metrics on simulated data
 #' }
 #' @export
