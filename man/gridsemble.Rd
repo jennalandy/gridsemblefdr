@@ -14,8 +14,9 @@ gridsemble(
   df = NULL,
   methods = c("locfdr", "fdrtool", "qvalue"),
   asym = FALSE,
-  focus_metric = "Fdrerror",
+  focus_metric = "pr",
   large_abs_metric = TRUE,
+  parallel = TRUE,
   verbose = TRUE
 )
 }
@@ -47,17 +48,20 @@ Must be one of c('pr','roc','brier','Fdrerror')}
 \item{large_abs_metric}{if TRUE, only consider focus_metric looking at the
 large absolute value test statistics (specifically, top quartile of abs(t))}
 
+\item{parallel}{if TRUE, process is run in parallel}
+
 \item{verbose}{}
 }
 \value{
 \itemize{
-\item \code{fdr} local false discovery rates
-\item \code{Fdr} left tail false discovery rates
-\item \code{pi0} proportion of null test statistics
-\item \code{top_grid} dataframe containing hyperparameter sets
+\item fdr local false discovery rates
+\item Fdr left tail false discovery rates
+\item pi0 proportion of null test statistics
+\item top_grid dataframe containing hyperparameter sets
 that were ensembled over and their metrics on simulated daa
-\item \code{all_grids} dataframe containing all hyperparameter sets considered
+\item all_grids dataframe containing all hyperparameter sets considered
 and their metrics on simulated data
+\item fit parameters used for simulation step
 }
 }
 \description{

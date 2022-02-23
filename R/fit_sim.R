@@ -263,6 +263,7 @@ get_neg_log_likelihood <- function(
 #' @param fit result of fit_sim()
 #'
 #' @return data frame of n simulated t-statistic truth pairs
+#' @export
 simulate_from_fit <- function(n, fit) {
 
   n0 <- round(fit$parameters$pi0*n)

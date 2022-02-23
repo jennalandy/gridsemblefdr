@@ -36,19 +36,19 @@ ensemble <- function(
       i_fdr <- run_locfdr_row(
         test_statistics = test_statistics,
         locfdr_grid = locfdr_grid,
-        row = top_grid[i, 'row']
+        row = as.numeric(top_grid[i, 'row'])
       )
     } else if (method == 'fdrtool') {
       i_fdr <- run_fdrtool_row(
         test_statistics = test_statistics,
         fdrtool_grid = fdrtool_grid,
-        row = top_grid[i, 'row']
+        row = as.numeric(top_grid[i, 'row'])
       )
     } else if (method == 'qvalue') {
       i_fdr <- run_qvalue_row(
         test_statistics = test_statistics,
         qvalue_grid = qvalue_grid,
-        row = top_grid[i, 'row'],
+        row = as.numeric(top_grid[i, 'row']),
         df = df
       )
     }

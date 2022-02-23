@@ -9,7 +9,8 @@ grid_search(
   nsim,
   topn,
   fit,
-  methods,
+  method_list,
+  row_list,
   df = NULL,
   locfdr_grid = NULL,
   fdrtool_grid = NULL,
@@ -17,7 +18,8 @@ grid_search(
   focus_metric = "pr",
   large_abs_metric = TRUE,
   params_type = "symmetric",
-  verbose = T
+  parallel = TRUE,
+  verbose = TRUE
 )
 }
 \arguments{
@@ -47,6 +49,8 @@ Must be one of c('pr','roc','brier','Fdrerror')}
 large absolute value test statistics (specifically, top quartile of abs(t))}
 
 \item{params_type}{type of simulation model fit, one of c('symmetric','asymmetric')}
+
+\item{parallel}{if TRUE, process is run in parallel}
 
 \item{verbose}{}
 }

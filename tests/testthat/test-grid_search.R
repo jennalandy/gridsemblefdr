@@ -17,17 +17,29 @@ truth <- c(
   rep(1, 200)
 )
 
-test_that("grid_search works", {
-  default_locfdr_grid <- build_locfdr_grid(
-    test_statistics = test_statistics
-  )
-  default_fdrtool_grid <- build_fdrtool_grid(
-    test_statistics = test_statistics
-  )
-  default_qvalue_grid <- build_qvalue_grid(
-    test_statistics = test_statistics
-  )
+method_list = c()
+row_list = c()
 
+default_locfdr_grid <- build_locfdr_grid(
+  test_statistics = test_statistics
+)
+method_list = c(method_list, rep('locfdr', nrow(default_locfdr_grid)))
+row_list = c(row_list, 1:nrow(default_locfdr_grid))
+
+default_fdrtool_grid <- build_fdrtool_grid(
+  test_statistics = test_statistics
+)
+method_list = c(method_list, rep('fdrtool', nrow(default_fdrtool_grid)))
+row_list = c(row_list, 1:nrow(default_fdrtool_grid))
+
+default_qvalue_grid <- build_qvalue_grid(
+  test_statistics = test_statistics
+)
+method_list = c(method_list, rep('qvalue', nrow(default_qvalue_grid)))
+row_list = c(row_list, 1:nrow(default_qvalue_grid))
+
+
+test_that("grid_search works", {
   fit <- fit_sim(test_statistics = test_statistics, type = 'symmetric')
 
   gs1 <- grid_search(
@@ -35,6 +47,8 @@ test_that("grid_search works", {
     nsim = 10,
     topn = 1,
     fit = fit,
+    method_list = method_list,
+    row_list = row_list,
     df = NULL,
     locfdr_grid = default_locfdr_grid,
     fdrtool_grid = default_fdrtool_grid,
@@ -51,12 +65,15 @@ test_that("grid_search works", {
                10*(nrow_null0(default_locfdr_grid) +
                nrow_null0(default_fdrtool_grid) +
                nrow_null0(default_qvalue_grid)))
+  expect_true(sum(unlist(gs1$all_grids$brier), na.rm = TRUE) > 0)
 
   gs2 <- grid_search(
     n = length(test_statistics),
     nsim = 2,
     topn = 3,
     fit = fit,
+    method_list = method_list,
+    row_list = row_list,
     df = NULL,
     locfdr_grid = default_locfdr_grid,
     fdrtool_grid = default_fdrtool_grid,
@@ -77,6 +94,8 @@ test_that("grid_search works", {
     nsim = 1,
     topn = 1,
     fit = fit_asym,
+    method_list = method_list,
+    row_list = row_list,
     df = NULL,
     locfdr_grid = default_locfdr_grid,
     fdrtool_grid = default_fdrtool_grid,

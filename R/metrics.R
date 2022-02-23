@@ -32,7 +32,7 @@ metrics <- function(fdr, Fdr, truth, true_Fdr, topq) {
 #' @importFrom PRROC pr.curve
 #' @export
 get_prauc <- function(fdr, truth) {
-  pr <- pr.curve(
+  pr <- PRROC::pr.curve(
       scores.class0 = fdr[!as.logical(truth)],
       scores.class1 = fdr[as.logical(truth)]
   )
@@ -52,7 +52,7 @@ get_roc <- function(fdr, truth) {
 
   # direction = ">" accounts for inverse
   # relationship between fdr and y
-  r <- roc(
+  r <- pROC::roc(
     truth ~ fdr,
     direction = ">",
     levels = levels(as.factor(truth))

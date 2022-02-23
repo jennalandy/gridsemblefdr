@@ -18,7 +18,8 @@ BugReports: https://github.com/jennalandy/gridsemblefdr/issues
 Imports: 
     dplyr,
     fdrtool,
-    locfdr
+    locfdr,
+    magrittr
 Suggests: 
     rmarkdown,
     knitr,

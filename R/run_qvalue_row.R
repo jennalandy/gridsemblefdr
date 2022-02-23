@@ -11,16 +11,14 @@ p_from_t <- function(test_statistics, df = NULL, sides = 'one') {
 
   if (is.null(df)) {
     # assume standard normal
-    one_sided <- lapply(test_statistics, function(z) {
+    one_sided <- unlist(lapply(test_statistics, function(z) {
       pnorm(-1*abs(z))
-    }) %>%
-      unlist()
+    }))
   } else {
     # assume t_df
-    one_sided <-lapply(test_statistics, function(z) {
+    one_sided <-unlist(lapply(test_statistics, function(z) {
       pt(-1*abs(z), df = df)
-    }) %>%
-      unlist()
+    }))
   }
 
   if (sides == 'two') {
@@ -68,7 +66,7 @@ run_qvalue_row <- function(
   # try running qvalue and fitting pi0
   tryCatch(
     {
-      res <- qvalue(
+      res <- qvalue::qvalue(
         p = p,
         transf = qvalue_grid$transf[row],
         adj = qvalue_grid$adj[row],
@@ -86,7 +84,7 @@ run_qvalue_row <- function(
 
   if (is.null(res)) {
     # if null, run without fitting pi0 (lambda = 0)
-    res <- qvalue(
+    res <- qvalue::qvalue(
       p = p,
       transf = as.character(qvalue_grid$transf[row]),
       adj = qvalue_grid$adj[row],

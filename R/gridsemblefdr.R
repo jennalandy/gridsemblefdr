@@ -54,24 +54,38 @@ gridsemble <- function(
     focus_metric = 'Fdrerror'
   }
 
+  method_list = c()
+  row_list = c()
   if ('locfdr' %in% methods) {
     if (is.null(locfdr_grid)) {
       locfdr_grid <- build_locfdr_grid(test_statistics)
+    }
+    if (nrow_null0(locfdr_grid) > 0) {
+      method_list = c(method_list, rep('locfdr', nrow(locfdr_grid)))
+      row_list = c(row_list, 1:nrow(locfdr_grid))
     }
   }
   if ('fdrtool' %in% methods) {
     if (is.null(fdrtool_grid)) {
       fdrtool_grid <- build_fdrtool_grid(test_statistics)
     }
+    if (nrow_null0(fdrtool_grid) > 0) {
+      method_list = c(method_list, rep('fdrtool', nrow(fdrtool_grid)))
+      row_list = c(row_list, 1:nrow(fdrtool_grid))
+    }
   }
   if ('qvalue' %in% methods) {
     if (is.null(qvalue_grid)) {
       qvalue_grid <- build_qvalue_grid(test_statistics, df = df)
     }
+    if (nrow_null0(qvalue_grid) > 0) {
+      method_list = c(method_list, rep('qvalue', nrow(qvalue_grid)))
+      row_list = c(row_list, 1:nrow(qvalue_grid))
+    }
   }
 
-  default_locfdr <- locfdr(test_statistics, plot = 0)
-  default_fdrtool <- fdrtool(test_statistics, pct = 0, plot = 0, verbose = 0)
+  default_locfdr <- locfdr::locfdr(test_statistics, plot = 0)
+  default_fdrtool <- fdrtool::fdrtool(test_statistics, pct = 0, plot = 0, verbose = 0)
   p_values = p_from_t(
     test_statistics = test_statistics,
     df = df,
@@ -79,26 +93,11 @@ gridsemble <- function(
   )
   default_qvalue <- NULL
   tryCatch({
-    default_qvalue <- qvalue(p_values, plot = 0)
+    default_qvalue <- qvalue::qvalue(p_values, plot = 0)
   }, error = function(e) {
   })
   if (is.null(default_qvalue)) {
-    default_qvalue <- qvalue(p_values, plot = 0, lambda = 0)
-  }
-
-  method_list = c()
-  row_list = c()
-  if ('locfdr' %in% methods & nrow_null0(locfdr_grid) > 0) {
-    method_list = c(method_list, rep('locfdr', nrow(locfdr_grid)))
-    row_list = c(row_list, 1:nrow(locfdr_grid))
-  }
-  if ('fdrtool' %in% methods & nrow_null0(fdrtool_grid) > 0) {
-    method_list = c(method_list, rep('fdrtool', nrow(fdrtool_grid)))
-    row_list = c(row_list, 1:nrow(fdrtool_grid))
-  }
-  if ('qvalue' %in% methods & nrow_null0(qvalue_grid) > 0) {
-    method_list = c(method_list, rep('qvalue', nrow(qvalue_grid)))
-    row_list = c(row_list, 1:nrow(qvalue_grid))
+    default_qvalue <- qvalue::qvalue(p_values, plot = 0, lambda = 0)
   }
 
   if (nsim == 0) {
@@ -137,7 +136,8 @@ gridsemble <- function(
       nsim = nsim,
       topn = topn,
       fit = fit,
-      methods = methods,
+      method_list = method_list,
+      row_list = row_list,
       df = df,
       locfdr_grid = locfdr_grid,
       qvalue_grid = qvalue_grid,
