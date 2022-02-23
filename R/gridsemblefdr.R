@@ -18,6 +18,7 @@
 #' Must be one of c('pr','roc','brier','Fdrerror')
 #' @param large_abs_metric if TRUE, only consider focus_metric looking at the
 #' large absolute value test statistics (specifically, top quartile of abs(t))
+#' @param parallel if TRUE, process is run in parallel
 #' @param verbose
 #'
 #' @return
@@ -29,6 +30,7 @@
 #'      that were ensembled over and their metrics on simulated daa
 #'      \item all_grids dataframe containing all hyperparameter sets considered
 #'      and their metrics on simulated data
+#'      \item fit parameters used for simulation step
 #' }
 #' @export
 gridsemble <- function(
@@ -41,8 +43,9 @@ gridsemble <- function(
   df = NULL,
   methods = c('locfdr','fdrtool','qvalue'),
   asym = FALSE,
-  focus_metric = 'Fdrerror',
+  focus_metric = 'pr',
   large_abs_metric = TRUE,
+  parallel = TRUE,
   verbose = TRUE
 ) {
 
@@ -127,6 +130,7 @@ gridsemble <- function(
     asym_type = ifelse(asym, 'asymmetric', 'symmetric')
 
     fit <- fit_sim(test_statistics, type = asym_type)
+    fit$parameters$pi0 = 0.8 # todo delete this
 
     grid_res <- grid_search(
       n = length(test_statistics),
@@ -141,6 +145,7 @@ gridsemble <- function(
       focus_metric = focus_metric,
       large_abs_metric = large_abs_metric,
       params_type = asym_type,
+      parallel = parallel,
       verbose = verbose
     )
 
@@ -171,7 +176,8 @@ gridsemble <- function(
     'default_locfdr' = default_locfdr,
     'default_fdrtool' = default_fdrtool,
     'default_qvalue' = default_qvalue,
-    'all_grids' = all_grids
+    'all_grids' = all_grids,
+    'fit' = fit
   )
 
   return(out)

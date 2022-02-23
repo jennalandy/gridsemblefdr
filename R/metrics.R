@@ -8,6 +8,7 @@
 #' is in the largest absolute quantile
 #'
 #' @return labeled list of metrics
+#' @export
 metrics <- function(fdr, Fdr, truth, true_Fdr, topq) {
   list(
     'pr' = get_prauc(fdr, truth),
@@ -29,6 +30,7 @@ metrics <- function(fdr, Fdr, truth, true_Fdr, topq) {
 #' @return PR AUC
 #'
 #' @importFrom PRROC pr.curve
+#' @export
 get_prauc <- function(fdr, truth) {
   pr <- pr.curve(
       scores.class0 = fdr[!as.logical(truth)],
@@ -45,6 +47,7 @@ get_prauc <- function(fdr, truth) {
 #' @return ROC AUC
 #'
 #' @importFrom pROC roc
+#' @export
 get_roc <- function(fdr, truth) {
 
   # direction = ">" accounts for inverse
@@ -63,6 +66,7 @@ get_roc <- function(fdr, truth) {
 #' @param truth truth values, vector of 0 and 1s
 #'
 #' @return Brier Score
+#' @export
 get_brier <- function(fdr, truth) {
   prob_1 = 1-fdr
   mean((prob_1 - as.numeric(truth))**2)
@@ -74,6 +78,7 @@ get_brier <- function(fdr, truth) {
 #' @param true_Fdr true Fdr values
 #'
 #' @return Fdr error
+#' @export
 get_Fdr_error <- function(Fdr, true_Fdr) {
   mean((true_Fdr - Fdr)^2)
 }

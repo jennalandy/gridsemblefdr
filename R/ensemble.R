@@ -13,6 +13,7 @@
 #'   \item fdr - estimated local false discovery rates
 #'   \item pi0 - estimated proportion of tests that are null
 #' }
+#' @export
 ensemble <- function(
   test_statistics,
   top_grid,

@@ -7,6 +7,7 @@
 #' @param direction direction of tail-end false discovery rate, c('left','right')
 #'
 #' @return vector of tail-end false discovery rates
+#' @export
 Fdr_from_fdr <- function(fdr, test_statistics, direction = 'left') {
 
   sapply(test_statistics, function(t) {

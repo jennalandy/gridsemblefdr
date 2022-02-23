@@ -13,6 +13,7 @@
 #' }
 #
 #' @importFrom fdrtool fdrtool
+#' @export
 run_fdrtool_row <- function(
   test_statistics,
   fdrtool_grid,
@@ -37,7 +38,7 @@ run_fdrtool_row <- function(
           test_statistics = test_statistics,
           direction = 'left'
         ),
-        'pi0' = res$param[1, 'eta0']
+        'pi0' = unlist(res$param[1, 'eta0'])
       ))
     },
     warning = function(cond) {

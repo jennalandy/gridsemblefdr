@@ -14,6 +14,7 @@
 #'
 #' @importFrom locfdr locfdr
 #' @importFrom dplyr case_when
+#' @export
 run_locfdr_row <- function(test_statistics, locfdr_grid, row) {
 
   # consider pi0 estimation method that matches desired nulltype
@@ -71,7 +72,7 @@ run_locfdr_row <- function(test_statistics, locfdr_grid, row) {
             test_statistics = test_statistics,
             direction = 'left'
           ),
-          'pi0' = res$fp0[est_method,'p0']
+          'pi0' = unlist(res$fp0[est_method,'p0'])
         ))
       } else {
         # for other warnings, don't consider this set of hyperparameters

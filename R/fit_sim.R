@@ -6,6 +6,7 @@
 #' @param type one of c('symmetric','asymmetric')
 #'
 #' @return vector of named parameters for the fit densities and type
+#' @export
 fit_sim <- function(
   test_statistics,
   type = 'symmetric'

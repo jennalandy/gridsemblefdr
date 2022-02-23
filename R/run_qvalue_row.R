@@ -6,6 +6,7 @@
 #' assume standard normal if NULL
 #'
 #' @return vector of p-values
+#' @export
 p_from_t <- function(test_statistics, df = NULL, sides = 'one') {
 
   if (is.null(df)) {
@@ -47,6 +48,7 @@ p_from_t <- function(test_statistics, df = NULL, sides = 'one') {
 #' }
 #'
 #' @importFrom qvalue qvalue
+#' @export
 run_qvalue_row <- function(
   test_statistics,
   qvalue_grid,
