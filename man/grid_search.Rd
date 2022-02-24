@@ -50,9 +50,9 @@ large absolute value test statistics (specifically, top quartile of abs(t))}
 
 \item{params_type}{type of simulation model fit, one of c('symmetric','asymmetric')}
 
-\item{parallel}{if TRUE, process is run in parallel}
+\item{parallel}{if TRUE, processes are run in parallel}
 
-\item{verbose}{}
+\item{verbose}{if TRUE, status updates will be displayed}
 }
 \value{
 \itemize{

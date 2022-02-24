@@ -18,8 +18,8 @@
 #' Must be one of c('pr','roc','brier','Fdrerror')
 #' @param large_abs_metric if TRUE, only consider focus_metric looking at the
 #' large absolute value test statistics (specifically, top quartile of abs(t))
-#' @param parallel if TRUE, process is run in parallel
-#' @param verbose
+#' @param parallel if TRUE, processes are run in parallel
+#' @param verbose if TRUE, status updates will be displayed
 #'
 #' @return
 #' \itemize{
@@ -54,33 +54,19 @@ gridsemble <- function(
     focus_metric = 'Fdrerror'
   }
 
-  method_list = c()
-  row_list = c()
   if ('locfdr' %in% methods) {
     if (is.null(locfdr_grid)) {
       locfdr_grid <- build_locfdr_grid(test_statistics, parallel = parallel)
-    }
-    if (nrow_null0(locfdr_grid) > 0) {
-      method_list = c(method_list, rep('locfdr', nrow(locfdr_grid)))
-      row_list = c(row_list, 1:nrow(locfdr_grid))
     }
   }
   if ('fdrtool' %in% methods) {
     if (is.null(fdrtool_grid)) {
       fdrtool_grid <- build_fdrtool_grid(test_statistics, parallel = parallel)
     }
-    if (nrow_null0(fdrtool_grid) > 0) {
-      method_list = c(method_list, rep('fdrtool', nrow(fdrtool_grid)))
-      row_list = c(row_list, 1:nrow(fdrtool_grid))
-    }
   }
   if ('qvalue' %in% methods) {
     if (is.null(qvalue_grid)) {
       qvalue_grid <- build_qvalue_grid(test_statistics, df = df, parallel = parallel)
-    }
-    if (nrow_null0(qvalue_grid) > 0) {
-      method_list = c(method_list, rep('qvalue', nrow(qvalue_grid)))
-      row_list = c(row_list, 1:nrow(qvalue_grid))
     }
   }
 
@@ -111,8 +97,6 @@ gridsemble <- function(
     nsim = nsim,
     topn = topn,
     fit = fit,
-    method_list = method_list,
-    row_list = row_list,
     df = df,
     locfdr_grid = locfdr_grid,
     qvalue_grid = qvalue_grid,

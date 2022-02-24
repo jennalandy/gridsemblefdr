@@ -46,8 +46,6 @@ get_true_Fdr <- function(test_statistics, truth, direction = 'left')  {
 #' @param topn Number of models chosen from each simulation to ensemble over.
 #' If `nsim = 0`, number of random models to ensemble over.
 #' @param fit result of fit_sim()
-#' @param method_list
-#' @param row_list
 #' @param df degrees of freedom of test statistics, if known
 #' @param locfdr_grid data frame where each row is a set of hyperparameters for locfdr
 #' @param fdrtool_grid data frame where each row is a set of hyperparameters for fdrtool
@@ -57,8 +55,8 @@ get_true_Fdr <- function(test_statistics, truth, direction = 'left')  {
 #' @param large_abs_metric if TRUE, only consider focus_metric looking at the
 #' large absolute value test statistics (specifically, top quartile of abs(t))
 #' @param params_type type of simulation model fit, one of c('symmetric','asymmetric')
-#' @param parallel if TRUE, process is run in parallel
-#' @param verbose
+#' @param parallel if TRUE, processes are run in parallel
+#' @param verbose if TRUE, status updates will be displayed
 #'
 #' @return
 #' \itemize{
@@ -91,6 +89,21 @@ grid_search <- function(
   parallel = TRUE,
   verbose = TRUE
 ) {
+
+  method_list = c()
+  row_list = c()
+  if (nrow_null0(locfdr_grid) > 0) {
+    method_list = c(method_list, rep('locfdr', nrow(locfdr_grid)))
+    row_list = c(row_list, 1:nrow(locfdr_grid))
+  }
+  if (nrow_null0(fdrtool_grid) > 0) {
+    method_list = c(method_list, rep('fdrtool', nrow(fdrtool_grid)))
+    row_list = c(row_list, 1:nrow(fdrtool_grid))
+  }
+  if (nrow_null0(qvalue_grid) > 0) {
+    method_list = c(method_list, rep('qvalue', nrow(qvalue_grid)))
+    row_list = c(row_list, 1:nrow(qvalue_grid))
+  }
 
   if (nsim == 0) {
 

@@ -28,7 +28,9 @@ ensemble(
 
 \item{df}{degrees of freedom of test statistics, if known}
 
-\item{verbose}{}
+\item{parallel}{if TRUE, processes are run in parallel}
+
+\item{verbose}{if TRUE, status updates will be displayed}
 }
 \value{
 \itemize{

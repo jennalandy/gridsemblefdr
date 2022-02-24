@@ -48,9 +48,9 @@ Must be one of c('pr','roc','brier','Fdrerror')}
 \item{large_abs_metric}{if TRUE, only consider focus_metric looking at the
 large absolute value test statistics (specifically, top quartile of abs(t))}
 
-\item{parallel}{if TRUE, process is run in parallel}
+\item{parallel}{if TRUE, processes are run in parallel}
 
-\item{verbose}{}
+\item{verbose}{if TRUE, status updates will be displayed}
 }
 \value{
 \itemize{

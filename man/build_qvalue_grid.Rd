@@ -36,7 +36,9 @@ If \code{smooth.log.pi0} is TRUE and pi0.method = "smoother", pi_0 will be estim
 by applying a smoother to a scatterplot of log(pi_0) estimates against the
 tuning parameter lambda.}
 
-\item{verbose}{}
+\item{parallel}{if TRUE, processes are run in parallel}
+
+\item{verbose}{if TRUE, status updates will be displayed}
 }
 \value{
 dataframe where each row is a possible set of hyperparameters for

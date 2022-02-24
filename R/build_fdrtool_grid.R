@@ -4,8 +4,8 @@
 #'
 #' @param test_statistics vector of test statistics
 #' @param fdrtool_grid data frame where each row is a possible set of hyperparameters for fdrtool
-#' @param parallel
-#' @param verbose
+#' @param parallel if TRUE, processes are run in parallel
+#' @param verbose if TRUE, status updates will be displayed
 #'
 #' @importFrom parallel makeCluster stopCluster
 #' @importFrom doParallel registerDoParallel
@@ -79,8 +79,8 @@ reduce_fdrtool_grid <- function(
 #' `cutoff.method` is one of "fndr" (default), "pct0", "locfdr".
 #' @param pct0 vector of options for pct0 hyperparameter. `pct0` is the
 #' fraction of data used for fitting null model - only if cutoff.method="pct0".
-#' @param parallel
-#' @param verbose
+#' @param parallel if TRUE, processes are run in parallel
+#' @param verbose if TRUE, status updates will be displayed
 #'
 #' @return dataframe where each row is a possible set of hyperparameters for
 #' fdrtool on a specific set of test statistics

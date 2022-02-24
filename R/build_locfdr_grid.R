@@ -4,8 +4,8 @@
 #'
 #' @param test_statistics vector of test statistics
 #' @param locfdr_grid data frame where each row is a possible set of hyperparameters for locfdr
-#' @param parallel
-#' @param verbose
+#' @param parallel if TRUE, processes are run in parallel
+#' @param verbose if TRUE, status updates will be displayed
 #'
 #' @return dataframe where each row is a possible set of hyperparameters for locfdr
 #'
@@ -90,8 +90,8 @@ reduce_locfdr_grid <- function(
 #' 3 is a split normal version of 2.
 #' @param type vector of options for type hyperparameter. `type` is the type of
 #' fitting used for f; 0 is a natural spline, 1 is a polynomial.
-#' @param parallel
-#' @param verbose
+#' @param parallel if TRUE, processes are run in parallel
+#' @param verbose if TRUE, status updates will be displayed
 #'
 #' @return dataframe where each row is a possible set of hyperparameters for
 #' locfdr on a specific set of test statistics

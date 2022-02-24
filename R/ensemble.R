@@ -6,7 +6,8 @@
 #' @param fdrtool_grid data frame where each row is a set of hyperparameters for fdrtool
 #' @param qvalue_grid data frame where each row is a set of hyperparameters for qvalue
 #' @param df degrees of freedom of test statistics, if known
-#' @param verbose
+#' @param parallel if TRUE, processes are run in parallel
+#' @param verbose if TRUE, status updates will be displayed
 #'
 #' @return
 #' \itemize{

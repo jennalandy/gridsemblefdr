@@ -34,7 +34,9 @@ use in the fdr calculations. 0 is the theoretical null N(0,1),
 \item{type}{vector of options for type hyperparameter. \code{type} is the type of
 fitting used for f; 0 is a natural spline, 1 is a polynomial.}
 
-\item{verbose}{}
+\item{parallel}{if TRUE, processes are run in parallel}
+
+\item{verbose}{if TRUE, status updates will be displayed}
 }
 \value{
 dataframe where each row is a possible set of hyperparameters for

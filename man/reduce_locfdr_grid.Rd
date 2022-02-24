@@ -16,7 +16,9 @@ reduce_locfdr_grid(
 
 \item{locfdr_grid}{data frame where each row is a possible set of hyperparameters for locfdr}
 
-\item{verbose}{}
+\item{parallel}{if TRUE, processes are run in parallel}
+
+\item{verbose}{if TRUE, status updates will be displayed}
 }
 \value{
 dataframe where each row is a possible set of hyperparameters for locfdr

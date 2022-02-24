@@ -4,8 +4,8 @@
 #'
 #' @param test_statistics vector of test statistics
 #' @param qvalue_grid data frame where each row is a possible set of hyperparameters for qvalue
-#' @param parallel
-#' @param verbose
+#' @param parallel if TRUE, processes are run in parallel
+#' @param verbose if TRUE, status updates will be displayed
 #'
 #' @return dataframe where each row is a possible set of hyperparameters for qvalue
 #'
@@ -89,7 +89,8 @@ reduce_qvalue_grid <- function(
 #' If `smooth.log.pi0` is TRUE and pi0.method = "smoother", pi_0 will be estimated
 #' by applying a smoother to a scatterplot of log(pi_0) estimates against the
 #' tuning parameter lambda.
-#' @param verbose
+#' @param parallel if TRUE, processes are run in parallel
+#' @param verbose if TRUE, status updates will be displayed
 #'
 #' @return dataframe where each row is a possible set of hyperparameters for
 #' qvalue on a specific set of test statistics
