@@ -114,7 +114,7 @@ grid_search <- function(
   )
   doParallel::registerDoParallel(cl)
 
-  all_grids <- foreach(
+  all_grids <- foreach::foreach(
     sim=1:nsim,
     .packages = c(
       'dplyr',
@@ -148,7 +148,7 @@ grid_search <- function(
     # on all data and on top absolute quantile
     topq = abs(this_dat$t) > quantile(abs(this_dat$t))['75%']
 
-    this_score <- foreach (
+    this_score <- foreach::foreach (
       i = 1:length(row_list),
       .combine = rbind,
       .packages = c(

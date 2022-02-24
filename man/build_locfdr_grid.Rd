@@ -10,6 +10,7 @@ build_locfdr_grid(
   pct0 = 1/c(3:10),
   nulltype = 1:3,
   type = 0:1,
+  parallel = TRUE,
   verbose = FALSE
 )
 }

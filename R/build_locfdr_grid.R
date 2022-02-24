@@ -4,18 +4,41 @@
 #'
 #' @param test_statistics vector of test statistics
 #' @param locfdr_grid data frame where each row is a possible set of hyperparameters for locfdr
+#' @param parallel
 #' @param verbose
 #'
 #' @return dataframe where each row is a possible set of hyperparameters for locfdr
+#'
+#' @importFrom parallel makeCluster stopCluster
+#' @importFrom doParallel registerDoParallel
+#' @importFrom foreach foreach
+#'
 #' @export
 reduce_locfdr_grid <- function(
   test_statistics,
   locfdr_grid,
+  parallel = TRUE,
   verbose = FALSE
 ) {
 
-  ok_rows <- c()
-  for (i in 1:nrow(locfdr_grid)) {
+  n.cores = ifelse(
+    parallel,
+    min(nrow(locfdr_grid), parallel::detectCores() - 1),
+    1
+  )
+  cl = parallel::makeCluster(
+    n.cores,
+    type = 'PSOCK'
+  )
+  doParallel::registerDoParallel(cl)
+
+  ok_rows <- foreach::foreach(
+    i=1:nrow(locfdr_grid),
+    .combine = c,
+    .export = c(
+      'run_locfdr_row'
+    )
+  ) %dopar% {
     # for each row, attempt to run locfdr
     run_i <- run_locfdr_row(
       test_statistics = test_statistics,
@@ -31,10 +54,12 @@ reduce_locfdr_grid <- function(
         (sum(run_i$fdr != 0) > 0) &
         run_i$pi0 <= 1
       ) {
-        ok_rows <- c(ok_rows, i)
+        return(i)
       }
     }
   }
+
+  parallel::stopCluster(cl)
 
   if(verbose) {
     print(paste(
@@ -65,6 +90,7 @@ reduce_locfdr_grid <- function(
 #' 3 is a split normal version of 2.
 #' @param type vector of options for type hyperparameter. `type` is the type of
 #' fitting used for f; 0 is a natural spline, 1 is a polynomial.
+#' @param parallel
 #' @param verbose
 #'
 #' @return dataframe where each row is a possible set of hyperparameters for
@@ -76,6 +102,7 @@ build_locfdr_grid <- function(
   pct0 = 1/c(3:10),
   nulltype = 1:3,
   type = 0:1,
+  parallel = TRUE,
   verbose = FALSE
 ) {
 
@@ -98,6 +125,7 @@ build_locfdr_grid <- function(
   locfdr_grid_reduced <- reduce_locfdr_grid(
     test_statistics = test_statistics,
     locfdr_grid = locfdr_grid,
+    parallel = parallel,
     verbose = verbose
   )
 

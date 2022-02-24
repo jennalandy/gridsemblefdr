@@ -11,6 +11,7 @@ build_qvalue_grid(
   pi0.method = c("bootstrap", "smoother"),
   smooth.log.pi0 = c(TRUE, FALSE),
   df = NULL,
+  parallel = TRUE,
   verbose = FALSE
 )
 }

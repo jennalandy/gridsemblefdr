@@ -4,7 +4,13 @@
 \alias{reduce_qvalue_grid}
 \title{Reduce qvalue grid}
 \usage{
-reduce_qvalue_grid(test_statistics, qvalue_grid, df = NULL, verbose = FALSE)
+reduce_qvalue_grid(
+  test_statistics,
+  qvalue_grid,
+  df = NULL,
+  parallel = TRUE,
+  verbose = FALSE
+)
 }
 \arguments{
 \item{test_statistics}{vector of test statistics}

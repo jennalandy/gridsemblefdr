@@ -58,7 +58,7 @@ gridsemble <- function(
   row_list = c()
   if ('locfdr' %in% methods) {
     if (is.null(locfdr_grid)) {
-      locfdr_grid <- build_locfdr_grid(test_statistics)
+      locfdr_grid <- build_locfdr_grid(test_statistics, parallel = parallel)
     }
     if (nrow_null0(locfdr_grid) > 0) {
       method_list = c(method_list, rep('locfdr', nrow(locfdr_grid)))
@@ -67,7 +67,7 @@ gridsemble <- function(
   }
   if ('fdrtool' %in% methods) {
     if (is.null(fdrtool_grid)) {
-      fdrtool_grid <- build_fdrtool_grid(test_statistics)
+      fdrtool_grid <- build_fdrtool_grid(test_statistics, parallel = parallel)
     }
     if (nrow_null0(fdrtool_grid) > 0) {
       method_list = c(method_list, rep('fdrtool', nrow(fdrtool_grid)))
@@ -76,7 +76,7 @@ gridsemble <- function(
   }
   if ('qvalue' %in% methods) {
     if (is.null(qvalue_grid)) {
-      qvalue_grid <- build_qvalue_grid(test_statistics, df = df)
+      qvalue_grid <- build_qvalue_grid(test_statistics, df = df, parallel = parallel)
     }
     if (nrow_null0(qvalue_grid) > 0) {
       method_list = c(method_list, rep('qvalue', nrow(qvalue_grid)))

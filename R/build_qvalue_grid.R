@@ -4,6 +4,7 @@
 #'
 #' @param test_statistics vector of test statistics
 #' @param qvalue_grid data frame where each row is a possible set of hyperparameters for qvalue
+#' @param parallel
 #' @param verbose
 #'
 #' @return dataframe where each row is a possible set of hyperparameters for qvalue
@@ -14,11 +15,28 @@ reduce_qvalue_grid <- function(
   test_statistics,
   qvalue_grid,
   df = NULL,
+  parallel = TRUE,
   verbose = FALSE
 ) {
 
-  ok_rows <- c()
-  for (i in 1:nrow(qvalue_grid)) {
+  n.cores = ifelse(
+    parallel,
+    min(nrow(qvalue_grid), parallel::detectCores() - 1),
+    1
+  )
+  cl = parallel::makeCluster(
+    n.cores,
+    type = 'PSOCK'
+  )
+  doParallel::registerDoParallel(cl)
+
+  ok_rows <- foreach::foreach(
+    i=1:nrow(qvalue_grid),
+    .combine = c,
+    .export = c(
+      'run_qvalue_row'
+    )
+  ) %dopar% {
     # for each row, attempt to run qvalue
     run_i <- run_qvalue_row(
       test_statistics = test_statistics,
@@ -35,10 +53,11 @@ reduce_qvalue_grid <- function(
         (sum(run_i$fdr != 0) > 0) &
         run_i$pi0 <= 1
       ) {
-        ok_rows <- c(ok_rows, i)
+        return(i)
       }
     }
   }
+  parallel::stopCluster(cl)
 
   if(verbose) {
     print(paste(
@@ -82,6 +101,7 @@ build_qvalue_grid <- function(
   pi0.method = c('bootstrap','smoother'),
   smooth.log.pi0 = c(TRUE, FALSE),
   df = NULL,
+  parallel = TRUE,
   verbose = FALSE
 ) {
 
@@ -103,6 +123,7 @@ build_qvalue_grid <- function(
     test_statistics = test_statistics,
     qvalue_grid = qvalue_grid,
     df = df,
+    parallel = parallel,
     verbose = verbose
   )
 

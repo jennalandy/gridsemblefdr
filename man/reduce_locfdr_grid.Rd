@@ -4,7 +4,12 @@
 \alias{reduce_locfdr_grid}
 \title{Reduce locfdr grid}
 \usage{
-reduce_locfdr_grid(test_statistics, locfdr_grid, verbose = FALSE)
+reduce_locfdr_grid(
+  test_statistics,
+  locfdr_grid,
+  parallel = TRUE,
+  verbose = FALSE
+)
 }
 \arguments{
 \item{test_statistics}{vector of test statistics}

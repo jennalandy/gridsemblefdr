@@ -8,6 +8,7 @@ build_fdrtool_grid(
   test_statistics,
   cutoff.method = c("fndr", "pct0", "locfdr"),
   pct0 = 1/c(2:10),
+  parallel = TRUE,
   verbose = FALSE
 )
 }
@@ -19,6 +20,8 @@ build_fdrtool_grid(
 
 \item{pct0}{vector of options for pct0 hyperparameter. \code{pct0} is the
 fraction of data used for fitting null model - only if cutoff.method="pct0".}
+
+\item{verbose}{}
 }
 \value{
 dataframe where each row is a possible set of hyperparameters for

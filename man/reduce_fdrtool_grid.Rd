@@ -4,7 +4,12 @@
 \alias{reduce_fdrtool_grid}
 \title{Reduce fdrtool grid}
 \usage{
-reduce_fdrtool_grid(test_statistics, fdrtool_grid, verbose = FALSE)
+reduce_fdrtool_grid(
+  test_statistics,
+  fdrtool_grid,
+  parallel = TRUE,
+  verbose = FALSE
+)
 }
 \arguments{
 \item{test_statistics}{vector of test statistics}
