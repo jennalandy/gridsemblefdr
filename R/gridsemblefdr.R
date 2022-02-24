@@ -100,58 +100,32 @@ gridsemble <- function(
     default_qvalue <- qvalue::qvalue(p_values, plot = 0, lambda = 0)
   }
 
-  if (nsim == 0) {
 
-    # just ensemble, no simulation / grid search
-    top_grid = data.frame(
-      'method' = method_list,
-      'row' = row_list
-    )
+  asym_type = ifelse(asym, 'asymmetric', 'symmetric')
 
-    top_grid = top_grid[
-      sample(1:nrow(top_grid), size = topn),
-    ]
+  fit <- fit_sim(test_statistics, type = asym_type)
+  fit$parameters$pi0 = 0.8 # todo delete this
 
-    ensemble_res = ensemble(
-      test_statistics = test_statistics,
-      top_grid = top_grid,
-      locfdr_grid = locfdr_grid,
-      fdrtool_grid = fdrtool_grid,
-      qvalue_grid = qvalue_grid,
-      df = df,
-      verbose = verbose
-    )
+  grid_res <- grid_search(
+    n = length(test_statistics),
+    nsim = nsim,
+    topn = topn,
+    fit = fit,
+    method_list = method_list,
+    row_list = row_list,
+    df = df,
+    locfdr_grid = locfdr_grid,
+    qvalue_grid = qvalue_grid,
+    fdrtool_grid = fdrtool_grid,
+    focus_metric = focus_metric,
+    large_abs_metric = large_abs_metric,
+    params_type = asym_type,
+    parallel = parallel,
+    verbose = verbose
+  )
 
-    fit = NULL
-    all_grids = NULL
-
-  } else {
-    asym_type = ifelse(asym, 'asymmetric', 'symmetric')
-
-    fit <- fit_sim(test_statistics, type = asym_type)
-    fit$parameters$pi0 = 0.8 # todo delete this
-
-    grid_res <- grid_search(
-      n = length(test_statistics),
-      nsim = nsim,
-      topn = topn,
-      fit = fit,
-      method_list = method_list,
-      row_list = row_list,
-      df = df,
-      locfdr_grid = locfdr_grid,
-      qvalue_grid = qvalue_grid,
-      fdrtool_grid = fdrtool_grid,
-      focus_metric = focus_metric,
-      large_abs_metric = large_abs_metric,
-      params_type = asym_type,
-      parallel = parallel,
-      verbose = verbose
-    )
-
-    top_grid = grid_res$top_grid
-    all_grids = grid_res$all_grids
-  }
+  top_grid = grid_res$top_grid
+  all_grids = grid_res$all_grids
 
   ensemble_res = ensemble(
     test_statistics = test_statistics,
@@ -160,6 +134,7 @@ gridsemble <- function(
     fdrtool_grid = fdrtool_grid,
     qvalue_grid = qvalue_grid,
     df = df,
+    parallel = parallel,
     verbose = verbose
   )
 

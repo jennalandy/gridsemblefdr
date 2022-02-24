@@ -21,16 +21,35 @@ ensemble <- function(
   fdrtool_grid,
   qvalue_grid,
   df = NULL,
+  parallel = TRUE,
   verbose = TRUE
 ) {
 
-  # initialize fdr vector, pi0 estimates, and count (to normalize after)
-  topn_fdr <- rep(0, length(test_statistics))
-  pi0_est <- 0
-  total <- 0
+  n.cores = ifelse(
+    parallel,
+    min(nrow(top_grid), parallel::detectCores() - 1),
+    1
+  )
+  cl = parallel::makeCluster(
+    n.cores,
+    type = 'PSOCK'
+  )
+  doParallel::registerDoParallel(cl)
 
   # iterate through models to ensemble over
-  for (i in 1:nrow(top_grid)) {
+  vec_mean = function(vec1, vec2) {
+    (vec1 + vec2)/2
+  }
+
+  pi0_and_fdr <- foreach (
+    i = 1:nrow(top_grid),
+    .combine = vec_mean,
+    .export = c(
+      "run_locfdr_row",
+      "run_qvalue_row",
+      "run_fdrtool_row"
+    )
+  ) %dopar% {
     method = top_grid[i,'method']
     if (method == 'locfdr') {
       i_fdr <- run_locfdr_row(
@@ -54,17 +73,19 @@ ensemble <- function(
     }
 
     if (!is.null(i_fdr)) {
-      if ((sum(i_fdr$fdr != 1) > 0)&(sum(i_fdr$fdr != 0) > 0)) {
-        topn_fdr <- topn_fdr + i_fdr$fdr
-        pi0_est <- pi0_est + i_fdr$pi0
-        total <- total + 1
+      if (
+          (sum(i_fdr$fdr != 1) > 0) &
+          (sum(i_fdr$fdr != 0) > 0)
+      ) {
+        return(c(unname(i_fdr$pi0), i_fdr$fdr))
       }
     }
-
   }
 
-  topn_fdr <- topn_fdr/total
-  pi0_est <- pi0_est/total
+  parallel::stopCluster(cl)
+
+  topn_fdr <- pi0_and_fdr[2:length(pi0_and_fdr)]
+  pi0_est <- pi0_and_fdr[1]
 
   return(list(
     fdr = topn_fdr,

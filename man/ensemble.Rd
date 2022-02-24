@@ -11,6 +11,7 @@ ensemble(
   fdrtool_grid,
   qvalue_grid,
   df = NULL,
+  parallel = TRUE,
   verbose = TRUE
 )
 }

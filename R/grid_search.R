@@ -92,6 +92,26 @@ grid_search <- function(
   verbose = TRUE
 ) {
 
+  if (nsim == 0) {
+
+    # just ensemble, no simulation / grid search
+    all_grids = data.frame(
+      'method' = method_list,
+      'row' = row_list
+    )
+
+    top_grid = all_grids[
+      sample(1:nrow(all_grids), size = topn),
+    ]
+
+    return(list(
+      'fit' = NA,
+      'top_grid' = top_grid,
+      'all_grids' = all_grids
+    ))
+
+  }
+
   # grid_size is the number of possible hyperparameter
   # combinations we're searching over
   grid_size = nrow_null0(locfdr_grid) +
