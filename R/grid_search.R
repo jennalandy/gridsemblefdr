@@ -55,8 +55,8 @@ get_true_Fdr <- function(test_statistics, truth, direction = 'left')  {
 #' @param large_abs_metric if TRUE, only consider focus_metric looking at the
 #' large absolute value test statistics (specifically, top quartile of abs(t))
 #' @param params_type type of simulation model fit, one of c('symmetric','asymmetric')
-#' @param parallel if TRUE, processes are run in parallel
-#' @param verbose if TRUE, status updates will be displayed
+#' @param parallel if TRUE, process is run in parallel
+#' @param verbose
 #'
 #' @return
 #' \itemize{
@@ -69,16 +69,16 @@ get_true_Fdr <- function(test_statistics, truth, direction = 'left')  {
 #' }
 #'
 #' @importFrom dplyr arrange
+#' @importFrom magrittr %>%
 #' @importFrom rlang sym
-#' @importFrom foreach foreach %dopar% %:%
+#' @importFrom foreach foreach %dopar%
 #' @importFrom parallel makeCluster
 #' @importFrom doParallel registerDoParallel
 #'
 #' @export
 grid_search <- function(
   n, nsim, topn, fit,
-  method_list,
-  row_list,
+  methods,
   df = NULL,
   locfdr_grid = NULL,
   fdrtool_grid = NULL,
@@ -90,74 +90,64 @@ grid_search <- function(
   verbose = TRUE
 ) {
 
-  method_list = c()
-  row_list = c()
-  if (nrow_null0(locfdr_grid) > 0) {
-    method_list = c(method_list, rep('locfdr', nrow(locfdr_grid)))
-    row_list = c(row_list, 1:nrow(locfdr_grid))
-  }
-  if (nrow_null0(fdrtool_grid) > 0) {
-    method_list = c(method_list, rep('fdrtool', nrow(fdrtool_grid)))
-    row_list = c(row_list, 1:nrow(fdrtool_grid))
-  }
-  if (nrow_null0(qvalue_grid) > 0) {
-    method_list = c(method_list, rep('qvalue', nrow(qvalue_grid)))
-    row_list = c(row_list, 1:nrow(qvalue_grid))
-  }
-
-  if (nsim == 0) {
-
-    # just ensemble, no simulation / grid search
-    all_grids = data.frame(
-      'method' = method_list,
-      'row' = row_list
-    )
-
-    top_grid = all_grids[
-      sample(1:nrow(all_grids), size = topn),
-    ]
-
-    return(list(
-      'fit' = NA,
-      'top_grid' = top_grid,
-      'all_grids' = all_grids
-    ))
-
-  }
-
   # grid_size is the number of possible hyperparameter
   # combinations we're searching over
   grid_size = nrow_null0(locfdr_grid) +
     nrow_null0(fdrtool_grid) +
     nrow_null0(qvalue_grid)
 
+  all_grids = data.frame(
+    'sim' = rep(1:nsim, each = grid_size),
+    'method' = rep(NA, grid_size*nsim),
+    'row' = rep(NA, grid_size*nsim),
+    'pr'  = rep(NA, grid_size*nsim),
+    'roc' = rep(NA, grid_size*nsim),
+    'brier' = rep(NA, grid_size*nsim),
+    'Fdrerror' = rep(NA, grid_size*nsim),
+    'pr_topq'  = rep(NA, grid_size*nsim),
+    'roc_topq' = rep(NA, grid_size*nsim),
+    'brier_topq' = rep(NA, grid_size*nsim),
+    'Fdrerror_topq' = rep(NA, grid_size*nsim),
+    'pi0' = rep(NA, grid_size*nsim)
+  )
+
+  top_grid = data.frame(
+    'sim' = rep(1:topn, each =  nsim),
+    'method' = rep(NA, nsim*topn),
+    'row' = rep(NA, nsim*topn),
+    'pr'  = rep(NA, nsim*topn),
+    'roc' = rep(NA, nsim*topn),
+    'brier' = rep(NA, nsim*topn),
+    'Fdrerror' = rep(NA, nsim*topn),
+    'pr_topq'  = rep(NA, nsim*topn),
+    'roc_topq' = rep(NA, nsim*topn),
+    'brier_topq' = rep(NA, nsim*topn),
+    'Fdrerror_topq' = rep(NA, nsim*topn),
+    'pi0' = rep(NA, nsim*topn)
+  )
+
   if (large_abs_metric) {
     focus_metric = paste(focus_metric, '_topq', sep = '')
   }
 
+  rows <- c()
+  if (!is.null(locfdr_grid)) {rows <- c(rows, 1:nrow(locfdr_grid))}
+  if (!is.null(fdrtool_grid)) {rows <- c(rows, 1:nrow(fdrtool_grid))}
+  if (!is.null(qvalue_grid)) {rows <- c(rows, 1:nrow(qvalue_grid))}
+
   # simulate and perform grid search `nsim` times
-  n.cores = ifelse(
-    parallel,
-    min(nsim, parallel::detectCores() - 1),
-    1
-  )
+  n.cores = min(nsim, parallel::detectCores() - 1)
   cl = parallel::makeCluster(
     n.cores,
     type = 'PSOCK'
   )
   doParallel::registerDoParallel(cl)
 
-  all_grids <- foreach::foreach(
+  foreach(
     sim=1:nsim,
     .packages = c(
-      'dplyr',
-      'magrittr',
-      'foreach'
-    ),
-    .export = c(
-      "simulate_from_fit"
-    ),
-    .combine = rbind
+      'dplyr'
+    )
   ) %dopar% {
 
     if(verbose) {
@@ -176,102 +166,104 @@ grid_search <- function(
       truth = this_dat$truth
     )
 
+    # set up empty data frame to record method, grid row, and metrics
+    this_score = data.frame(
+      'method' = c(
+        rep('locfdr', nrow_null0(locfdr_grid)),
+        rep('fdrtool', nrow_null0(fdrtool_grid)),
+        rep('qvalue', nrow_null0(qvalue_grid))
+      ),
+      'row' = rows,
+      'pr'  = rep(NA, grid_size),
+      'roc' = rep(NA, grid_size),
+      'brier' = rep(NA, grid_size),
+      'Fdrerror' = rep(NA, grid_size),
+      'pr_topq'  = rep(NA, grid_size),
+      'roc_topq' = rep(NA, grid_size),
+      'brier_topq' = rep(NA, grid_size),
+      'Fdrerror_topq' = rep(NA, grid_size),
+      'pi0' = rep(NA, grid_size)
+    )
+
     # run a grid search for best set of parameters
     # record PR AUC, ROC AUC, and Brier Score
     # on all data and on top absolute quantile
     topq = abs(this_dat$t) > quantile(abs(this_dat$t))['75%']
 
-    this_score <- foreach::foreach (
-      i = 1:length(row_list),
-      .combine = rbind,
-      .packages = c(
-        "magrittr"
-      )
-    ) %dopar% {
-      if (method_list[i] == 'locfdr') {
+    for (i in 1:nrow(this_score)) {
+      if (this_score$method[i] == 'locfdr') {
         row_res <- run_locfdr_row(
           test_statistics = this_dat$t,
           locfdr_grid = locfdr_grid,
-          row = row_list[i]
+          row = this_score$row[i]
         )
-      } else if (method_list[i] == 'fdrtool') {
+      } else if (this_score$method[i] == 'fdrtool') {
         row_res <- run_fdrtool_row(
           test_statistics = this_dat$t,
           fdrtool_grid = fdrtool_grid,
-          row = row_list[i]
+          row = this_score$row[i]
         )
-      } else if (method_list[i] == 'qvalue') {
+      } else if (this_score$method[i] == 'qvalue') {
         row_res <- run_qvalue_row(
           test_statistics = this_dat$t,
           qvalue_grid = qvalue_grid,
-          row = row_list[i],
+          row = this_score$row[i],
           df = df
         )
       }
 
       # if not null, record pi0 estimate and metrics
       if (!is.null(row_res)) {
+        if (is.null(row_res$pi0) | length(row_res$pi0) == 0) {
+          print(row_res)
+        }
+        this_score$pi0[i] <- row_res$pi0
 
-        this_metrics <- metrics(
+        this_score[
+          i, c('pr','roc','brier','Fdrerror',
+               'pr_topq','roc_topq','brier_topq','Fdrerror_topq')
+        ] <- metrics(
           fdr = row_res$fdr,
           Fdr = row_res$Fdr,
           truth = this_dat$truth,
           true_Fdr = this_dat$true_Fdr,
           topq = topq
         )
-
-        this_metrics$method <- method_list[i]
-        this_metrics$row <- row_list[i]
-        this_metrics$pi0 <- row_res$pi0
-        this_metrics$sim <- sim
-
-      } else {
-
-        this_metrics <- list(
-          "pr"=NA,
-          "roc"= NA,
-          "brier"=NA,
-          "Fdrerror"=NA,
-          "pr_topq"=NA,
-          "roc_topq"=NA,
-          "brier_toq"=NA,
-          "Fdrerror_topq"=NA,
-          "method"=method_list[i],
-          "row"=row_list[i],
-          "pi0"=NA,
-          "sim"=sim
-        )
-
       }
-      return(data.frame(this_metrics))
     }
 
-    # order by focus_metric, lowest to highest
-    sorted <- dplyr::arrange(this_score, !!rlang::sym(focus_metric))
-
-    return(sorted)
-  }
-  parallel::stopCluster(cl)
-
-  # if Fdrerror or brier, we want low values
-  # if ROC or PR AUC, we want high values
-  if(any(startsWith(
-      focus_metric, c('Fdrerror','brier')
-  ))) {
-    best_rows = (1:topn)
-  } else {
-    best_rows = (grid_size-topn+1):grid_size
-  }
-
-  top_grid = data.frame(do.call(
-    # concatenate the topn within each sim
-    rbind,
-    lapply(
-      1:nsim,
-      # already sorted within sim, take best n from each
-      function(i) {all_grids[all_grids$sim == i,][best_rows,]}
+    # save full grid of metrics to all_grids
+    all_grids[
+      (grid_size*(sim-1) + 1):(grid_size*sim),
+    ] <- cbind(
+      rep(sim, nrow(this_score)),
+      this_score
     )
-  ))
+
+    # order by focus_metric, choose topn best parameter combinations
+    sorted <- this_score %>%
+      dplyr::arrange(!!rlang::sym(focus_metric))
+
+    if (any(startsWith(focus_metric, c('Fdrerror','brier')))) {
+      # low value is best
+      best <- sorted %>%
+        head(topn)
+    } else if (any(startsWith(focus_metric, c('pr','roc')))) {
+      # high value is best
+      best <- sorted %>%
+        tail(topn)
+    }
+
+    # store top options in top_grid -> to be ensembled over!
+    top_grid[
+        (topn*(sim-1) + 1):(topn*sim),
+      ] <- cbind(
+        rep(sim, topn),
+        best
+      )
+  }
+
+  parallel::stopCluster(cl)
 
   return(list(
     'fit' = fit,
