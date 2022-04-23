@@ -7,7 +7,7 @@
 reduce_fdrtool_grid(
   test_statistics,
   fdrtool_grid,
-  parallel = TRUE,
+  parallel_param = NULL,
   verbose = FALSE
 )
 }
@@ -16,7 +16,7 @@ reduce_fdrtool_grid(
 
 \item{fdrtool_grid}{data frame where each row is a possible set of hyperparameters for fdrtool}
 
-\item{parallel}{if TRUE, processes are run in parallel}
+\item{parallel_param}{if not NULL, processes are run in parallel}
 
 \item{verbose}{if TRUE, status updates will be displayed}
 }

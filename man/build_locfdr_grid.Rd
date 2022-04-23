@@ -10,7 +10,7 @@ build_locfdr_grid(
   pct0 = 1/c(3:10),
   nulltype = 1:3,
   type = 0:1,
-  parallel = TRUE,
+  parallel_param = NULL,
   verbose = FALSE
 )
 }
@@ -34,7 +34,7 @@ use in the fdr calculations. 0 is the theoretical null N(0,1),
 \item{type}{vector of options for type hyperparameter. \code{type} is the type of
 fitting used for f; 0 is a natural spline, 1 is a polynomial.}
 
-\item{parallel}{if TRUE, processes are run in parallel}
+\item{parallel_param}{if not NULL, processes are run in parallel with this parameter}
 
 \item{verbose}{if TRUE, status updates will be displayed}
 }

@@ -11,7 +11,7 @@ ensemble(
   fdrtool_grid,
   qvalue_grid,
   df = NULL,
-  parallel = TRUE,
+  parallel_param = NULL,
   verbose = TRUE
 )
 }
@@ -28,7 +28,7 @@ ensemble(
 
 \item{df}{degrees of freedom of test statistics, if known}
 
-\item{parallel}{if TRUE, processes are run in parallel}
+\item{parallel_param}{if not NULL, processes are run in parallel}
 
 \item{verbose}{if TRUE, status updates will be displayed}
 }

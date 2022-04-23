@@ -4,7 +4,7 @@
 #'
 #' @param test_statistics vector of test statistics
 #' @param qvalue_grid data frame where each row is a possible set of hyperparameters for qvalue
-#' @param parallel if TRUE, processes are run in parallel
+#' @param parallel_param if not NULL, processes are run in parallel
 #' @param verbose if TRUE, status updates will be displayed
 #'
 #' @return dataframe where each row is a possible set of hyperparameters for qvalue
@@ -15,49 +15,36 @@ reduce_qvalue_grid <- function(
   test_statistics,
   qvalue_grid,
   df = NULL,
-  parallel = TRUE,
+  parallel_param = NULL,
   verbose = FALSE
 ) {
 
-  n.cores = ifelse(
-    parallel,
-    min(nrow(qvalue_grid), parallel::detectCores() - 1),
-    1
-  )
-  cl = parallel::makeCluster(
-    n.cores,
-    type = 'PSOCK'
-  )
-  doParallel::registerDoParallel(cl)
+  ok_rows <- unlist(parlapply(
+    X = 1:nrow(qvalue_grid),
+    parallel_param = parallel_param,
+    FUN = function(i, run_qvalue_row, qvalue_grid, test_statistics, df) {
+      # for each row, attempt to run qvalue
+      run_i <- run_qvalue_row(
+        test_statistics = test_statistics,
+        qvalue_grid = qvalue_grid,
+        row = i,
+        df = df,
+        returnFdr = FALSE
+      )
 
-  ok_rows <- foreach::foreach(
-    i=1:nrow(qvalue_grid),
-    .combine = c,
-    .export = c(
-      'run_qvalue_row'
-    )
-  ) %dopar% {
-    # for each row, attempt to run qvalue
-    run_i <- run_qvalue_row(
-      test_statistics = test_statistics,
-      qvalue_grid = qvalue_grid,
-      row = i,
-      df = df
-    )
-
-    # keep this row in final grid if it ran without error,
-    # and if it does not estimate fdrs as all 0 or all 1
-    if (!is.null(run_i)) {
-      if (
-        (sum(run_i$fdr != 1) > 0) &
-        (sum(run_i$fdr != 0) > 0) &
-        run_i$pi0 <= 1
-      ) {
-        return(i)
+      # keep this row in final grid if it ran without error,
+      # and if it does not estimate fdrs as all 0 or all 1
+      if (!is.null(run_i)) {
+        if (run_i$pi0 <= 1) {
+          return(i)
+        }
       }
-    }
-  }
-  parallel::stopCluster(cl)
+    },
+    run_qvalue_row = run_qvalue_row,
+    qvalue_grid = qvalue_grid,
+    test_statistics = test_statistics,
+    df = df
+  ))
 
   if(verbose) {
     print(paste(
@@ -89,7 +76,7 @@ reduce_qvalue_grid <- function(
 #' If `smooth.log.pi0` is TRUE and pi0.method = "smoother", pi_0 will be estimated
 #' by applying a smoother to a scatterplot of log(pi_0) estimates against the
 #' tuning parameter lambda.
-#' @param parallel if TRUE, processes are run in parallel
+#' @param parallel_param if not NULL, processes are run in parallel
 #' @param verbose if TRUE, status updates will be displayed
 #'
 #' @return dataframe where each row is a possible set of hyperparameters for
@@ -102,7 +89,7 @@ build_qvalue_grid <- function(
   pi0.method = c('bootstrap','smoother'),
   smooth.log.pi0 = c(TRUE, FALSE),
   df = NULL,
-  parallel = TRUE,
+  parallel_param = NULL,
   verbose = FALSE
 ) {
 
@@ -124,7 +111,7 @@ build_qvalue_grid <- function(
     test_statistics = test_statistics,
     qvalue_grid = qvalue_grid,
     df = df,
-    parallel = parallel,
+    parallel_param = parallel_param,
     verbose = verbose
   )
 

@@ -4,7 +4,7 @@
 \alias{run_fdrtool_row}
 \title{Run fdrtool}
 \usage{
-run_fdrtool_row(test_statistics, fdrtool_grid, row)
+run_fdrtool_row(test_statistics, fdrtool_grid, row, returnFdr = TRUE)
 }
 \arguments{
 \item{test_statistics}{vector of test statistics}

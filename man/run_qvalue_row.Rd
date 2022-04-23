@@ -4,7 +4,14 @@
 \alias{run_qvalue_row}
 \title{Run qvalue}
 \usage{
-run_qvalue_row(test_statistics, qvalue_grid, row, df = NULL, verbose = FALSE)
+run_qvalue_row(
+  test_statistics,
+  qvalue_grid,
+  row,
+  df = NULL,
+  returnFdr = TRUE,
+  verbose = FALSE
+)
 }
 \arguments{
 \item{test_statistics}{vector of test statistics}

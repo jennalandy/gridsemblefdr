@@ -17,7 +17,8 @@
 run_fdrtool_row <- function(
   test_statistics,
   fdrtool_grid,
-  row
+  row,
+  returnFdr = TRUE
 ) {
   tryCatch(
     {
@@ -31,14 +32,20 @@ run_fdrtool_row <- function(
         pct0 = fdrtool_grid$pct0[row]
       )
 
-      return(list(
-        'fdr' = res$lfdr,
-        'Fdr' = Fdr_from_fdr(
+      if (returnFdr) {
+        Fdr = Fdr_from_fdr(
           fdr = res$lfdr,
           test_statistics = test_statistics,
           direction = 'left'
-        ),
-        'pi0' = unlist(res$param[1, 'eta0'])
+        )
+      } else {
+        Fdr = 'not computed'
+      }
+
+      return(list(
+        'fdr' = res$lfdr,
+        'Fdr' = Fdr,
+        'pi0' = unname(unlist(res$param[1, 'eta0']))
       ))
     },
     warning = function(cond) {

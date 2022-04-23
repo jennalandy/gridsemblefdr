@@ -15,7 +15,12 @@
 #' @importFrom locfdr locfdr
 #' @importFrom dplyr case_when
 #' @export
-run_locfdr_row <- function(test_statistics, locfdr_grid, row) {
+run_locfdr_row <- function(
+  test_statistics,
+  locfdr_grid,
+  row,
+  returnFdr = TRUE
+) {
 
   # consider pi0 estimation method that matches desired nulltype
   est_method <- dplyr::case_when(
@@ -65,13 +70,19 @@ run_locfdr_row <- function(test_statistics, locfdr_grid, row) {
           plot = 0
         ))
 
-        return(list(
-          'fdr' = res$fdr,
-          'Fdr' = Fdr_from_fdr(
+        if (returnFdr) {
+          Fdr = Fdr_from_fdr(
             fdr = res$fdr,
             test_statistics = test_statistics,
             direction = 'left'
-          ),
+          )
+        } else {
+          Fdr = 'not computed'
+        }
+
+        return(list(
+          'fdr' = res$fdr,
+          'Fdr' = Fdr,
           'pi0' = unlist(res$fp0[est_method,'p0'])
         ))
       } else {

@@ -18,7 +18,7 @@ grid_search(
   focus_metric = "pr",
   large_abs_metric = TRUE,
   params_type = "symmetric",
-  parallel = TRUE,
+  parallel_param = NULL,
   verbose = TRUE
 )
 }
@@ -50,7 +50,7 @@ large absolute value test statistics (specifically, top quartile of abs(t))}
 
 \item{params_type}{type of simulation model fit, one of c('symmetric','asymmetric')}
 
-\item{parallel}{if TRUE, processes are run in parallel}
+\item{parallel_param}{if not NULL, processes are run in parallel}
 
 \item{verbose}{if TRUE, status updates will be displayed}
 }

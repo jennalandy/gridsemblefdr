@@ -50,6 +50,10 @@ get_prauc <- function(fdr, truth) {
 #' @export
 get_roc <- function(fdr, truth) {
 
+  if (sum(truth) == 0 | sum(!truth) == 0) {
+    return(0)
+  }
+
   # direction = ">" accounts for inverse
   # relationship between fdr and y
   r <- pROC::roc(

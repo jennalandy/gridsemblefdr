@@ -11,7 +11,7 @@ build_qvalue_grid(
   pi0.method = c("bootstrap", "smoother"),
   smooth.log.pi0 = c(TRUE, FALSE),
   df = NULL,
-  parallel = TRUE,
+  parallel_param = NULL,
   verbose = FALSE
 )
 }
@@ -36,7 +36,7 @@ If \code{smooth.log.pi0} is TRUE and pi0.method = "smoother", pi_0 will be estim
 by applying a smoother to a scatterplot of log(pi_0) estimates against the
 tuning parameter lambda.}
 
-\item{parallel}{if TRUE, processes are run in parallel}
+\item{parallel_param}{if not NULL, processes are run in parallel}
 
 \item{verbose}{if TRUE, status updates will be displayed}
 }

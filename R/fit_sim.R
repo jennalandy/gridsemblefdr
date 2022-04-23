@@ -1,259 +1,416 @@
-#' @title Fit for Simulation
+#' @title Fit for Simulation using EM algorithm
 #' @description Fit a null and alternative distribution in order to
 #' simulate labeled data for the grid search.
 #'
 #' @param test_statistics vector of test statistics
 #' @param type one of c('symmetric','asymmetric')
+#' @param sigmasq0 initial value for sigmasq0
+#' @param sigmasq1 initial value for sigmasq1
+#' @param pi0 initial value for pi0
+#' @param maxiter highest number of iterations of EM algorithm allowed
+#' @param tol tolerance for change in sum of squared differences in parameters
+#' in order to stop algorithm
 #'
-#' @return vector of named parameters for the fit densities and type
+#' @return vector of named parameters for the fit densities and values across iterations
 #' @export
 fit_sim <- function(
   test_statistics,
-  type = 'symmetric'
+  type = 'symmetric',
+  # initialize
+  sigmasq0 = 2,
+  sigmasq1 = 4,
+  sigmasq1n = 4,
+  sigmasq1p = 4,
+  pi1n = 0.5,
+  pi0 = 0.9,
+  # learning parameters
+  maxiter = 500,
+  tol = 0.0001
 ) {
-
-  neg_log_likelihood <- get_neg_log_likelihood(
-    test_statistics = test_statistics,
-    type = 'symmetric'
-  )
-
-  # reasonable initial guesses
-  bounds <- quantile(test_statistics, c(0.25, 0.75))
-  inner_ts <- test_statistics[
-    test_statistics > bounds[1] &
-    test_statistics < bounds[2]
-  ]
-  sigma_0_init <- sd(inner_ts)
-  sigma_1_init <- sd(test_statistics)
-  pi_0_init <- 0.9
-
-  parameters <- optim(
-    c(sigma_0_init, sigma_1_init, pi_0_init),
-    neg_log_likelihood,
-    method = "L-BFGS-B",
-    lower = c(0.0001, 0.1, 0),
-    upper = c(Inf, Inf, 0.999)
-  )$par
-
-  parameters_list = list(
-    sigma_0 = parameters[1],
-    sigma_1 = parameters[2],
-    pi0 = parameters[3]
-  )
-
-  if (type == 'asymmetric') {
-    neg_log_likelihood <- get_neg_log_likelihood(
-      test_statistics = test_statistics,
-      type = 'asymmetric'
+  if (type == 'symmetric') {
+    return(
+      fit_sim_symmetric(
+        test_statistics,
+        # initialize
+        sigmasq0 = sigmasq0,
+        sigmasq1 = sigmasq1,
+        pi0 = pi0,
+        # learning parameters
+        maxiter = maxiter,
+        tol = tol
+      )
     )
+  } else if (type == 'asymmetric') {
+    return(
+      fit_sim_asymmetric(
+        test_statistics,
+        # initialize
+        sigmasq0 = sigmasq0,
+        sigmasq1n = sigmasq1n,
+        sigmasq1p = sigmasq1p,
+        pi1n = pi1n,
+        pi0 = pi0,
+        # learning parameters
+        maxiter = maxiter,
+        tol = tol
+      )
+    )
+  } else {
+    return(NULL)
+  }
+}
 
-    # inital guesses based on symmetric fit
-    sigma_0_init <- parameters_list$sigma_0
-    sigma_1L_init <- parameters_list$sigma_1
-    sigma_1R_init <- parameters_list$sigma_1
-    pi_0_init <- parameters_list$pi0
-    pi_1L_init <- mean(test_statistics < 0)
-
-    parameters <- optim(
-      c(
-        sigma_0_init, sigma_1L_init, sigma_1R_init,
-        pi_1L_init, pi_0_init
-      ),
-      neg_log_likelihood,
-      method = "L-BFGS-B",
-      lower = c(0.0001, 0.1, 0.1, 0, 0),
-      upper = c(Inf, Inf, Inf, 1, 0.999)
-    )$par
-
-    parameters_list = list(
-      sigma_0 = parameters[1],
-      sigma_1l = parameters[2],
-      sigma_1r = parameters[3],
-      pi1l = parameters[4],
-      pi0 = parameters[5]
+#' @title Fit for Simulation using EM algorithm, Symmetric
+#' @description Fit a null and alternative distribution in order to
+#' simulate labeled data for the grid search.
+#'
+#' @param test_statistics vector of test statistics
+#' @param sigmasq0 initial value for sigmasq0
+#' @param sigmasq1 initial value for sigmasq1
+#' @param pi0 initial value for pi0
+#' @param maxiter highest number of iterations of EM algorithm allowed
+#' @param tol tolerance for change in sum of squared differences in parameters
+#' in order to stop algorithm
+#'
+#' @return vector of named parameters for the fit densities and values across iterations
+#' @export
+fit_sim_symmetric <- function(
+  test_statistics,
+  # initialize
+  sigmasq0 = 2,
+  sigmasq1 = 4,
+  pi0 = 0.9,
+  # learning parameters
+  maxiter = 500,
+  tol = 0.0001
+) {
+  prob_y1_given_t <- function(t, pi0, sigmasq0, sigmasq1) {
+    (1-pi0)*(t^2/sigmasq1)*(1/sqrt(2*pi*sigmasq1))*exp(-(1/(2*sigmasq1))*t^2)/mix(
+      t, pi0, sigmasq0, sigmasq1
+    )
+  }
+  prob_y0_given_t <- function(t, pi0, sigmasq0, sigmasq1) {
+    pi0*(1/sqrt(2*pi*sigmasq0))*exp(-(1/(2*sigmasq0))*t^2)/mix(
+      t, pi0, sigmasq0, sigmasq1
     )
   }
 
+  thetas <- matrix(nrow = maxiter, ncol = 3)
+  thetas[1,] <- c(pi0, sigmasq0, sigmasq1)
+
+  for (i in 2:maxiter) {
+    # estimate
+    P_y1_given_t <- prob_y1_given_t(test_statistics, pi0, sigmasq0, sigmasq1)
+    P_y0_given_t <- prob_y0_given_t(test_statistics, pi0, sigmasq0, sigmasq1)
+
+    # maximize
+    sigmasq0 <- sum(P_y0_given_t*test_statistics^2)/sum(P_y0_given_t)
+    sigmasq1 <- sum(P_y1_given_t*test_statistics^2)/(3*sum(P_y1_given_t))
+
+    pi0 <- mean(P_y0_given_t)
+
+    thetas[i,] <- c(pi0, sigmasq0, sigmasq1)
+
+    # check if we can break early
+    diff = sum((thetas[i,] - thetas[i-1,])^2)
+    if (diff < tol) {
+      break
+    }
+  }
+
+  thetas <- thetas[!is.na(thetas[,1]),]
+
+  thetas <- data.frame(thetas) %>%
+    mutate(i = 1:nrow(thetas))
+
+  colnames(thetas) = c('pi0', 'sigmasq0', 'sigmasq1', 'i')
+
+  parameters_list = list(
+    sigmasq0 = sigmasq0,
+    sigmasq1 = sigmasq1,
+    pi0 = pi0
+  )
+
   return(list(
     'parameters' = parameters_list,
-    'type' = type
+    'thetas' = thetas,
+    'type' = 'symmetric',
+    'iters' = i
   ))
 }
 
+#' @title Fit for Simulation using EM algorithm, Asymmetric
+#' @description Fit a null and alternative distribution in order to
+#' simulate labeled data for the grid search.
+#'
+#' @param test_statistics vector of test statistics
+#' @param sigmasq0 initial value for sigmasq0
+#' @param sigmasq1n initial value for sigmasq1n
+#' @param sigmasq1p initial value for sigmasq1p
+#' @param pi1n initial value for pi1n
+#' @param pi0 initial value for pi0
+#' @param maxiter highest number of iterations of EM algorithm allowed
+#' @param tol tolerance for change in sum of squared differences in parameters
+#' in order to stop algorithm
+#'
+#' @return vector of named parameters for the fit densities and values across iterations
+#' @export
+fit_sim_asymmetric <- function(
+  test_statistics,
+  # initialize
+  sigmasq0 = 2,
+  sigmasq1n = 4,
+  sigmasq1p = 4,
+  pi1n = 0.5,
+  pi0 = 0.9,
+  # learning parameters
+  maxiter = 500,
+  tol = 0.0001
+) {
+  prob_y1_given_t <- function(t, pi0, sigmasq0, pi1n, sigmasq1n, sigmasq1p) {
+    (1-pi0)*(
+      ifelse(
+        t < 0,
+        pi1n * (t^2/sigmasq1n) * (1/sqrt(2*pi*sigmasq1n) * exp(-t^2/(2*sigmasq1n))),
+        0
+      ) + ifelse(
+        t > 0,
+        (1-pi1n) * (t^2/sigmasq1p) * (1/sqrt(2*pi*sigmasq1p) * exp(-t^2/(2*sigmasq1p))),
+        0
+      )
+    )/mix_asymmetric(
+      t, pi0, sigmasq0, pi1n, sigmasq1n, sigmasq1p
+    )
+  }
+
+  prob_y0_given_t <- function(t, pi0, sigmasq0, pi1n, sigmasq1n, sigmasq1p) {
+    pi0*(1/sqrt(2*pi*sigmasq0))*exp(-(1/(2*sigmasq0))*t^2)/mix_asymmetric(
+      t, pi0, sigmasq0, pi1n, sigmasq1n, sigmasq1p
+    )
+  }
+
+  thetas <- matrix(nrow = maxiter, ncol = 5)
+  thetas[1,] <- c(pi0, sigmasq0, pi1n, sigmasq1n, sigmasq1p)
+
+  for (i in 2:maxiter) {
+    # estimate
+    P_y1_given_t <- prob_y1_given_t(test_statistics, pi0, sigmasq0, pi1n, sigmasq1n, sigmasq1p)
+    P_y0_given_t <- prob_y0_given_t(test_statistics, pi0, sigmasq0, pi1n, sigmasq1n, sigmasq1p)
+
+    # maximize
+    sigmasq0 <- sum(P_y0_given_t*test_statistics^2)/sum(P_y0_given_t)
+    sigmasq1n <- sum((P_y1_given_t*test_statistics^2)[test_statistics < 0])/(3*sum(P_y1_given_t[test_statistics < 0]))
+    sigmasq1p <- sum((P_y1_given_t*test_statistics^2)[test_statistics > 0])/(3*sum(P_y1_given_t[test_statistics > 0]))
+
+    pi0 <- mean(P_y0_given_t)
+    pi1n <- mean(P_y1_given_t[test_statistics < 0])*mean(test_statistics < 0)/mean(P_y1_given_t)
+
+    # store
+    thetas[i,] <- c(pi0, sigmasq0, pi1n, sigmasq1n, sigmasq1p)
+
+    # check if we can break early
+    diff = sum((thetas[i,] - thetas[i-1,])^2)
+    if (diff < tol) {
+      break
+    }
+  }
+
+  # drop extra rows if iterations ended early
+  thetas <- thetas[!is.na(thetas[,1]),]
+
+  thetas <- data.frame(thetas) %>%
+    mutate(i = 1:nrow(thetas))
+
+  colnames(thetas) = c('pi0', 'sigmasq0', 'pi1n', 'sigmasq1n', 'sigmasq1p', 'i')
+
+  parameters_list = list(
+    sigmasq0 = sigmasq0,
+    sigmasq1n = sigmasq1n,
+    sigmasq1p = sigmasq1p,
+    pi1n = pi1n,
+    pi0 = pi0
+  )
+
+  return(list(
+    'parameters' = parameters_list,
+    'thetas' = thetas,
+    'type' = 'asymmetric',
+    'iters' = i
+  ))
+}
 
 #' @title Null pdf
 #'
 #' @param t test statistic
-#' @param sigma_0 variance of null density
+#' @param sigmasq0 variance of null density
 #'
 #' @return value of null density pdf at value t
-null <- function(t, sigma_0) {
-  dnorm(t, mean = 0, sd = sigma_0)
+null <- function(t, sigmasq0) {
+  (2*pi*sigmasq0)^(-1/2) * exp(-t^2/(2*sigmasq0))
 }
 
 #' @title Sample from null density
 #'
 #' @param n sample size
-#' @param sigma_0 variance of null distribution
+#' @param sigmasq0 variance of null distribution
 #'
-#' @return vector of test statistics sampled from null density N(0, sigma_0)
-sample_null <- function(n, sigma_0) {
-  rnorm(n, mean = 0, sd = sigma_0)
+#' @return vector of test statistics sampled from null density N(0, sigmasq0)
+sample_null <- function(n, sigmasq0) {
+  rnorm(n, mean = 0, sd = sqrt(sigmasq0))
 }
 
 #' @title Alternative pdf
 #'
 #' @param t test statistic
-#' @param sigma_1 variance of alternative distribution if symmetric
-#' @param sigma_1L variance of negative alternative distribution if asymmetric
-#' @param sigma_1R variance of positive alternative distribution if asymmetric
-#' @param pi_1L proportion of alternative distribution > 0 if asymmetric
-#' @param type one of c('symmetric','asymmetric')
+#' @param sigmasq1 variance of alternative distribution if symmetric
 #'
 #' @return value of alternative density pdf at value t
-alternative <- function(
-  t, sigma_1 = NULL, sigma_1L = NULL,
-  sigma_1R = NULL, pi_1L = 0.5,
-  type = 'symmetric'
-) {
-  if (type == 'symmetric') {
-
-    ( (t^2/sigma_1^2) * (2*pi*sigma_1^2)^(-1/2) )*exp( -t^2/(2*sigma_1^2) )
-
-  } else if (type == 'asymmetric') {
-
-    pi_1L*2*as.numeric(t <= 0)*(
-      (t^2/sigma_1L^2)*(2*pi*sigma_1L^2)^(-1/2)
-    )*exp( -t^2/(2*sigma_1L^2)) +
-    (1-pi_1L)*2*as.numeric(t > 0)*(
-      (t^2/sigma_1R^2)*(2*pi*sigma_1R^2)^(-1/2)
-    )*exp( -t^2/(2*sigma_1R^2))
-
-  }
+alt <- function(t, sigmasq1) {
+  (t^2/sigmasq1) * (2*pi*sigmasq1)^(-1/2) * exp(-t^2/(2*sigmasq1))
 }
 
-#' Acceptance sample from a pdf
-#'
-#' @param n sample size
-#' @param pdf distribution to sample from
-#' @param c accept/reject constant
-#' @param compare_dist comparison/proposal distribution, one of c('norm','uniform')
-#' @param compare_params parameters for compare_dist, either c(mean, sd) or c(min, max)
-#'
-#' @return vector of sampled values
-acceptance_sample <- function(
-  n, pdf,
-  c = 10,
-  compare_dist = 'norm',
-  compare_params = c(0, 1)
-) {
-  U = runif(n = n, min = 0, max = 1)
-  if (compare_dist == 'norm') {
-    X = rnorm(n = n, mean = compare_params[1], sd = compare_params[2])
-    accept <- (U <= pdf(X)/(
-      c * dnorm(x = X, mean  = compare_params[1], sd = compare_params[2])
-    ))
-  } else if (compare_dist == 'unif') {
-    X = runif(n = n, min = compare_params[1], max = compare_params[2])
-    accept <- (U <= pdf(X)/(
-      c * dunif(x = X, min  = compare_params[1], max = compare_params[2])
-    ))
-  }
-  if (sum(accept) == n) {
-    return(X)
-  } else {
-    return(c(X[accept], acceptance_sample(
-      n - sum(accept), pdf, c = c,
-      compare_dist = compare_dist,
-      compare_params = compare_params
-    )))
-  }
+alt_neg <- function(t, sigmasq1n) {
+  ifelse(
+    t < 0,
+    2 * (t^2/sigmasq1n) * (2*pi*sigmasq1n)^(-1/2) * exp(-t^2/(2*sigmasq1n)),
+    0
+  )
+}
+alt_pos <- function(t, sigmasq1p) {
+  ifelse(
+    t > 0,
+    2 * (t^2/sigmasq1p) * (2*pi*sigmasq1p)^(-1/2) * exp(-t^2/(2*sigmasq1p)),
+    0
+  )
+}
+alt_asymmetric <- function(t, pi1n, sigmasq1n, sigmasq1p) {
+  pi1n*alt_neg(t, sigmasq1n) + (1-pi1n)*alt_pos(t, sigmasq1p)
 }
 
-#' @title Sample from alternative density
-#' @description Using acceptance sampling
+#' @title Sample from alternative pdf using metropolis hastings
 #'
-#' @param n sample size
-#' @param sigma_1 variance of alternative distribution if symmetric
-#' @param sigma_1L variance of negative alternative distribution if asymmetric
-#' @param sigma_1R variance of positive alternative distribution if asymmetric
-#' @param pi_1L proportion of alternative distribution > 0 if asymmetric
-#' @param type one of c('symmetric','asymmetric')
+#' @param N number of test statistics to sample
+#' @param sigmasq1 variance of alternative distribution
+#' @param burn_in number of iterations to use as burn in and discard
 #'
-#' @return vector of test statistics sampled from alternative density
+#' @return test_statistics vector of test statistics
+#' @export
 sample_alternative <- function(
-  n,
-  sigma_1 = NULL,
-  sigma_1L = NULL,
-  sigma_1R = NULL,
-  pi_1L = 0.5,
-  type = 'symmetric'
+  N,
+  sigmasq1,
+  burn_in = 1000,
+  t_init = 1
 ) {
+  t_vec = vector(length = N)
+  t = t_init
+  for (i in 1:(N + burn_in)) {
+    t = metropolis_hastings_step(t, sigmasq1)
 
-  pdf <- function(z) {
-    alternative(z, sigma_1, sigma_1L, sigma_1R, pi_1L, type = type)
+    # use first 1000 as burn-in
+    if (i > burn_in) {
+      t_vec[i-burn_in] = t
+    }
   }
-  return(acceptance_sample(n, pdf, compare_params = c(0, 4)))
+  return (t_vec)
+}
+
+sample_alternative_asymmetric <- function(
+  N,
+  sigmasq1n,
+  sigmasq1p,
+  pi1n,
+  burn_in = 1000,
+  t_init = 1
+) {
+  t_vec = vector(length = N)
+  t = t_init
+  for (i in 1:(N + burn_in)) {
+    t = metropolis_hastings_step_asymmetric(t, pi1n, sigmasq1n, sigmasq1p)
+
+    # use first 1000 as burn-in
+    if (i > burn_in) {
+      t_vec[i-burn_in] = t
+    }
+  }
+  return (t_vec)
+}
+
+#' @title Proposal pdf
+#'
+#' @param of returns
+#' @param given
+#' @param sd
+#'
+#' @return
+#' @export
+#'
+#' @examples
+proposal_pdf <- function(of, given, sd) {
+  dnorm(of, mean = given, sd = sd)
+}
+
+#' @title One Metropolis Hastings step to update t
+#'
+#' @param t current t value
+#' @param sigmasq1 variance of alternative distribution
+#'
+#' @return t next t value
+#' @export
+metropolis_hastings_step <- function(t, sigmasq1) {
+  # sample t_next|t ~ q
+  t_next <- rnorm(1, mean = t, sd = 4)
+
+  # compute acceptance probability
+  acceptance <- min(
+    1,
+    alt(t_next, sigmasq1)*proposal_pdf(of = t_next, given = t, sd = 4)/
+      (alt(t, sigmasq1)*proposal_pdf(of = t, given = t_next, sd = 4))
+  )
+
+  # accept t_next with acceptance probability, otherwise keep t
+  u <- runif(1, 0, 1)
+  if (u < acceptance) {
+    t <- t_next
+  }
+
+  return(t)
+}
+
+metropolis_hastings_step_asymmetric <- function(t, pi1n, sigmasq1n, sigmasq1p) {
+  # sample beta_next|beta ~ q
+  t_next <- rnorm(1, mean = t, sd = 4)
+
+  # compute acceptance probability
+  acceptance <- min(
+    1,
+    alt_asymmetric(t_next, pi1n, sigmasq1n, sigmasq1p)*proposal_pdf(of = t_next, given = t, sd = 4)/
+      (alt_asymmetric(t, pi1n, sigmasq1n, sigmasq1p)*proposal_pdf(of = t, given = t_next, sd = 4))
+  )
+
+  # accept t_next with acceptance probability, otherwise keep t
+  u <- runif(1, 0, 1)
+  if (u < acceptance) {
+    t <- t_next
+  }
+
+  return(t)
 }
 
 #' @title Mixture pdf
 #'
 #' @param t test statistic
-#' @param sigma_0 variance of null distribution
-#' @param sigma_1 variance of alternative distribution if symmetric
-#' @param sigma_1L variance of negative alternative distribution if asymmetric
-#' @param sigma_1R variance of positive alternative distribution if asymmetric
-#' @param pi_1L proportion of alternative distribution > 0 if asymmetric
+#' @param pi0 proportion null
+#' @param sigmasq0 variance of null distribution
 #' @param type one of c('symmetric','asymmetric')
 #'
 #' @return value of mixture density pdf at value t
-mixture <- function(
-  z, sigma_0, sigma_1, sigma_1L, sigma_1R,
-  pi_0, pi_1L, type = 'symmetric'
-) {
-  pi_0*null(z, sigma_0) +
-    (1-pi_0)*alternative(z, sigma_1, sigma_1L, sigma_1R, pi_1L, type = type)
+mix <- function(t, pi0, sigmasq0, sigmasq1) {
+  pi0*null(t, sigmasq0) + (1-pi0)*alt(t, sigmasq1)
 }
 
-#' @title Negative log likelihood of mixture density
-#'
-#' @param test_statistics vector of test statistics
-#' @param type one of c('symmetric','asymmetric')
-#'
-#' @return function of parameters vector that computes NLL for the data, t
-get_neg_log_likelihood <- function(
-  test_statistics,
-  type = 'symmetric'
-) {
-  if (type == 'symmetric') {
-    return(
-      # param = c(sigma_0, sigma_1, pi_0)
-      function(param) {
-        -1*sum(sapply(test_statistics, function(t) {log(mixture(
-          t,
-          sigma_0 = param[1],
-          sigma_1 = param[2],
-          pi_0 = param[3],
-          type = type
-        ))}))
-      }
-    )
-  } else if (type == 'asymmetric') {
-    # param = c(sigma_0, sigma_1L, sigma_1R, pi_1L, pi_0)
-    function(param) {
-      -1*sum(sapply(test_statistics, function(t) {log(mixture(
-        t,
-        sigma_0 = param[1],
-        sigma_1L = param[2],
-        sigma_1R = param[3],
-        pi_1L = param[4],
-        pi_0 = param[5],
-        type = type
-      ))}))
-    }
-  }
+mix_asymmetric <- function(t, pi0, sigmasq0, pi1n, sigmasq1n, sigmasq1p) {
+  pi0*null(t, sigmasq0) + (1-pi0)*alt_asymmetric(t, pi1n, sigmasq1n, sigmasq1p)
 }
-
 
 #' @title Simulate from fit
 #' @description simulate a dataset of size n from the mixture and record truth label
@@ -273,12 +430,11 @@ simulate_from_fit <- function(n, fit) {
       t = c(
         sample_null(
           n = n0,
-          sigma_0 = fit$parameters$sigma_0
+          sigmasq0 = fit$parameters$sigmasq0
         ),
         sample_alternative(
-          n = n-n0,
-          sigma_1 = fit$parameters$sigma_1,
-          type = 'symmetric'
+          N = n-n0,
+          sigmasq1 = fit$parameters$sigmasq1
         )
       ),
       truth = c(
@@ -292,13 +448,13 @@ simulate_from_fit <- function(n, fit) {
       t = c(
         sample_null(
           n = n0,
-          sigma_0 = fit$parameters$sigma_0
+          sigmasq0 = fit$parameters$sigmasq0
         ),
-        sample_alternative(
-          n = n-n0,
-          sigma_1L = fit$parameters$sigma_1l,
-          sigma_1R = fit$parameters$sigma_1r,
-          type = 'asymmetric'
+        sample_alternative_asymmetric(
+          N = n-n0,
+          sigmasq1n = fit$parameters$sigmasq1n,
+          sigmasq1p = fit$parameters$sigmasq1p,
+          pi1n = fit$parameters$pi1n
         )
       ),
       truth = c(

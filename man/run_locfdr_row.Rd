@@ -4,7 +4,7 @@
 \alias{run_locfdr_row}
 \title{Run locfdr}
 \usage{
-run_locfdr_row(test_statistics, locfdr_grid, row)
+run_locfdr_row(test_statistics, locfdr_grid, row, returnFdr = TRUE)
 }
 \arguments{
 \item{test_statistics}{vector of test statistics}

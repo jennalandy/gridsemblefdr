@@ -8,7 +8,7 @@ build_fdrtool_grid(
   test_statistics,
   cutoff.method = c("fndr", "pct0", "locfdr"),
   pct0 = 1/c(2:10),
-  parallel = TRUE,
+  parallel_param = NULL,
   verbose = FALSE
 )
 }
@@ -21,7 +21,7 @@ build_fdrtool_grid(
 \item{pct0}{vector of options for pct0 hyperparameter. \code{pct0} is the
 fraction of data used for fitting null model - only if cutoff.method="pct0".}
 
-\item{parallel}{if TRUE, processes are run in parallel}
+\item{parallel_param}{if not NULL, processes are run in parallel}
 
 \item{verbose}{if TRUE, status updates will be displayed}
 }

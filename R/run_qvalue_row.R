@@ -52,6 +52,7 @@ run_qvalue_row <- function(
   qvalue_grid,
   row,
   df = NULL,
+  returnFdr = TRUE,
   verbose = FALSE
 ) {
 
@@ -68,7 +69,7 @@ run_qvalue_row <- function(
     {
       res <- qvalue::qvalue(
         p = p,
-        transf = qvalue_grid$transf[row],
+        transf = as.character(qvalue_grid$transf[row]),
         adj = qvalue_grid$adj[row],
         pi0.method = as.character(qvalue_grid$pi0.method[row]),
         smooth.log.pi0 = as.logical(qvalue_grid$smooth.log.pi0[row])
@@ -99,13 +100,18 @@ run_qvalue_row <- function(
     return(NULL)
   } else {
     # otherwise return results
-    return(list(
-      'fdr' = res$lfdr,
-      'Fdr' = Fdr_from_fdr(
+    if (returnFdr) {
+      Fdr = Fdr_from_fdr(
         fdr = res$lfdr,
         test_statistics = test_statistics,
         direction = 'left'
-      ),
+      )
+    } else {
+      Fdr = 'not computed'
+    }
+    return(list(
+      'fdr' = res$lfdr,
+      'Fdr' = Fdr,
       'pi0' = res$pi0
     ))
   }

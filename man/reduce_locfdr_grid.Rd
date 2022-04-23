@@ -7,7 +7,7 @@
 reduce_locfdr_grid(
   test_statistics,
   locfdr_grid,
-  parallel = TRUE,
+  parallel_param = NULL,
   verbose = FALSE
 )
 }
@@ -16,7 +16,7 @@ reduce_locfdr_grid(
 
 \item{locfdr_grid}{data frame where each row is a possible set of hyperparameters for locfdr}
 
-\item{parallel}{if TRUE, processes are run in parallel}
+\item{parallel_param}{if not NULL, processes are run in parallel with this parameter}
 
 \item{verbose}{if TRUE, status updates will be displayed}
 }

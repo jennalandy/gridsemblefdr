@@ -21,6 +21,8 @@
 #' @param parallel if TRUE, processes are run in parallel
 #' @param verbose if TRUE, status updates will be displayed
 #'
+#' @importFrom BiocParallel DoparParam
+#'
 #' @return
 #' \itemize{
 #'      \item fdr local false discovery rates
@@ -49,49 +51,67 @@ gridsemble <- function(
   verbose = TRUE
 ) {
 
-  if (!(focus_metric %in% c('Fdrerror','roc','pr','brier'))) {
-    cat("focus_metric must be one of c('Fdrerror','roc','pr','brier'), using default (Fdrerror)")
-    focus_metric = 'Fdrerror'
+  if (parallel) {
+    parallel_param <- BiocParallel::SnowParam(workers = 5, type = "SOCK")
+  } else {
+    parallel_param <- NULL
   }
 
-  if ('locfdr' %in% methods) {
-    if (is.null(locfdr_grid)) {
-      locfdr_grid <- build_locfdr_grid(test_statistics, parallel = parallel)
-    }
-  }
-  if ('fdrtool' %in% methods) {
-    if (is.null(fdrtool_grid)) {
-      fdrtool_grid <- build_fdrtool_grid(test_statistics, parallel = parallel)
-    }
-  }
-  if ('qvalue' %in% methods) {
-    if (is.null(qvalue_grid)) {
-      qvalue_grid <- build_qvalue_grid(test_statistics, df = df, parallel = parallel)
-    }
-  }
-
-  default_locfdr <- locfdr::locfdr(test_statistics, plot = 0)
-  default_fdrtool <- fdrtool::fdrtool(test_statistics, pct = 0, plot = 0, verbose = 0)
   p_values = p_from_t(
     test_statistics = test_statistics,
     df = df,
     sides = 'two'
   )
+
+  if (!(focus_metric %in% c('Fdrerror','roc','pr','brier'))) {
+    cat("focus_metric must be one of c('Fdrerror','roc','pr','brier'), using default (Fdrerror)")
+    focus_metric = 'pr'
+  }
+
+  if ('locfdr' %in% methods) {
+    if (is.null(locfdr_grid)) {
+      locfdr_grid <- build_locfdr_grid(test_statistics, parallel_param = parallel_param)
+    }
+  }
+  if ('fdrtool' %in% methods) {
+    if (is.null(fdrtool_grid)) {
+      fdrtool_grid <- build_fdrtool_grid(test_statistics, parallel_param = parallel_param)
+    }
+  }
+  if ('qvalue' %in% methods) {
+    if (is.null(qvalue_grid)) {
+      qvalue_grid <- build_qvalue_grid(test_statistics, df = df, parallel_param = parallel_param)
+    }
+  }
+
+  # store results from each implementation with default parameters
+  # leave null if unable to run implementation
+
+  default_locfdr <- NULL
+  default_fdrtool <- NULL
   default_qvalue <- NULL
+
+  tryCatch({
+    default_locfdr <- locfdr::locfdr(test_statistics, plot = 0)
+  }, error = function(e) {})
+
+  tryCatch({
+    default_fdrtool <- fdrtool::fdrtool(test_statistics, pct = 0, plot = 0, verbose = 0)
+  }, error = function(e) {})
+
   tryCatch({
     default_qvalue <- qvalue::qvalue(p_values, plot = 0)
-  }, error = function(e) {
-  })
+  }, error = function(e) {})
+
   if (is.null(default_qvalue)) {
     default_qvalue <- qvalue::qvalue(p_values, plot = 0, lambda = 0)
   }
 
-
+  # fit simulation model to test statistics
   asym_type = ifelse(asym, 'asymmetric', 'symmetric')
-
   fit <- fit_sim(test_statistics, type = asym_type)
-  fit$parameters$pi0 = 0.8 # todo delete this
 
+  # perform grid search on simulated datasets
   grid_res <- grid_search(
     n = length(test_statistics),
     nsim = nsim,
@@ -104,13 +124,14 @@ gridsemble <- function(
     focus_metric = focus_metric,
     large_abs_metric = large_abs_metric,
     params_type = asym_type,
-    parallel = parallel,
+    parallel_param = parallel_param,
     verbose = verbose
   )
 
   top_grid = grid_res$top_grid
   all_grids = grid_res$all_grids
 
+  # ensemble over top performing grid search methods
   ensemble_res = ensemble(
     test_statistics = test_statistics,
     top_grid = top_grid,
@@ -118,10 +139,11 @@ gridsemble <- function(
     fdrtool_grid = fdrtool_grid,
     qvalue_grid = qvalue_grid,
     df = df,
-    parallel = parallel,
+    parallel_param = parallel_param,
     verbose = verbose
   )
 
+  # compute tail end Fdr from local fdr
   Fdr <- Fdr_from_fdr(
     fdr = ensemble_res$fdr,
     test_statistics = test_statistics
@@ -129,8 +151,10 @@ gridsemble <- function(
 
   out <- list(
     'fdr' = ensemble_res$fdr,
+    'fdr_var' = ensemble_res$fdr_var,
     'Fdr' = Fdr,
     'pi0' = ensemble_res$pi0,
+    'pi0_var' = ensemble_res$pi0_var,
     'top_grid' = top_grid,
     'default_locfdr' = default_locfdr,
     'default_fdrtool' = default_fdrtool,
@@ -138,6 +162,5 @@ gridsemble <- function(
     'all_grids' = all_grids,
     'fit' = fit
   )
-
   return(out)
 }

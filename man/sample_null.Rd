@@ -4,15 +4,15 @@
 \alias{sample_null}
 \title{Sample from null density}
 \usage{
-sample_null(n, sigma_0)
+sample_null(n, sigmasq0)
 }
 \arguments{
 \item{n}{sample size}
 
-\item{sigma_0}{variance of null distribution}
+\item{sigmasq0}{variance of null distribution}
 }
 \value{
-vector of test statistics sampled from null density N(0, sigma_0)
+vector of test statistics sampled from null density N(0, sigmasq0)
 }
 \description{
 Sample from null density

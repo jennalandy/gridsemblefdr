@@ -4,12 +4,12 @@
 \alias{null}
 \title{Null pdf}
 \usage{
-null(t, sigma_0)
+null(t, sigmasq0)
 }
 \arguments{
 \item{t}{test statistic}
 
-\item{sigma_0}{variance of null density}
+\item{sigmasq0}{variance of null density}
 }
 \value{
 value of null density pdf at value t

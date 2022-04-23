@@ -2,33 +2,20 @@
 % Please edit documentation in R/fit_sim.R
 \name{sample_alternative}
 \alias{sample_alternative}
-\title{Sample from alternative density}
+\title{Sample from alternative pdf using metropolis hastings}
 \usage{
-sample_alternative(
-  n,
-  sigma_1 = NULL,
-  sigma_1L = NULL,
-  sigma_1R = NULL,
-  pi_1L = 0.5,
-  type = "symmetric"
-)
+sample_alternative(N, sigmasq1, burn_in = 1000, t_init = 1)
 }
 \arguments{
-\item{n}{sample size}
+\item{N}{number of test statistics to sample}
 
-\item{sigma_1}{variance of alternative distribution if symmetric}
+\item{sigmasq1}{variance of alternative distribution}
 
-\item{sigma_1L}{variance of negative alternative distribution if asymmetric}
-
-\item{sigma_1R}{variance of positive alternative distribution if asymmetric}
-
-\item{pi_1L}{proportion of alternative distribution > 0 if asymmetric}
-
-\item{type}{one of c('symmetric','asymmetric')}
+\item{burn_in}{number of iterations to use as burn in and discard}
 }
 \value{
-vector of test statistics sampled from alternative density
+test_statistics vector of test statistics
 }
 \description{
-Using acceptance sampling
+Sample from alternative pdf using metropolis hastings
 }
