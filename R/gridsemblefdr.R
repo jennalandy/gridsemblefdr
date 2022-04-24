@@ -22,6 +22,7 @@
 #' @param verbose if TRUE, status updates will be displayed
 #'
 #' @importFrom BiocParallel DoparParam
+#' @importFrom parallel detectCores
 #'
 #' @return
 #' \itemize{
@@ -46,14 +47,24 @@ gridsemble <- function(
   methods = c('locfdr','fdrtool','qvalue'),
   asym = FALSE,
   focus_metric = 'pr',
+  n_workers = NULL,
   large_abs_metric = TRUE,
   parallel = TRUE,
+  parallel_param = NULL,
   verbose = TRUE
 ) {
 
-  if (parallel) {
-    parallel_param <- BiocParallel::SnowParam(workers = 5, type = "SOCK")
-  } else {
+  if (parallel & is.null(parallel_param)) {
+    if (is.null(n_workers)) {
+      n_workers = parallel::detectCores() - 2
+    }
+
+    parallel_param <- BiocParallel::MulticoreParam(
+      workers = n_workers,
+      tasks = n_workers
+    )
+  }
+  if (!parallel) {
     parallel_param <- NULL
   }
 

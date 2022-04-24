@@ -22,14 +22,16 @@ nrow_null0 <- function(dataframe) {
 get_true_Fdr <- function(test_statistics, truth, direction = 'left')  {
   out <- rep(NA, length(test_statistics))
   if (direction == 'left') {
+    # Pr(null | T <= t) = Pr(truth = 0 | T <= t)
     for (i in 1:length(test_statistics)) {
       t = test_statistics[i]
-      out[i] <- mean(truth[test_statistics <= t])
+      out[i] <- mean(1 - truth[test_statistics <= t])
     }
   } else {
+    # Pr(null | T >= t)
     for (i in 1:length(test_statistics)) {
       t = test_statistics[i]
-      out[i] <- mean(truth[test_statistics >= t])
+      out[i] <- mean(1 - truth[test_statistics >= t])
     }
   }
   return(out)

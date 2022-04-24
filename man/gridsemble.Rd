@@ -15,8 +15,10 @@ gridsemble(
   methods = c("locfdr", "fdrtool", "qvalue"),
   asym = FALSE,
   focus_metric = "pr",
+  n_workers = NULL,
   large_abs_metric = TRUE,
   parallel = TRUE,
+  parallel_param = NULL,
   verbose = TRUE
 )
 }
