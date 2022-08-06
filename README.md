@@ -8,15 +8,9 @@
 
 `gridsemblefdr` computes local and tail-end false discovery rates using ensemble methods.
 
-False discovery rate methodologies are popular in multiple hypothesis testing, for example, with high-dimensional genomic data. Though most implementations use hyperparameters, it is an unsupervised problem, so standard hyperparameter optimization techniques cannot be used. In practice, this means hyperparameters are chosen differently by each researcher, and often left as the default values in their package of choice. To address this issue, we introduce a novel approach to tail end (Fdr) and local (fdr) false discovery rate estimation that builds upon existing methods in two important ways. First, we utilize ensemble methods to combine information from models fit with different sets of hyperparameters. Simulation studies show that an ensemble outperforms existing methods with default hyperparameters. Second, we determine informed sets of hyperparameters to ensemble over through a grid search on simulated, labeled test statistics based on the true, unlabeled data. Simulation studies show that in an ensemble, these informed sets of hyperparameters outperform random sets of hyperparameters. 
+Unsupervised models present a unique challenge for hyperparameter optimization because measures of accuracy used in standard supervised techniques cannot be computed. In practice, this means hyperparameters are chosen differently by each researcher and are often left as the default values in their package of choice. We introduce a novel ensemble framework to address this issue for unsupervised problems with latent labels. This framework selects models to ensemble by their approximate performances, which are estimated using simulated labeled data informed by domain knowledge of the latent label structure. We implement our framework to improve existing false discovery rate methodology, viewing multiple hypothesis testing as an unsupervised classification problem with binary latent labels. Our simulation studies show that an ensemble outperforms three popular methods with their default hyperparameters and that, within an ensemble, combining models chosen based on their approximate performances outperforms an ensemble over a random subset of models. The R package for the false discovery rate implementation of this framework, {\tt gridsemblefdr}, can be installed here.
 
-For more details on the methodology, see the paper associated with this package [[1]()].
-
-## Citing this package
-
-The methodology implemented in this package was introduced in the following publication.
-
-**todo**
+The paper associated with this package is in progress.
 
 ## Installation
 ```{r setup, eval = FALSE}
@@ -41,42 +35,47 @@ test_statistics = c(
   runif(50, 3, 10)    # add 5% positivive extreme values
 )
 
-gridsemble <- gridsemble(test_statistics)
+gridsemble_res <- gridsemble(test_statistics)
 ```
 
 Local and tail-end false discovery rates, as well as the proportion of test statistics from the null distribution, pi0, can be accessed from the `gridsemble` object.
 
 ```{r eval = FALSE}
-fdr <- gridsemble$fdr
-Fdr <- gridsemble$Fdr
-pi0 <- gridsemble$pi0
+fdr <- gridsemble_res$fdr
+Fdr <- gridsemble_res$Fdr
+pi0 <- gridsemble_res$pi0
 ```
 
 #### Options
 
-By default, `gridsemble` will build `nsim = 10` simulated datasets, run a grid search on each, and choose the top `topn = 1` set of hyperparameters from each to ensemble over. Further, the hyperparameter sets considered are set to the default grid values in the functions `build_locfdr_grid`, `build_fdrtool_grid`, and `build_qvalue_grid`. If a user wants a more personalized set of hyperparameters considered, they can build their own grids of options with these functions, or even exclude one of the three package from the ensemble entirely if desired.
+By default, `gridsemble` will build `nsim = 10` simulated datasets to compute approximate metrics, and choose the top `ensemble_size = 10` set of hyperparameters from each to ensemble over. Further, the hyperparameter sets considered are set to the default grid values in the functions `build_locfdr_grid`, `build_fdrtool_grid`, and `build_qvalue_grid`. 
+
+If a user wants a more personalized set of hyperparameters considered, they can build their own grids of options with these functions, or even exclude one of the three package from the ensemble entirely. Further, for continuous hyperparameters such as `pct_range`, the user can choose for the grid to be filled in with equally-spaced values (`method = 'grid'`), or with uniformly sampled values (`method = 'random'`).
 
 ```{r eval = FALSE}
 my_locfdr_grid <- build_locfdr_grid(
   test_statistics,
-  pct = c(0.001, 0.003),
-  pct0 = c(1/3,1/4),
+  pct_range = c(0.001, 0.003),
+  pct0_range = c(1/3,1/4),
   nulltype = c(1,2),
-  type = c(0)
+  type = c(0),
+  method = 'grid'
 )
 
 my_fdrtool_grid <- build_fdrtool_grid(
   test_statistics,
   cutoff.method = c('fndr','pct0'),
-  pct0 = c(1/3,1/4)
+  pct0_range = c(1/3,1/4),
+  method = 'grid'
 )
 
 my_qvalue_grid <- build_qvalue_grid(
   test_statistics,
   transf = c('probit','logit'),
-  adj = c(1),
+  adj_range = c(0.5, 1.5),
   pi0.method = c('bootstrap'),
-  smooth.log.pi0 = c('FALSE')
+  smooth.log.pi0 = c('FALSE'),
+  method = 'grid'
 )
 
 gridsemble <- gridsemble(
