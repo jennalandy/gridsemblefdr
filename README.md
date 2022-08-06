@@ -48,7 +48,7 @@ pi0 <- gridsemble_res$pi0
 
 #### Number of Simulations and Ensemble Size
 
-By default, `gridsemble` will build `nsim = 10` simulated datasets to compute approximate metrics, and choose the top `ensemble_size = 10` set of hyperparameters from each to ensemble over. This can easily be changed by the user.
+By default, `gridsemblefdr` will build `nsim = 10` simulated datasets to compute approximate metrics, and choose the top `ensemble_size = 10` set of hyperparameters from each to ensemble over. This can easily be changed by the user.
 
 ```{r eval = FALSE}
 gridsemble_res <- gridsemble(
@@ -90,7 +90,7 @@ my_qvalue_grid <- build_qvalue_grid(
   method = 'grid'
 )
 
-gridsemble <- gridsemble(
+gridsemble_res <- gridsemble(
   test_statistics,
   locfdr_grid = my_locfdr_grid,
   fdrtool_grid = my_fdrtool_grid,
