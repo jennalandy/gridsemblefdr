@@ -22,7 +22,7 @@ library(gridsemblefdr)
 
 ## Quick start guide
 
-Given a vector of test statistics, the `gridsemblefdr` function can be used to compute local and tail-end false discovery rates.
+Given a vector of test statistics, the `gridsemble` function can be used to compute local and tail-end false discovery rates. Here is an example using `gridsemblefdr` on a simulation study of 1000 t-statistics:
 
 ```{r eval = FALSE}
 library(gridsemblefdr)
