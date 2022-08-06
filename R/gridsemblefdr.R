@@ -17,6 +17,8 @@
 #' @param large_abs_metric boolean, if TRUE, only consider focus_metric looking at the
 #' large absolute value test statistics (top quartile of abs(t))
 #' @param parallel boolean
+#' @param paralllel_param BiocParallel object, specified to run in parallel or NULL
+#' @param sim_n integer, size of simulated datasets, default number of test statistics
 #' @param verbose boolean
 #'
 #' @importFrom BiocParallel DoparParam
@@ -49,7 +51,7 @@ gridsemble <- function(
   large_abs_metric = TRUE,
   parallel = TRUE,
   parallel_param = NULL,
-  sim_subset = NULL,
+  sim_n = NULL,
   verbose = TRUE
 ) {
 
@@ -148,7 +150,7 @@ gridsemble <- function(
     large_abs_metric = large_abs_metric,
     params_type = 'symmetric',
     parallel_param = parallel_param,
-    sim_subset = sim_subset,
+    sim_n = sim_n,
     verbose = verbose
   )
 

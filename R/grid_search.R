@@ -53,6 +53,7 @@ get_true_Fdr <- function(test_statistics, truth, direction = 'left')  {
 #' large absolute value test statistics (top quartile of abs(t))
 #' @param params_type string, type of simulation model fit, one of c('symmetric')
 #' @param parallel_param BiocParallel object, specified to run in parallel or NULL
+#' @param sim_n integer, size of simulated datasets, default number of test statistics
 #' @param verbose boolean
 #'
 #' @return
@@ -79,7 +80,7 @@ grid_search <- function(
   large_abs_metric = TRUE,
   params_type = 'symmetric',
   parallel_param = NULL,
-  sim_subset = NULL,
+  sim_n = NULL,
   verbose = TRUE
 ) {
 
@@ -134,7 +135,7 @@ grid_search <- function(
   }
 
   # simulate and perform grid search `nsim` times
-  sample_n = ifelse(!is.null(sim_subset), sim_subset, n)
+  sample_n = ifelse(!is.null(sim_n), sim_n, n)
   all_grids <- do.call(rbind, parlapply(
     X = 1:nsim,
     parallel_param = parallel_param,

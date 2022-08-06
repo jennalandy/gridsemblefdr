@@ -19,7 +19,7 @@ grid_search(
   large_abs_metric = TRUE,
   params_type = "symmetric",
   parallel_param = NULL,
-  sim_subset = NULL,
+  sim_n = NULL,
   verbose = TRUE
 )
 }
@@ -51,6 +51,8 @@ large absolute value test statistics (top quartile of abs(t))}
 \item{params_type}{string, type of simulation model fit, one of c('symmetric')}
 
 \item{parallel_param}{BiocParallel object, specified to run in parallel or NULL}
+
+\item{sim_n}{integer, size of simulated datasets, default number of test statistics}
 
 \item{verbose}{boolean}
 }

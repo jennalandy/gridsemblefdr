@@ -3,8 +3,8 @@
 #' can be used for qvalue on the provided data without error
 #'
 #' @param test_statistics vector, test statistics
-#' @param locfdr_grid data.frame, each row is a possible set of hyperparameters for locfdr
-#' @param row integer, row of locfdr_grid considered
+#' @param qvalue_grid data.frame, each row is a possible set of hyperparameters for locfdr
+#' @param row integer, row of qvalue_grid considered
 #'
 #' @return boolean, whether the hyperparameter combination ran without error
 check_qvalue_row <- function(

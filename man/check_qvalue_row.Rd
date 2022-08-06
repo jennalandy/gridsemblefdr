@@ -11,9 +11,9 @@ check_qvalue_row(test_statistics, qvalue_grid, lower_pi0, row)
 \arguments{
 \item{test_statistics}{vector, test statistics}
 
-\item{row}{integer, row of locfdr_grid considered}
+\item{qvalue_grid}{data.frame, each row is a possible set of hyperparameters for locfdr}
 
-\item{locfdr_grid}{data.frame, each row is a possible set of hyperparameters for locfdr}
+\item{row}{integer, row of qvalue_grid considered}
 }
 \value{
 boolean, whether the hyperparameter combination ran without error

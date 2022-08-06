@@ -19,7 +19,7 @@ gridsemble(
   large_abs_metric = TRUE,
   parallel = TRUE,
   parallel_param = NULL,
-  sim_subset = NULL,
+  sim_n = NULL,
   verbose = TRUE
 )
 }
@@ -50,7 +50,11 @@ large absolute value test statistics (top quartile of abs(t))}
 
 \item{parallel}{boolean}
 
+\item{sim_n}{integer, size of simulated datasets, default number of test statistics}
+
 \item{verbose}{boolean}
+
+\item{paralllel_param}{BiocParallel object, specified to run in parallel or NULL}
 }
 \value{
 \itemize{
