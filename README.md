@@ -38,7 +38,7 @@ test_statistics = c(
 gridsemble_res <- gridsemble(test_statistics)
 ```
 
-Local and tail-end false discovery rates, as well as the proportion of test statistics from the null distribution, pi0, can be accessed from the `gridsemble` object.
+Local and tail-end false discovery rates, as well as the proportion of test statistics from the null distribution, pi0, can be accessed from the `gridsemble_res` object.
 
 ```{r eval = FALSE}
 fdr <- gridsemble_res$fdr
@@ -53,7 +53,11 @@ pi0 <- gridsemble_res$pi0
 By default, `gridsemble` will build `nsim = 10` simulated datasets to compute approximate metrics, and choose the top `ensemble_size = 10` set of hyperparameters from each to ensemble over. This can easily be changed by the user.
 
 ```{r eval = FALSE}
-gridsemble_res <- gridsemble(test_statistics, nsim = 5, ensemble_size = 20)
+gridsemble_res <- gridsemble(
+  test_statistics, 
+  nsim = 5, 
+  ensemble_size = 20
+)
 ```
 
 #### Hyperparameter Grids
@@ -101,5 +105,8 @@ gridsemble <- gridsemble(
 By default, the simulated datasets are the same size as the real data. If this is too large given a user's computational limitations, the size of simulated datasets can be specified with `sim_n`.
 
 ```{r eval = FALSE}
-gridsemble_res <- gridsemble(test_statistics, sim_n = 1000)
+gridsemble_res <- gridsemble(
+  test_statistics, 
+  sim_n = 1000
+)
 ```
