@@ -7,21 +7,22 @@
 reduce_locfdr_grid(
   test_statistics,
   locfdr_grid,
+  lower_pi0,
   parallel_param = NULL,
   verbose = FALSE
 )
 }
 \arguments{
-\item{test_statistics}{vector of test statistics}
+\item{test_statistics}{vector, test statistics}
 
-\item{locfdr_grid}{data frame where each row is a possible set of hyperparameters for locfdr}
+\item{locfdr_grid}{data.frame, each row is a possible set of hyperparameters for locfdr}
 
-\item{parallel_param}{if not NULL, processes are run in parallel with this parameter}
+\item{parallel_param}{BiocParallel object, specified to run in parallel or NULL}
 
-\item{verbose}{if TRUE, status updates will be displayed}
+\item{verbose}{boolean}
 }
 \value{
-dataframe where each row is a possible set of hyperparameters for locfdr
+data.frame, each row is a possible set of hyperparameters for locfdr
 }
 \description{
 Reduces grid to parameter combinations

@@ -7,10 +7,10 @@
 nrow_null0(dataframe)
 }
 \arguments{
-\item{dataframe}{data frame or NULL}
+\item{dataframe}{data.frame or NULL}
 }
 \value{
-the number of rows in the dataframe, or 0 if a
+integer, number of rows in the dataframe, or 0 if a
 NULL value is passed in.
 }
 \description{

@@ -2,7 +2,7 @@
 % Please edit documentation in R/fit_sim.R
 \name{fit_sim_symmetric}
 \alias{fit_sim_symmetric}
-\title{Fit for Simulation using EM algorithm, Symmetric}
+\title{Fit Symmetric Working Model using EM algorithm}
 \usage{
 fit_sim_symmetric(
   test_statistics,
@@ -14,21 +14,21 @@ fit_sim_symmetric(
 )
 }
 \arguments{
-\item{test_statistics}{vector of test statistics}
+\item{test_statistics}{vector, test statistics}
 
-\item{sigmasq0}{initial value for sigmasq0}
+\item{sigmasq0}{double, initial value for sigmasq0}
 
-\item{sigmasq1}{initial value for sigmasq1}
+\item{sigmasq1}{double, initial value for sigmasq1}
 
-\item{pi0}{initial value for pi0}
+\item{pi0}{double, initial value for pi0}
 
-\item{maxiter}{highest number of iterations of EM algorithm allowed}
+\item{maxiter}{integer, max number of iterations of EM algorithm allowed}
 
-\item{tol}{tolerance for change in sum of squared differences in parameters
+\item{tol}{double, tolerance for change in sum of squared differences in parameters
 in order to stop algorithm}
 }
 \value{
-vector of named parameters for the fit densities and values across iterations
+list, named parameters for the fit densities and values across iterations
 }
 \description{
 Fit a null and alternative distribution in order to

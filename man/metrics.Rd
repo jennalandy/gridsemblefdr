@@ -4,18 +4,29 @@
 \alias{metrics}
 \title{Compute all metrics}
 \usage{
-metrics(fdr, Fdr, truth, true_Fdr, topq)
+metrics(
+  fdr,
+  Fdr,
+  test_statistics,
+  truth,
+  true_Fdr,
+  true_fdr,
+  topq,
+  cutoff = 0.2
+)
 }
 \arguments{
-\item{fdr}{estimated fdr values}
+\item{fdr}{vector, estimated fdr values}
 
-\item{Fdr}{estimated (tail end) Fdr values}
+\item{Fdr}{vector, estimated (tail end) Fdr values}
 
-\item{truth}{truth values, vector of 0 and 1s}
+\item{truth}{vector, truth values, vector of 0 and 1s}
 
-\item{true_Fdr}{true Fdr values}
+\item{true_Fdr}{vector, true Fdr values}
 
-\item{topq}{vector of booleans for whether each test statistic
+\item{true_fdr}{vector, true fdr values}
+
+\item{topq}{vector, booleans for whether each test statistic
 is in the largest absolute quantile}
 }
 \value{

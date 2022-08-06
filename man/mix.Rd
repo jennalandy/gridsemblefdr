@@ -7,13 +7,13 @@
 mix(t, pi0, sigmasq0, sigmasq1)
 }
 \arguments{
-\item{t}{test statistic}
+\item{t}{double, test statistic}
 
-\item{pi0}{proportion null}
+\item{pi0}{double, proportion null}
 
-\item{sigmasq0}{variance of null distribution}
+\item{sigmasq0}{double, variance of null distribution}
 
-\item{type}{one of c('symmetric','asymmetric')}
+\item{type}{string, one of c('symmetric')}
 }
 \value{
 value of mixture density pdf at value t

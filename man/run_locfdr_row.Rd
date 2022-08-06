@@ -7,11 +7,11 @@
 run_locfdr_row(test_statistics, locfdr_grid, row, returnFdr = TRUE)
 }
 \arguments{
-\item{test_statistics}{vector of test statistics}
+\item{test_statistics}{vector, test statistics}
 
-\item{locfdr_grid}{data frame where each row is a set of hyperparameters}
+\item{locfdr_grid}{data.frame, each row is a set of hyperparameters}
 
-\item{row}{row of locfdr_grid, i.e. which set of hyperparameters to run locfdr with}
+\item{row}{integer, row of locfdr_grid}
 }
 \value{
 \itemize{

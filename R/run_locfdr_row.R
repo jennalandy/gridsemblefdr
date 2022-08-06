@@ -1,9 +1,9 @@
 #' @title Run locfdr
 #' @description Run locfdr with a specific set of parameters
 #'
-#' @param test_statistics vector of test statistics
-#' @param locfdr_grid data frame where each row is a set of hyperparameters
-#' @param row row of locfdr_grid, i.e. which set of hyperparameters to run locfdr with
+#' @param test_statistics vector, test statistics
+#' @param locfdr_grid data.frame, each row is a set of hyperparameters
+#' @param row integer, row of locfdr_grid
 #'
 #' @return
 #' \itemize{
@@ -14,7 +14,6 @@
 #'
 #' @importFrom locfdr locfdr
 #' @importFrom dplyr case_when
-#' @export
 run_locfdr_row <- function(
   test_statistics,
   locfdr_grid,

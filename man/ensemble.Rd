@@ -7,6 +7,8 @@
 ensemble(
   test_statistics,
   top_grid,
+  focus_metric,
+  large_abs_metric,
   locfdr_grid,
   fdrtool_grid,
   qvalue_grid,
@@ -16,21 +18,22 @@ ensemble(
 )
 }
 \arguments{
-\item{test_statistics}{vector of test statistics}
+\item{test_statistics}{vector, test statistics}
 
-\item{top_grid}{data frame of method, row number combinations to ensemble}
+\item{top_grid}{data.frame, specifies packages and row numbers within that grid of
+the best methods used in the ensemble}
 
-\item{locfdr_grid}{data frame where each row is a set of hyperparameters for locfdr}
+\item{locfdr_grid}{data.frame, each row is a set of hyperparameters for locfdr}
 
-\item{fdrtool_grid}{data frame where each row is a set of hyperparameters for fdrtool}
+\item{fdrtool_grid}{data.frame, each row is a set of hyperparameters for fdrtool}
 
-\item{qvalue_grid}{data frame where each row is a set of hyperparameters for qvalue}
+\item{qvalue_grid}{data.frame, each row is a set of hyperparameters for qvalue}
 
-\item{df}{degrees of freedom of test statistics, if known}
+\item{df}{integer, degrees of freedom of test statistics, if known}
 
-\item{parallel_param}{if not NULL, processes are run in parallel}
+\item{parallel_param}{BiocParallel object, specified to run in parallel or NULL}
 
-\item{verbose}{if TRUE, status updates will be displayed}
+\item{verbose}{boolean}
 }
 \value{
 \itemize{

@@ -1,13 +1,13 @@
 #' @title P from T
 #' @description get p-value from test statistic
 #'
-#' @param test_statistics vector of t statistics
-#' @param df degrees of freedom to compute p-value from test statistics,
+#' @param test_statistics vector, test statistics
+#' @param df integer, degrees of freedom to compute p-value from test statistics,
 #' assume standard normal if NULL
+#' @param sides string, one of c('one','two'), one- or two-sided p-values
 #'
 #' @return vector of p-values
-#' @export
-p_from_t <- function(test_statistics, df = NULL, sides = 'one') {
+p_from_t <- function(test_statistics, df = NULL, sides = 'two') {
 
   if (is.null(df)) {
     # assume standard normal
@@ -29,14 +29,14 @@ p_from_t <- function(test_statistics, df = NULL, sides = 'one') {
 }
 
 #' @title Run qvalue
-#' @description Run fdrtool with a specific set of parameters
+#' @description Run qvalue with a specific set of parameters
 #'
-#' @param test_statistics vector of test statistics
-#' @param qvalue_grid data frame where each row is a set of hyperparameters
-#' @param row row of qvalue_grid, i.e. which set of hyperparameters to run qvalue with
-#' @param df degrees of freedom to compute p-value from test statistics,
+#' @param test_statistics vector, test statistics
+#' @param qvalue_grid data.frame, each row is a set of hyperparameters
+#' @param row integer, row of qvalue_grid
+#' @param df integer, degrees of freedom to compute p-value from test statistics,
 #' assume standard normal if NULL
-#' @param verbose
+#' @param verbose boolean
 #'
 #' @return
 #' \itemize{
@@ -46,7 +46,6 @@ p_from_t <- function(test_statistics, df = NULL, sides = 'one') {
 #' }
 #'
 #' @importFrom qvalue qvalue
-#' @export
 run_qvalue_row <- function(
   test_statistics,
   qvalue_grid,

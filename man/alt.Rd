@@ -7,12 +7,12 @@
 alt(t, sigmasq1)
 }
 \arguments{
-\item{t}{test statistic}
+\item{t}{double, test statistic}
 
-\item{sigmasq1}{variance of alternative distribution if symmetric}
+\item{sigmasq1}{double, variance of alternative distribution if symmetric}
 }
 \value{
-value of alternative density pdf at value t
+double, value of alternative density pdf at value t
 }
 \description{
 Alternative pdf

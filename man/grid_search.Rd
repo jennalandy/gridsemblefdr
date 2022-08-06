@@ -7,7 +7,7 @@
 grid_search(
   n,
   nsim,
-  topn,
+  ensemble_size,
   fit,
   method_list,
   row_list,
@@ -19,52 +19,52 @@ grid_search(
   large_abs_metric = TRUE,
   params_type = "symmetric",
   parallel_param = NULL,
+  sim_subset = NULL,
   verbose = TRUE
 )
 }
 \arguments{
-\item{n}{number of test statistics in the real dataset = number of
-test statistics to simulate}
+\item{n}{integer, number of test statistics in each simulated dataset}
 
-\item{nsim}{Number of datasets to simulate and grid search over.
+\item{nsim}{integer, number of datasets to simulate.
 If 0, no datasets are simulated and model(s) are randomly selected.}
 
-\item{topn}{Number of models chosen from each simulation to ensemble over.
-If \code{nsim = 0}, number of random models to ensemble over.}
+\item{ensemble_size}{integer, number of models chosen to ensemble over OR double,
+proportion of grid size to ensemble over}
 
-\item{fit}{result of fit_sim()}
+\item{fit}{list, result of fit_sim()}
 
-\item{df}{degrees of freedom of test statistics, if known}
+\item{df}{integer, degrees of freedom of test statistics, if known, or NULL}
 
-\item{locfdr_grid}{data frame where each row is a set of hyperparameters for locfdr}
+\item{locfdr_grid}{data.frame, each row is a set of hyperparameters for locfdr}
 
-\item{fdrtool_grid}{data frame where each row is a set of hyperparameters for fdrtool}
+\item{fdrtool_grid}{data.frame, each row is a set of hyperparameters for fdrtool}
 
-\item{qvalue_grid}{data frame where each row is a set of hyperparameters for qvalue}
+\item{qvalue_grid}{data.frame, each row is a set of hyperparameters for qvalue}
 
-\item{focus_metric}{which metric to prioritize in the grid search.
-Must be one of c('pr','roc','brier','Fdrerror')}
+\item{focus_metric}{string, one of one of c('fdrerror','Fdrerror','pr','roc','brier'),
+which metric to optimize in the grid search}
 
-\item{large_abs_metric}{if TRUE, only consider focus_metric looking at the
-large absolute value test statistics (specifically, top quartile of abs(t))}
+\item{large_abs_metric}{boolean, if TRUE, only consider focus_metric looking at the
+large absolute value test statistics (top quartile of abs(t))}
 
-\item{params_type}{type of simulation model fit, one of c('symmetric','asymmetric')}
+\item{params_type}{string, type of simulation model fit, one of c('symmetric')}
 
-\item{parallel_param}{if not NULL, processes are run in parallel}
+\item{parallel_param}{BiocParallel object, specified to run in parallel or NULL}
 
-\item{verbose}{if TRUE, status updates will be displayed}
+\item{verbose}{boolean}
 }
 \value{
 \itemize{
-\item fit - result of fit_sim()
-\item top_grid - data frame where each row corresponds to a model
+\item fit - list, result of fit_sim()
+\item top_grid - data.frame, each row corresponds to a model
 to ensemble over. Each row references a method (locfdr, fdrtool,
 or qvalue) and row numbers in the respective grid
-\item all_grids - data frame with simulation metrics across all
+\item all_grids - data.frame, simulation metrics across all
 simulations and all models.
 }
 }
 \description{
-simulate data and run grid search(es) to determine which
+simulate data and run grid search to determine which
 models to ensemble over on the real dataset
 }

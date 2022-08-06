@@ -7,12 +7,12 @@
 metropolis_hastings_step(t, sigmasq1)
 }
 \arguments{
-\item{t}{current t value}
+\item{t}{double, current t value}
 
-\item{sigmasq1}{variance of alternative distribution}
+\item{sigmasq1}{double, variance of alternative distribution}
 }
 \value{
-t next t value
+double, next t value
 }
 \description{
 One Metropolis Hastings step to update t

@@ -7,12 +7,12 @@
 simulate_from_fit(n, fit)
 }
 \arguments{
-\item{n}{sample size}
+\item{n}{integer, sample size}
 
-\item{fit}{result of fit_sim()}
+\item{fit}{list, result of fit_sim()}
 }
 \value{
-data frame of n simulated t-statistic truth pairs
+data.frame, n simulated t-statistic and truth pairs
 }
 \description{
 simulate a dataset of size n from the mixture and record truth label

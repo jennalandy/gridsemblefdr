@@ -7,21 +7,22 @@
 reduce_fdrtool_grid(
   test_statistics,
   fdrtool_grid,
+  lower_pi0,
   parallel_param = NULL,
   verbose = FALSE
 )
 }
 \arguments{
-\item{test_statistics}{vector of test statistics}
+\item{test_statistics}{vector, test statistics}
 
-\item{fdrtool_grid}{data frame where each row is a possible set of hyperparameters for fdrtool}
+\item{fdrtool_grid}{data.frame where each row is a possible set of hyperparameters for fdrtool}
 
-\item{parallel_param}{if not NULL, processes are run in parallel}
+\item{parallel_param}{BiocParallel object, specified to run in parallel or NULL}
 
-\item{verbose}{if TRUE, status updates will be displayed}
+\item{verbose}{boolean}
 }
 \value{
-dataframe where each row is a possible set of hyperparameters for fdrtool
+reduced fdrtool_grid: dataframe where each row is a possible set of hyperparameters for fdrtool
 }
 \description{
 Reduces grid to parameter combinations

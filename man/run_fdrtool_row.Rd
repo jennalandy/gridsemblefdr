@@ -7,11 +7,11 @@
 run_fdrtool_row(test_statistics, fdrtool_grid, row, returnFdr = TRUE)
 }
 \arguments{
-\item{test_statistics}{vector of test statistics}
+\item{test_statistics}{vector, test statistics}
 
-\item{fdrtool_grid}{data frame where each row is a set of hyperparameters}
+\item{fdrtool_grid}{data.frame, each row is a set of hyperparameters}
 
-\item{row}{row of fdrtool_grid, i.e. which set of hyperparameters to run fdrtool with}
+\item{row}{integer, row of fdrtool_grid}
 }
 \value{
 \itemize{

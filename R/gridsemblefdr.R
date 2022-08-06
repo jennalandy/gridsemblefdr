@@ -2,24 +2,22 @@
 #' @description use ensemble methods to estimate local (fdr) and tail-end (Fdr)
 #' false discovery rates.
 #'
-#' @param test_statistics vector of test statistics
-#' @param nsim Number of datasets to simulate and grid search over.
+#' @param test_statistics vector, test statistics
+#' @param nsim integer, number of datasets to simulate and grid search over.
 #' If 0, no datasets are simulated and model(s) are randomly selected.
-#' @param topn Number of models chosen from each simulation to ensemble over.
-#' If `nsim = 0`, number of random models to ensemble over.
-#' @param locfdr_grid data frame where each row is a set of hyperparameters for locfdr
-#' @param fdrtool_grid data frame where each row is a set of hyperparameters for fdrtool
-#' @param qvalue_grid data frame where each row is a set of hyperparameters for qvalue
-#' @param df degrees of freedom of test statistics, if known. Otherwise assumed
+#' @param ensemble_size integer, number of models chosen to ensemble over.
+#' @param locfdr_grid data.frame, each row is a set of hyperparameters for locfdr
+#' @param fdrtool_grid data.frame, each row is a set of hyperparameters for fdrtool
+#' @param qvalue_grid data.frame, each row is a set of hyperparameters for qvalue
+#' @param df integer, degrees of freedom of test statistics, if known. Otherwise assumed
 #' to be from N(0, 1).
-#' @param methods vector of methods to be used. Default c('locfdr','fdrtool','qvalue')
-#' @param asym boolean, whether to consider an asymmetric simulation model.
-#' @param focus_metric which metric to prioritize in the grid search.
-#' Must be one of c('pr','roc','brier','Fdrerror')
-#' @param large_abs_metric if TRUE, only consider focus_metric looking at the
-#' large absolute value test statistics (specifically, top quartile of abs(t))
-#' @param parallel if TRUE, processes are run in parallel
-#' @param verbose if TRUE, status updates will be displayed
+#' @param methods vector, methods to be used. Default c('locfdr','fdrtool','qvalue')
+#' @param focus_metric string, one of one of c('fdrerror','Fdrerror','pr','roc','brier'),
+#' which metric to optimize in the grid search
+#' @param large_abs_metric boolean, if TRUE, only consider focus_metric looking at the
+#' large absolute value test statistics (top quartile of abs(t))
+#' @param parallel boolean
+#' @param verbose boolean
 #'
 #' @importFrom BiocParallel DoparParam
 #' @importFrom parallel detectCores
@@ -39,18 +37,19 @@
 gridsemble <- function(
   test_statistics,
   nsim = 10,
-  topn = 1,
+  ensemble_size = 10,
   locfdr_grid = NULL,
   fdrtool_grid = NULL,
   qvalue_grid = NULL,
   df = NULL,
   methods = c('locfdr','fdrtool','qvalue'),
-  asym = FALSE,
-  focus_metric = 'pr',
+  focus_metric = 'fdrerror',
+  lower_pi0 = 0.7,
   n_workers = NULL,
   large_abs_metric = TRUE,
   parallel = TRUE,
   parallel_param = NULL,
+  sim_subset = NULL,
   verbose = TRUE
 ) {
 
@@ -74,25 +73,35 @@ gridsemble <- function(
     sides = 'two'
   )
 
-  if (!(focus_metric %in% c('Fdrerror','roc','pr','brier'))) {
-    cat("focus_metric must be one of c('Fdrerror','roc','pr','brier'), using default (Fdrerror)")
-    focus_metric = 'pr'
+  if (!(focus_metric %in% c('Fdrerror','fdrerror','roc','pr','brier','accuracy','recall','precision','specificity','f1'))) {
+    cat("focus_metric must be one of c('Fdrerror','fdrerror','roc','pr','brier'), using default (fdrerror)")
+    focus_metric = 'fdrerror'
   }
 
   if ('locfdr' %in% methods) {
     if (is.null(locfdr_grid)) {
-      locfdr_grid <- build_locfdr_grid(test_statistics, parallel_param = parallel_param)
+      locfdr_grid <- build_locfdr_grid(test_statistics, lower_pi0=lower_pi0, parallel_param = parallel_param)
     }
   }
   if ('fdrtool' %in% methods) {
     if (is.null(fdrtool_grid)) {
-      fdrtool_grid <- build_fdrtool_grid(test_statistics, parallel_param = parallel_param)
+      fdrtool_grid <- build_fdrtool_grid(test_statistics, lower_pi0=lower_pi0, parallel_param = parallel_param)
     }
   }
   if ('qvalue' %in% methods) {
     if (is.null(qvalue_grid)) {
-      qvalue_grid <- build_qvalue_grid(test_statistics, df = df, parallel_param = parallel_param)
+      qvalue_grid <- build_qvalue_grid(test_statistics, df = df, lower_pi0=lower_pi0, parallel_param = parallel_param)
     }
+  }
+
+  grid_size = nrow_null0(locfdr_grid) +
+    nrow_null0(fdrtool_grid) +
+    nrow_null0(qvalue_grid)
+
+  if (grid_size < ensemble_size) {
+    ensemble_size = grid_size
+    warning(paste("Grid size of ", grid_size, " is too small for ensemble size ", ensemble_size,
+                  ". Setting ensemble size to ", grid_size, ".", sep = ''))
   }
 
   # store results from each implementation with default parameters
@@ -119,14 +128,17 @@ gridsemble <- function(
   }
 
   # fit simulation model to test statistics
-  asym_type = ifelse(asym, 'asymmetric', 'symmetric')
-  fit <- fit_sim(test_statistics, type = asym_type)
+  if (nsim > 0) {
+    fit <- fit_sim(test_statistics, type = 'symmetric')
+  } else {
+    fit <- NULL
+  }
 
   # perform grid search on simulated datasets
   grid_res <- grid_search(
     n = length(test_statistics),
     nsim = nsim,
-    topn = topn,
+    ensemble_size = ensemble_size,
     fit = fit,
     df = df,
     locfdr_grid = locfdr_grid,
@@ -134,8 +146,9 @@ gridsemble <- function(
     fdrtool_grid = fdrtool_grid,
     focus_metric = focus_metric,
     large_abs_metric = large_abs_metric,
-    params_type = asym_type,
+    params_type = 'symmetric',
     parallel_param = parallel_param,
+    sim_subset = sim_subset,
     verbose = verbose
   )
 
@@ -145,6 +158,8 @@ gridsemble <- function(
   # ensemble over top performing grid search methods
   ensemble_res = ensemble(
     test_statistics = test_statistics,
+    focus_metric = focus_metric,
+    large_abs_metric = large_abs_metric,
     top_grid = top_grid,
     locfdr_grid = locfdr_grid,
     fdrtool_grid = fdrtool_grid,
@@ -171,7 +186,10 @@ gridsemble <- function(
     'default_fdrtool' = default_fdrtool,
     'default_qvalue' = default_qvalue,
     'all_grids' = all_grids,
-    'fit' = fit
+    'fit' = fit,
+    'locfdr_grid' = locfdr_grid,
+    'fdrtool_grid' = fdrtool_grid,
+    'qvalue_grid' = qvalue_grid
   )
   return(out)
 }

@@ -7,14 +7,14 @@
 Fdr_from_fdr(fdr, test_statistics, direction = "left")
 }
 \arguments{
-\item{fdr}{vector of local false discovery rate estimates}
+\item{fdr}{vector, local false discovery rate estimates}
 
-\item{test_statistics}{vector of test statistics}
+\item{test_statistics}{vector, test statistics}
 
-\item{direction}{direction of tail-end false discovery rate, c('left','right')}
+\item{direction}{string, one of c('left','right'), direction of tail-end false discovery rate}
 }
 \value{
-vector of tail-end false discovery rates
+vector, tail-end false discovery rates
 }
 \description{
 Calculate tail-end false discovery rate (Fdr)

@@ -7,12 +7,12 @@
 sample_null(n, sigmasq0)
 }
 \arguments{
-\item{n}{sample size}
+\item{n}{integer, sample size}
 
-\item{sigmasq0}{variance of null distribution}
+\item{sigmasq0}{double, variance of null distribution}
 }
 \value{
-vector of test statistics sampled from null density N(0, sigmasq0)
+vector, test statistics sampled from null density N(0, sigmasq0)
 }
 \description{
 Sample from null density

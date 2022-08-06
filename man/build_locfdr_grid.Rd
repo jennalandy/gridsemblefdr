@@ -6,44 +6,46 @@
 \usage{
 build_locfdr_grid(
   test_statistics,
-  pct = c(0, 2, 4, 6)/1000,
-  pct0 = 1/c(3:10),
+  pct_range = c(0, 0.1),
+  pct0_range = c(0, 1/3),
   nulltype = 1:3,
   type = 0:1,
+  grid_size = 40,
+  method = "grid",
+  lower_pi0 = 0.7,
+  seed = NULL,
   parallel_param = NULL,
   verbose = FALSE
 )
 }
 \arguments{
-\item{test_statistics}{vector of test statistics}
+\item{test_statistics}{vector, test statistics}
 
-\item{pct}{vector of options for pct hyperparameter. \code{pct} is the
+\item{pct_range}{vector c(min, max), range for pct hyperparameter. \code{pct} is the
 excluded tail proportions of zz's when fitting f(z).
 pct=0 includes full range of zz's.}
 
-\item{pct0}{vector of options for pct0 hyperparameter. \code{pct0} is the
+\item{pct0_range}{vector c(min, max), range for pct0 hyperparameter. \code{pct0} is the
 proportion of the zz distribution used in fitting the null density
-f0(z) by central matching. Scalar, range \link{pct0, 1-pct0} is used.}
+f0(z) by central matching.}
 
-\item{nulltype}{vector of options for nulltype hyperparameter. \code{nulltype}
+\item{nulltype}{vector, options for nulltype hyperparameter. \code{nulltype}
 is the type of null hypothesis assumed in estimating f0(z), for
 use in the fdr calculations. 0 is the theoretical null N(0,1),
 1 is maximum likelihood estimation, 2 is central matching estimation,
 3 is a split normal version of 2.}
 
-\item{type}{vector of options for type hyperparameter. \code{type} is the type of
+\item{type}{vector, options for type hyperparameter. \code{type} is the type of
 fitting used for f; 0 is a natural spline, 1 is a polynomial.}
 
-\item{parallel_param}{if not NULL, processes are run in parallel with this parameter}
+\item{parallel_param}{BiocParallel object, specified to run in parallel or NULL}
 
-\item{verbose}{if TRUE, status updates will be displayed}
+\item{verbose}{boolean}
 }
 \value{
-dataframe where each row is a possible set of hyperparameters for
-locfdr on a specific set of test statistics
+data.frame, each row is a possible set of hyperparameters for locfdr
 }
 \description{
-Build a grid of possible hyperparameters for locfdr
-from separate vectors of hyperparameter options. Final grid only considers
-hyperparameters that can be run on provided data without error.
+Build a factorial grid of possible hyperparameters for locfdr and
+reduce to hyperparameter sets that can be run on provided data without error.
 }

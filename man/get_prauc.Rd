@@ -7,12 +7,12 @@
 get_prauc(fdr, truth)
 }
 \arguments{
-\item{fdr}{estimated fdr values}
+\item{fdr}{vector, estimated fdr values}
 
-\item{truth}{truth values, vector of 0 and 1s}
+\item{truth}{vector, truth values, vector of 0 and 1s}
 }
 \value{
-PR AUC
+double, PR AUC
 }
 \description{
 Calculate PR AUC

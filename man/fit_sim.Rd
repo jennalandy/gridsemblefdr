@@ -2,7 +2,7 @@
 % Please edit documentation in R/fit_sim.R
 \name{fit_sim}
 \alias{fit_sim}
-\title{Fit for Simulation using EM algorithm}
+\title{Fit working model using EM algorithm}
 \usage{
 fit_sim(
   test_statistics,
@@ -18,19 +18,19 @@ fit_sim(
 )
 }
 \arguments{
-\item{test_statistics}{vector of test statistics}
+\item{test_statistics}{vector, test statistics}
 
-\item{type}{one of c('symmetric','asymmetric')}
+\item{type}{string, one of c('symmetric'), set up this way to add other working model options later}
 
-\item{sigmasq0}{initial value for sigmasq0}
+\item{sigmasq0}{double, initial value for sigmasq0}
 
-\item{sigmasq1}{initial value for sigmasq1}
+\item{sigmasq1}{double, initial value for sigmasq1}
 
-\item{pi0}{initial value for pi0}
+\item{pi0}{double, initial value for pi0}
 
-\item{maxiter}{highest number of iterations of EM algorithm allowed}
+\item{maxiter}{integer, highest number of iterations of EM algorithm allowed}
 
-\item{tol}{tolerance for change in sum of squared differences in parameters
+\item{tol}{double, tolerance for change in sum of squared differences in parameters
 in order to stop algorithm}
 }
 \value{

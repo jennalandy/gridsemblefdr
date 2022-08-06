@@ -7,27 +7,31 @@
 build_qvalue_grid(
   test_statistics,
   transf = c("probit", "logit"),
-  adj = c(0.8, 0.9, 1, 1.1, 1.2),
+  adj_range = c(0.5, 1.5),
   pi0.method = c("bootstrap", "smoother"),
   smooth.log.pi0 = c(TRUE, FALSE),
   df = NULL,
+  grid_size = 40,
+  method = "grid",
+  lower_pi0 = 0.7,
+  seed = NULL,
   parallel_param = NULL,
   verbose = FALSE
 )
 }
 \arguments{
-\item{test_statistics}{vector of test statistics}
+\item{test_statistics}{vector, test statistics}
 
-\item{transf}{vector of options for transf hyperparameter. \code{transf} is
+\item{transf}{vector, options for transf hyperparameter. \code{transf} is
 a transformation is applied to the p-values so that a local FDR estimate can
 be formed that does not involve edge effects of the \link{0,1} interval in which
 the p-values lie, either "probit" or "logit".}
 
-\item{adj}{vector of options for adj hyperparameter. \code{adj} is a numeric value
+\item{adj_range}{vector c(min, max), range for adj hyperparameter. \code{adj} is a numeric value
 that is applied as a multiple of the smoothing bandwidth used in the density
 estimation.}
 
-\item{pi0.method}{vector of options for pi0.method hyperparameter. \code{pi0.method}
+\item{pi0.method}{vector, options for pi0.method hyperparameter. \code{pi0.method}
 is the method for automatically choosing tuning parameter in the estimation of
 pi_0, the proportion of true null hypotheses, either "smoother" or "bootstrap".}
 
@@ -36,16 +40,14 @@ If \code{smooth.log.pi0} is TRUE and pi0.method = "smoother", pi_0 will be estim
 by applying a smoother to a scatterplot of log(pi_0) estimates against the
 tuning parameter lambda.}
 
-\item{parallel_param}{if not NULL, processes are run in parallel}
+\item{parallel_param}{BiocParallel object, specified to run in parallel or NULL}
 
-\item{verbose}{if TRUE, status updates will be displayed}
+\item{verbose}{boolean}
 }
 \value{
-dataframe where each row is a possible set of hyperparameters for
-qvalue on a specific set of test statistics
+data.frame, each row is a possible set of hyperparameters for qvalue
 }
 \description{
-Build a grid of possible hyperparameters for qvalue
-from separate vectors of hyperparameter options. Final grid only considers
-hyperparameters that can be run on provided data without error.
+Build a factorial grid of possible hyperparameters for qvalue and
+reduce to hyperparameter sets that can be run on provided data without error.
 }

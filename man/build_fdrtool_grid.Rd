@@ -7,30 +7,40 @@
 build_fdrtool_grid(
   test_statistics,
   cutoff.method = c("fndr", "pct0", "locfdr"),
-  pct0 = 1/c(2:10),
+  pct0_range = c(0, 0.5),
+  grid_size = 40,
   parallel_param = NULL,
+  method = "grid",
+  lower_pi0 = 0.7,
+  seed = NULL,
   verbose = FALSE
 )
 }
 \arguments{
-\item{test_statistics}{vector of test statistics}
+\item{test_statistics}{vector, test statistics}
 
-\item{cutoff.method}{vector of options for cutoff method hyperparameter.
+\item{cutoff.method}{vector, options for cutoff method hyperparameter.
 \code{cutoff.method} is one of "fndr" (default), "pct0", "locfdr".}
 
-\item{pct0}{vector of options for pct0 hyperparameter. \code{pct0} is the
+\item{pct0_range}{vector c(min, max), range for pct0 hyperparameter. \code{pct0} is the
 fraction of data used for fitting null model - only if cutoff.method="pct0".}
 
-\item{parallel_param}{if not NULL, processes are run in parallel}
+\item{grid_size}{integer, desired size of grid to use. Note that this is \emph{not a guarantee}
+as some hyperparameter combinations may fail when run on the data.}
 
-\item{verbose}{if TRUE, status updates will be displayed}
+\item{parallel_param}{BiocParallel object, specified to run in parallel or NULL}
+
+\item{method}{string, one of c('random', 'grid'). 'random' will sample from a uniform
+distribution within the ranges, 'grid' will select equally spaced values.}
+
+\item{seed}{integer, random seed used if method = 'random'}
+
+\item{verbose}{boolean}
 }
 \value{
-dataframe where each row is a possible set of hyperparameters for
-fdrtool on a specific set of test statistics
+data.frame, each row is a possible set of hyperparameters for fdrtool
 }
 \description{
-Build a grid of possible hyperparameters for fdrtool
-from separate vectors of hyperparameter options. Final grid only considers
-hyperparameters that can be run on provided data without error.
+Build a factorial grid of possible hyperparameters for fdrtool and
+reduce to hyperparameter sets that can be run on provided data without error.
 }

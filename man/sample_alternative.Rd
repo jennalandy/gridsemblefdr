@@ -7,14 +7,14 @@
 sample_alternative(N, sigmasq1, burn_in = 1000, t_init = 1)
 }
 \arguments{
-\item{N}{number of test statistics to sample}
+\item{N}{integer, number of test statistics to sample}
 
-\item{sigmasq1}{variance of alternative distribution}
+\item{sigmasq1}{double, variance of alternative distribution}
 
-\item{burn_in}{number of iterations to use as burn in and discard}
+\item{burn_in}{integer, number of iterations to use as burn in and discard}
 }
 \value{
-test_statistics vector of test statistics
+vector, test statistics
 }
 \description{
 Sample from alternative pdf using metropolis hastings

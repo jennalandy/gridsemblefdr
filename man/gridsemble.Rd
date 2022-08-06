@@ -7,52 +7,50 @@
 gridsemble(
   test_statistics,
   nsim = 10,
-  topn = 1,
+  ensemble_size = 10,
   locfdr_grid = NULL,
   fdrtool_grid = NULL,
   qvalue_grid = NULL,
   df = NULL,
   methods = c("locfdr", "fdrtool", "qvalue"),
-  asym = FALSE,
-  focus_metric = "pr",
+  focus_metric = "fdrerror",
+  lower_pi0 = 0.7,
   n_workers = NULL,
   large_abs_metric = TRUE,
   parallel = TRUE,
   parallel_param = NULL,
+  sim_subset = NULL,
   verbose = TRUE
 )
 }
 \arguments{
-\item{test_statistics}{vector of test statistics}
+\item{test_statistics}{vector, test statistics}
 
-\item{nsim}{Number of datasets to simulate and grid search over.
+\item{nsim}{integer, number of datasets to simulate and grid search over.
 If 0, no datasets are simulated and model(s) are randomly selected.}
 
-\item{topn}{Number of models chosen from each simulation to ensemble over.
-If \code{nsim = 0}, number of random models to ensemble over.}
+\item{ensemble_size}{integer, number of models chosen to ensemble over.}
 
-\item{locfdr_grid}{data frame where each row is a set of hyperparameters for locfdr}
+\item{locfdr_grid}{data.frame, each row is a set of hyperparameters for locfdr}
 
-\item{fdrtool_grid}{data frame where each row is a set of hyperparameters for fdrtool}
+\item{fdrtool_grid}{data.frame, each row is a set of hyperparameters for fdrtool}
 
-\item{qvalue_grid}{data frame where each row is a set of hyperparameters for qvalue}
+\item{qvalue_grid}{data.frame, each row is a set of hyperparameters for qvalue}
 
-\item{df}{degrees of freedom of test statistics, if known. Otherwise assumed
+\item{df}{integer, degrees of freedom of test statistics, if known. Otherwise assumed
 to be from N(0, 1).}
 
-\item{methods}{vector of methods to be used. Default c('locfdr','fdrtool','qvalue')}
+\item{methods}{vector, methods to be used. Default c('locfdr','fdrtool','qvalue')}
 
-\item{asym}{boolean, whether to consider an asymmetric simulation model.}
+\item{focus_metric}{string, one of one of c('fdrerror','Fdrerror','pr','roc','brier'),
+which metric to optimize in the grid search}
 
-\item{focus_metric}{which metric to prioritize in the grid search.
-Must be one of c('pr','roc','brier','Fdrerror')}
+\item{large_abs_metric}{boolean, if TRUE, only consider focus_metric looking at the
+large absolute value test statistics (top quartile of abs(t))}
 
-\item{large_abs_metric}{if TRUE, only consider focus_metric looking at the
-large absolute value test statistics (specifically, top quartile of abs(t))}
+\item{parallel}{boolean}
 
-\item{parallel}{if TRUE, processes are run in parallel}
-
-\item{verbose}{if TRUE, status updates will be displayed}
+\item{verbose}{boolean}
 }
 \value{
 \itemize{

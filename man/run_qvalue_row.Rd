@@ -14,16 +14,16 @@ run_qvalue_row(
 )
 }
 \arguments{
-\item{test_statistics}{vector of test statistics}
+\item{test_statistics}{vector, test statistics}
 
-\item{qvalue_grid}{data frame where each row is a set of hyperparameters}
+\item{qvalue_grid}{data.frame, each row is a set of hyperparameters}
 
-\item{row}{row of qvalue_grid, i.e. which set of hyperparameters to run qvalue with}
+\item{row}{integer, row of qvalue_grid}
 
-\item{df}{degrees of freedom to compute p-value from test statistics,
+\item{df}{integer, degrees of freedom to compute p-value from test statistics,
 assume standard normal if NULL}
 
-\item{verbose}{}
+\item{verbose}{boolean}
 }
 \value{
 \itemize{
@@ -33,5 +33,5 @@ assume standard normal if NULL}
 }
 }
 \description{
-Run fdrtool with a specific set of parameters
+Run qvalue with a specific set of parameters
 }

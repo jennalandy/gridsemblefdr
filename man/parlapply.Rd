@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils_parallel.R
 \name{parlapply}
 \alias{parlapply}
-\title{Title}
+\title{general lapply function with specification of parallel or not}
 \usage{
 parlapply(X, FUN, parallel_param, ...)
 }
@@ -11,11 +11,11 @@ parlapply(X, FUN, parallel_param, ...)
 
 \item{FUN}{the function to be applied to each element of X}
 
-\item{parallel}{whether to run in parallel with \code{bplapply} or regularly with \code{lapply}}
+\item{parallel_param}{BiocParallel object, specified to run in parallel or NULL}
 }
 \value{
 result of lapply
 }
 \description{
-Title
+general lapply function with specification of parallel or not
 }

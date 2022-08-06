@@ -7,12 +7,12 @@
 null(t, sigmasq0)
 }
 \arguments{
-\item{t}{test statistic}
+\item{t}{double, test statistic}
 
-\item{sigmasq0}{variance of null density}
+\item{sigmasq0}{double, variance of null density}
 }
 \value{
-value of null density pdf at value t
+double, value of null density pdf at value t
 }
 \description{
 Null pdf

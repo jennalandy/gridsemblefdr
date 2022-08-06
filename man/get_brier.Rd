@@ -7,12 +7,12 @@
 get_brier(fdr, truth)
 }
 \arguments{
-\item{fdr}{estimated fdr values}
+\item{fdr}{vector, estimated fdr values}
 
-\item{truth}{truth values, vector of 0 and 1s}
+\item{truth}{vector, truth values}
 }
 \value{
-Brier Score
+double, Brier Score
 }
 \description{
 Calculate Brier Score

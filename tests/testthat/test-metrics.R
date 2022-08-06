@@ -14,14 +14,14 @@ test_that("get_true_Fdr works", {
     t = test_statistics, truth = truth
   )
   expect_equal(length(true_Fdr), length(test_statistics))
-  expect_equal(true_Fdr[10], mean(truth[test_statistics <= test_statistics[10]]))
+  expect_equal(true_Fdr[10], mean(1 - truth[test_statistics <= test_statistics[10]]))
 })
 
-test_that("get_Fdr_error works", {
+test_that("get_MSE works", {
   true_Fdr = runif(n = length(test_statistics))
   my_Fdr = rep(0, length(test_statistics))
 
-  Fdr_error = get_Fdr_error(my_Fdr, true_Fdr)
+  Fdr_error = get_MSE(my_Fdr, true_Fdr)
   expect_equal(Fdr_error, mean((true_Fdr - my_Fdr)**2))
   expect_type(Fdr_error, "double")
 })
@@ -51,7 +51,8 @@ test_that("metrics works", {
   my_fdr = runif(n = length(test_statistics))
   my_Fdr = rep(0, length(test_statistics))
   true_Fdr = true_Fdr = runif(n = length(test_statistics))
-  my_metrics = metrics(my_fdr, my_Fdr, truth, true_Fdr, topq)
+  my_pi0 = 0.4
+  my_metrics = metrics(my_fdr, my_Fdr, my_pi0, test_statistics, truth, true_Fdr, topq)
 
   expect_type(my_metrics, 'list')
 })

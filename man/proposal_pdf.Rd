@@ -7,12 +7,14 @@
 proposal_pdf(of, given, sd)
 }
 \arguments{
-\item{of}{returns}
+\item{of}{double, proposed value}
 
-\item{sd}{}
+\item{given}{double, previous value}
+
+\item{sd}{double, standard deviation of proposal distribution}
 }
 \value{
-
+double, proposal pdf value
 }
 \description{
 Proposal pdf

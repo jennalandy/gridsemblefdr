@@ -2,15 +2,14 @@
 #' @description Calculate tail-end false discovery rate (Fdr)
 #' from local false discovery rate (fdr)
 #'
-#' @param fdr vector of local false discovery rate estimates
-#' @param test_statistics vector of test statistics
-#' @param direction direction of tail-end false discovery rate, c('left','right')
+#' @param fdr vector, local false discovery rate estimates
+#' @param test_statistics vector, test statistics
+#' @param direction string, one of c('left','right'), direction of tail-end false discovery rate
 #'
 #' @importFrom dplyr cummean last arrange mutate group_by summarize pull
 #' @importFrom magrittr %>%
 #'
-#' @return vector of tail-end false discovery rates
-#' @export
+#' @return vector, tail-end false discovery rates
 Fdr_from_fdr <- function(fdr, test_statistics, direction = 'left') {
 
   Fdr = vector(length = length(test_statistics))
