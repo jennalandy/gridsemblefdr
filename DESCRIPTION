@@ -20,8 +20,12 @@ Imports:
     dplyr,
     fdrtool,
     locfdr,
+    qvalue,
+    parallel,
     magrittr,
-    BiocParallel
+    BiocParallel,
+    PRROC,
+    pROC
 Suggests: 
     rmarkdown,
     knitr,
