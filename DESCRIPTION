@@ -26,6 +26,16 @@ Imports:
     BiocParallel,
     PRROC,
     pROC
+Requires: 
+    dplyr,
+    fdrtool,
+    locfdr,
+    qvalue,
+    parallel,
+    magrittr,
+    BiocParallel,
+    PRROC,
+    pROC
 Suggests: 
     rmarkdown,
     knitr,
