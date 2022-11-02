@@ -48,7 +48,7 @@ gridsemble <- function(
   lower_pi0 = 0.7,
   sim_size = length(test_statistics),
   parallel = TRUE,
-  n_workers = parallel::detectCores() - 2,
+  n_workers = max(parallel::detectCores() - 2, 1),
   parallel_param = NULL,
   verbose = TRUE
 ) {

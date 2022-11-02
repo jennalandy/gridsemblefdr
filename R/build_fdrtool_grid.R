@@ -113,7 +113,7 @@ build_fdrtool_grid <- function(
   method = 'grid',
   seed = NULL,
   parallel = TRUE,
-  n_workers = parallel::detectCores() - 2,
+  n_workers = max(parallel::detectCores() - 2, 1),
   parallel_param = NULL,
   verbose = FALSE
 ) {
