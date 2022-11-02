@@ -14,7 +14,15 @@
 #'   \item Fdr - estimated left tail-end false discovery rates if returnFdr = TRUE
 #'   \item pi0 - estimated proportion of tests that are null
 #' }
-run_row <- function(test_statistics, df, grids, method, row, returnFdr = TRUE, verbose = FALSE) {
+run_row <- function(
+    test_statistics,
+    grids,
+    method,
+    row,
+    df = NULL,
+    returnFdr = TRUE,
+    verbose = FALSE
+) {
   grid = grids[[method]]
   if (method == 'locfdr') {
     row_res <- run_locfdr_row(
@@ -27,14 +35,14 @@ run_row <- function(test_statistics, df, grids, method, row, returnFdr = TRUE, v
     row_res <- run_fdrtool_row(
       test_statistics = test_statistics,
       fdrtool_grid = grid,
-      row = test_statistics,
+      row = row,
       returnFdr = returnFdr
     )
   } else if (method == 'qvalue') {
     row_res <- run_qvalue_row(
       test_statistics = test_statistics,
       qvalue_grid = grid,
-      row = test_statistics,
+      row = row,
       df = df,
       returnFdr = returnFdr,
       verbose = verbose

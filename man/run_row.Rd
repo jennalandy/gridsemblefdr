@@ -6,10 +6,10 @@
 \usage{
 run_row(
   test_statistics,
-  df,
   grids,
   method,
   row,
+  df = NULL,
   returnFdr = TRUE,
   verbose = FALSE
 )
@@ -17,13 +17,13 @@ run_row(
 \arguments{
 \item{test_statistics}{vector, test statistics}
 
-\item{df}{integer, degrees of freedom of test statistics, if known}
-
 \item{grids}{list, grids named by method}
 
 \item{method}{string, one of c('locfdr','fdrtool','qvalue')}
 
 \item{row}{integer, which row of method grid to consider}
+
+\item{df}{integer, degrees of freedom of test statistics, if known}
 
 \item{returnFdr}{boolean, whether to calculate Fdr form fdr}
 

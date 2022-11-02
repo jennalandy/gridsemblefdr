@@ -64,19 +64,17 @@ single_grid_search <- function(
   this_score <- do.call(rbind, lapply(
     1:length(row_list),
     function(i) {
-
       row_res = run_row(
         test_statistics = this_dat$t,
-        df = df,
         grids = list(
           'locfdr' = locfdr_grid,
           'fdrtool' = fdrtool_grid,
           'qvalue' = qvalue_grid
         ),
         method = method_list[i],
-        row = row_list[i]
+        row = row_list[i],
+        df = df
       )
-
       if (!is.null(row_res)) {
         # if not null, record pi0 estimate and metrics
         this_metrics <- metrics(
@@ -102,7 +100,6 @@ single_grid_search <- function(
       return(data.frame(this_metrics))
     }
   ))
-
   return(this_score)
 }
 
@@ -251,7 +248,6 @@ grid_search <- function(
 
       # simulate data from generating_model
       this_dat <- simulate_from_generating_model(sim_size, generating_model)
-
       this_score <- single_grid_search(
         this_dat = this_dat,
         df = df,
@@ -262,7 +258,6 @@ grid_search <- function(
         qvalue_grid = qvalue_grid,
         verbose = verbose
       )
-
       this_score$sim <- sim
       return(this_score)
     },
