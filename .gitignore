@@ -7,3 +7,4 @@ inst/doc
 R/in_progress.R
 ..Rcheck/*
 gridsemblefdr.Rcheck/*
+*.Rproj
