@@ -156,7 +156,7 @@ grid_search <- function(
   focus_metric = 'fdrerror',
   large_abs_metric = FALSE,
 
-  parallel = TRUE,
+  parallel = min(TRUE, n_workers > 1),
   n_workers =  max(parallel::detectCores() - 2, 1),
   parallel_param = NULL,
 
@@ -167,11 +167,17 @@ grid_search <- function(
     ensemble_size = max(1, round(length(method_list)*ensemble_size))
   }
 
-  if (parallel & is.null(parallel_param)) {
+  n_workers = min(n_workers, nsim)
+  if (parallel & is.null(parallel_param) & n_workers > 1) {
     parallel_param <- BiocParallel::MulticoreParam(
       workers = n_workers,
       tasks = n_workers
     )
+  }
+  if (!is.null(parallel_param) & verbose) {
+    message('Running grid search in parallel')
+  } else if (verbose) {
+    message('Running grid search')
   }
 
   method_list = c()
@@ -222,6 +228,7 @@ grid_search <- function(
     parallel_param = parallel_param,
     FUN = function(
       sim,
+      nsim,
       sim_size,
       focus_metric,
       generating_model,
@@ -243,7 +250,7 @@ grid_search <- function(
       run_qvalue_row
     ){
       if(verbose) {
-        print(paste('Simulation',sim))
+        message(paste0('\tSimulation ',sim, '/', nsim))
       }
 
       # simulate data from generating_model
@@ -262,6 +269,7 @@ grid_search <- function(
       return(this_score)
     },
     sim_size = sim_size,
+    nsim = nsim,
     simulate_from_generating_model = simulate_from_generating_model,
     generating_model = generating_model,
     focus_metric = focus_metric,

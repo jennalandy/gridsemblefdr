@@ -47,7 +47,7 @@ gridsemble <- function(
   ensemble_size = 10,
   lower_pi0 = 0.7,
   sim_size = length(test_statistics),
-  parallel = TRUE,
+  parallel = min(TRUE, n_workers > 1),
   n_workers = max(parallel::detectCores() - 2, 1),
   parallel_param = NULL,
   verbose = TRUE
@@ -56,7 +56,8 @@ gridsemble <- function(
   focus_metric = 'fdrerror'
   large_abs_metric = FALSE
 
-  if (parallel & is.null(parallel_param)) {
+  n_workers = min(n_workers, nsim)
+  if (parallel & is.null(parallel_param) & n_workers > 1) {
     parallel_param = BiocParallel::MulticoreParam(
       workers = n_workers,
       tasks = n_workers
@@ -114,9 +115,12 @@ gridsemble <- function(
 
   # fit generating model to test statistics
   if (nsim > 0) {
-    generating_model <- fit_generating_model(test_statistics)
+    generating_model <- fit_generating_model(test_statistics, verbose = verbose)
   } else {
     generating_model <- NULL
+    if (verbose) {
+      message('No generting model fit with nsim = 0')
+    }
   }
 
   # perform grid search on simulated datasets

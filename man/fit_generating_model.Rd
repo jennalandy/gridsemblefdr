@@ -10,7 +10,8 @@ fit_generating_model(
   sigmasq1 = 4,
   pi0 = 0.9,
   maxiter = 500,
-  tol = 1e-04
+  tol = 1e-04,
+  verbose = TRUE
 )
 }
 \arguments{

@@ -28,12 +28,16 @@ check_qvalue_row <- function(
   # keep this row in final grid if it ran without error,
   # and if it does not estimate fdrs as all 0 or all 1
   if (!is.null(run_i)) {
-    if (run_i$pi0 <= 1 & run_i$pi0 >= lower_pi0) {
+    if (run_i$pi0 > 1) {
+      return('pi0 > 1')
+    } else if (run_i$pi0 < lower_pi0) {
+      return('pi0 < lower_pi0')
+    } else {
       return(TRUE)
     }
   }
 
-  return(FALSE)
+  return('error')
 }
 
 #' @title Reduce qvalue grid
@@ -59,18 +63,21 @@ reduce_qvalue_grid <- function(
   verbose = FALSE
 ) {
 
-  ok_rows <- unlist(parlapply(
+  checks <- unlist(parlapply(
     X = 1:nrow(qvalue_grid),
     parallel_param = parallel_param,
     FUN = function(i, run_qvalue_row, qvalue_grid, test_statistics, df) {
-      if(check_qvalue_row(
+      check = check_qvalue_row(
         test_statistics = test_statistics,
         qvalue_grid = qvalue_grid,
         row = i,
         df = df,
         lower_pi0 = lower_pi0
-      )) {
+      )
+      if (check == TRUE) {
         return(i)
+      } else {
+        return(check)
       }
     },
     run_qvalue_row = run_qvalue_row,
@@ -79,11 +86,26 @@ reduce_qvalue_grid <- function(
     df = df
   ))
 
+  rows = grepl('^[[:digit:]]+$', checks)
+  ok_rows = as.numeric(checks[rows])
+  fails = checks[!rows]
+
   if(verbose) {
-    print(paste(
-      length(ok_rows),'/',nrow(qvalue_grid),
-      'qvalue parameter sets are usable'
+    message(paste0(
+      '\t', length(ok_rows),'/',nrow(qvalue_grid),
+      ' qvalue thetas included'
     ))
+  }
+
+  if (verbose & length(fails) > 0) {
+    fails_tab = table(fails)
+    for (reason in names(fails_tab)) {
+      message(paste0(
+        '\t\t', fails_tab[reason],
+        ' thetas dropped for ',
+        reason
+      ))
+    }
   }
 
   return (qvalue_grid[ok_rows,])
@@ -137,7 +159,7 @@ build_qvalue_grid <- function(
   method = 'grid',
   seed = NULL,
   parallel_param = NULL,
-  parallel = TRUE,
+  parallel = min(TRUE, n_workers > 1),
   n_workers = max(parallel::detectCores() - 2, 1),
   verbose = FALSE
 ) {
@@ -146,11 +168,16 @@ build_qvalue_grid <- function(
     set.seed(seed)
   }
 
-  if (parallel & is.null(parallel_param)) {
+  if (parallel & is.null(parallel_param) & n_workers > 1) {
     parallel_param = BiocParallel::MulticoreParam(
       workers = n_workers,
       tasks = n_workers
     )
+  }
+  if (!is.null(parallel_param) & verbose) {
+    message('Building qvalue grid in parallel')
+  } else if (verbose) {
+    message('Building qvalue grid')
   }
 
   # smooth.log.pi0 is only used if pi0.method = 'smoother'
@@ -245,8 +272,8 @@ build_qvalue_grid <- function(
 
   if (verbose & nrow(qvalue_grid) > grid_size & method == 'grid') {
     message(paste0(
-      nrow(qvalue_grid) - grid_size, " extra hyperparameter combinations",
-      " to have a fully expanded grid. Using a grid size of ", nrow(qvalue_grid), "."
+      "\t", nrow(qvalue_grid) - grid_size, " extra thetas",
+      " needed for full grid"
     ))
   }
 
@@ -258,14 +285,6 @@ build_qvalue_grid <- function(
     parallel_param = parallel_param,
     verbose = verbose
   )
-
-  if (verbose & nrow(qvalue_grid_reduced) < nrow(qvalue_grid)) {
-    message(paste0(
-      nrow(qvalue_grid) - nrow(qvalue_grid_reduced), " hyperparameter combinations failed",
-      ifelse(lower_pi0 > 0, paste(' or had pi0 below', lower_pi0), ''),
-      " when run on the data. Using a grid size of ", nrow(qvalue_grid_reduced), "."
-    ))
-  }
 
   return(qvalue_grid_reduced)
 }

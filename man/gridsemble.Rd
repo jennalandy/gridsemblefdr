@@ -17,7 +17,7 @@ gridsemble(
   ensemble_size = 10,
   lower_pi0 = 0.7,
   sim_size = length(test_statistics),
-  parallel = TRUE,
+  parallel = min(TRUE, n_workers > 1),
   n_workers = max(parallel::detectCores() - 2, 1),
   parallel_param = NULL,
   verbose = TRUE

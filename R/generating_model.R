@@ -19,8 +19,14 @@ fit_generating_model <- function(
   pi0 = 0.9,
 
   maxiter = 500,
-  tol = 0.0001
+  tol = 0.0001,
+
+  verbose = TRUE
 ) {
+  if (verbose) {
+    message('Fitting generating model')
+  }
+
   type = 'symmetric'
 
   # option to add other working model options later

@@ -25,12 +25,16 @@ check_locfdr_row <- function(
   # keep this row in final grid if it ran without error,
   # and if it does not estimate fdrs as all 0 or all 1
   if (!is.null(run_i)) {
-    if (run_i$pi0 <= 1 & run_i$pi0 >= lower_pi0) {
+    if (run_i$pi0 > 1) {
+      return('pi0 > 1')
+    } else if (run_i$pi0 < lower_pi0) {
+      return('pi0 < lower_pi0')
+    } else {
       return(TRUE)
     }
   }
 
-  return(FALSE)
+  return('error')
 }
 
 #' @title Reduce locfdr grid
@@ -52,17 +56,21 @@ reduce_locfdr_grid <- function(
   verbose = FALSE
 ) {
 
-  ok_rows <- unlist(parlapply(
+  checks <- unlist(parlapply(
     X = 1:nrow(locfdr_grid),
     parallel_param = parallel_param,
     FUN = function(i, run_locfdr_row, locfdr_grid, test_statistics) {
-      if (check_locfdr_row(
+      check = check_locfdr_row(
         test_statistics,
         locfdr_grid,
         row = i,
         lower_pi0 = lower_pi0
-      )) {
+      )
+
+      if (check == TRUE) {
         return(i)
+      } else {
+        return(check)
       }
     },
     run_locfdr_row = run_locfdr_row,
@@ -70,11 +78,26 @@ reduce_locfdr_grid <- function(
     test_statistics = test_statistics
   ))
 
+  rows = grepl('^[[:digit:]]+$', checks)
+  ok_rows = as.numeric(checks[rows])
+  fails = checks[!rows]
+
   if(verbose) {
-    print(paste(
-      length(ok_rows),'/',nrow(locfdr_grid),
-      'locfdr parameter sets are usable'
+    message(paste0(
+      '\t',length(ok_rows),'/',nrow(locfdr_grid),
+      ' locfdr thetas included'
     ))
+  }
+
+  if (verbose & length(fails) > 0) {
+    fails_tab = table(fails)
+    for (reason in names(fails_tab)) {
+      message(paste0(
+        '\t\t', fails_tab[reason],
+        ' thetas dropped for ',
+        reason
+      ))
+    }
   }
 
   return (locfdr_grid[ok_rows,])
@@ -124,7 +147,7 @@ build_locfdr_grid <- function(
   method = 'grid',
   seed = NULL,
   parallel_param = NULL,
-  parallel = TRUE,
+  parallel = min(TRUE, n_workers > 1),
   n_workers = max(parallel::detectCores() - 2, 1),
   verbose = FALSE
 ) {
@@ -133,11 +156,16 @@ build_locfdr_grid <- function(
     set.seed(seed)
   }
 
-  if (parallel & is.null(parallel_param)) {
+  if (parallel & is.null(parallel_param) & n_workers > 1) {
     parallel_param = BiocParallel::MulticoreParam(
       workers = n_workers,
       tasks = n_workers
     )
+  }
+  if (!is.null(parallel_param) & verbose) {
+    message('Building locfdr grid in parallel')
+  } else if (verbose) {
+    message('Building locfdr grid')
   }
 
   # if nulltypes 2 or 3 are options,
@@ -245,8 +273,8 @@ build_locfdr_grid <- function(
 
   if (verbose & nrow(locfdr_grid) > grid_size & method == 'grid') {
     message(paste0(
-      nrow(locfdr_grid) - grid_size, " extra hyperparameter combinations",
-      " to have a fully expanded grid. Using a grid size of ", nrow(locfdr_grid), "."
+      '\t', nrow(locfdr_grid) - grid_size, " extra thetas",
+      " needed for full grid"
     ))
   }
 
@@ -257,14 +285,6 @@ build_locfdr_grid <- function(
     parallel_param = parallel_param,
     verbose = verbose
   )
-
-  if (verbose & nrow(locfdr_grid_reduced) < nrow(locfdr_grid)) {
-    message(paste0(
-      nrow(locfdr_grid) - nrow(locfdr_grid_reduced), " hyperparameter combinations failed",
-      ifelse(lower_pi0 > 0, paste(' or had pi0 below', lower_pi0), ''),
-      " when run on the data. Using a grid size of ", nrow(locfdr_grid_reduced), "."
-    ))
-  }
 
   return(locfdr_grid_reduced)
 }

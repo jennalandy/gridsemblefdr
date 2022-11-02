@@ -12,7 +12,7 @@ build_fdrtool_grid(
   lower_pi0 = 0.7,
   method = "grid",
   seed = NULL,
-  parallel = TRUE,
+  parallel = min(TRUE, n_workers > 1),
   n_workers = max(parallel::detectCores() - 2, 1),
   parallel_param = NULL,
   verbose = FALSE

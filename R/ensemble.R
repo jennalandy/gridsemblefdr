@@ -36,6 +36,10 @@ ensemble <- function(
   verbose = TRUE
 ) {
 
+  if (verbose) {
+    message('Ensembling')
+  }
+
   if (large_abs_metric) {
     focus_metric = paste0(focus_metric, '_topq')
   }

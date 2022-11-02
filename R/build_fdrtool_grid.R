@@ -26,12 +26,16 @@ check_fdrtool_row <- function(
   # keep this row in final grid if it ran without error,
   # and if it does not estimate fdrs as all 0 or all 1
   if (!is.null(run_i)) {
-    if (run_i$pi0 <= 1 & run_i$pi0 >= lower_pi0) {
+    if (run_i$pi0 > 1) {
+      return('pi0 > 1')
+    } else if (run_i$pi0 < lower_pi0) {
+      return('pi0 < lower_pi0')
+    } else {
       return(TRUE)
     }
   }
 
-  return(FALSE)
+  return('error')
 }
 
 #' @title Reduce fdrtool grid
@@ -53,17 +57,21 @@ reduce_fdrtool_grid <- function(
   verbose = FALSE
 ) {
 
-  ok_rows <- unlist(parlapply(
+  checks <- unlist(parlapply(
     X = 1:nrow(fdrtool_grid),
     parallel_param = parallel_param,
     FUN = function(i, run_fdrtool_row, fdrtool_grid, test_statistics) {
-      if(check_fdrtool_row(
+      check = check_fdrtool_row(
         test_statistics = test_statistics,
         fdrtool_grid = fdrtool_grid,
         row = i,
         lower_pi0 = lower_pi0
-      )) {
+      )
+
+      if (check == TRUE) {
         return(i)
+      } else {
+        return(check)
       }
     },
     run_fdrtool_row = run_fdrtool_row,
@@ -71,11 +79,26 @@ reduce_fdrtool_grid <- function(
     test_statistics = test_statistics
   ))
 
+  rows = grepl('^[[:digit:]]+$', checks)
+  ok_rows = as.numeric(checks[rows])
+  fails = checks[!rows]
+
   if(verbose) {
-    print(paste(
-      length(ok_rows),'/',nrow(fdrtool_grid),
-      'fdrtool parameter sets are usable'
+    message(paste0(
+      '\t',length(ok_rows),'/',nrow(fdrtool_grid),
+      ' fdrtool thetas included'
     ))
+  }
+
+  if (verbose & length(fails) > 0) {
+    fails_tab = table(fails)
+    for (reason in names(fails_tab)) {
+      message(paste0(
+        '\t\t', fails_tab[reason],
+        ' thetas dropped for ',
+        reason
+      ))
+    }
   }
 
   return (fdrtool_grid[ok_rows,])
@@ -112,7 +135,7 @@ build_fdrtool_grid <- function(
   lower_pi0 = 0.7,
   method = 'grid',
   seed = NULL,
-  parallel = TRUE,
+  parallel = min(TRUE, n_workers > 1),
   n_workers = max(parallel::detectCores() - 2, 1),
   parallel_param = NULL,
   verbose = FALSE
@@ -122,11 +145,16 @@ build_fdrtool_grid <- function(
     set.seed(seed)
   }
 
-  if (parallel & is.null(parallel_param)) {
+  if (parallel & is.null(parallel_param) & n_workers > 1) {
     parallel_param = BiocParallel::MulticoreParam(
       workers = n_workers,
       tasks = n_workers
     )
+  }
+  if (!is.null(parallel_param) & verbose) {
+    message('Building fdrtool grid in parallel')
+  } else if (verbose) {
+    message('Building fdrtool grid')
   }
 
   #pct0 parameter is only used when cutoff.method = 'pct0'
@@ -158,9 +186,9 @@ build_fdrtool_grid <- function(
     )
     if (verbose & nrow(fdrtool_grid) <  grid_size) {
       message(paste0(
-        "Couldn't create grid size ", grid_size,
+        "\tCouldn't create grid size ", grid_size,
         ". Without 'pct0' as a cutoff.method option, there are only ",
-        nrow(fdrtool_grid), " possible hyperparameter combinations. Using ",
+        nrow(fdrtool_grid), " possible thetas. Using ",
         "a grid size of ", nrow(fdrtool_grid), "."
       ))
     }
@@ -173,13 +201,6 @@ build_fdrtool_grid <- function(
     parallel_param = parallel_param,
     verbose = verbose
   )
-  if (verbose & nrow(fdrtool_grid_reduced) < nrow(fdrtool_grid)) {
-    message(paste0(
-      nrow(fdrtool_grid) - nrow(fdrtool_grid_reduced), " hyperparameter combinations failed",
-      ifelse(lower_pi0 > 0, paste(' or had pi0 below', lower_pi0), ''),
-      " when run on the data. Using a grid size of ", nrow(fdrtool_grid_reduced), "."
-    ))
-  }
 
   return(fdrtool_grid_reduced)
 }
