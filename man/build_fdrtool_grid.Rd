@@ -9,10 +9,12 @@ build_fdrtool_grid(
   cutoff.method = c("fndr", "pct0", "locfdr"),
   pct0_range = c(0, 0.5),
   grid_size = 40,
-  parallel_param = NULL,
-  method = "grid",
   lower_pi0 = 0.7,
+  method = "grid",
   seed = NULL,
+  parallel = TRUE,
+  n_workers = parallel::detectCores() - 2,
+  parallel_param = NULL,
   verbose = FALSE
 )
 }
@@ -25,15 +27,21 @@ build_fdrtool_grid(
 \item{pct0_range}{vector c(min, max), range for pct0 hyperparameter. \code{pct0} is the
 fraction of data used for fitting null model - only if cutoff.method="pct0".}
 
-\item{grid_size}{integer, desired size of grid to use. Note that this is \emph{not a guarantee}
+\item{grid_size}{integer, maximum size of grid to use. Note that this is \emph{not the final grid size}
 as some hyperparameter combinations may fail when run on the data.}
 
-\item{parallel_param}{BiocParallel object, specified to run in parallel or NULL}
+\item{lower_pi0}{double, exclude hyperparameter combinations that give pi0 estimates below this threshold}
 
 \item{method}{string, one of c('random', 'grid'). 'random' will sample from a uniform
 distribution within the ranges, 'grid' will select equally spaced values.}
 
 \item{seed}{integer, random seed used if method = 'random'}
+
+\item{parallel}{boolean, whether to utilize parallelization}
+
+\item{n_workers}{integer, number of cores to use if parallel, default 2 less than available.}
+
+\item{parallel_param}{BiocParallel object, specified to run in parallel or NULL}
 
 \item{verbose}{boolean}
 }

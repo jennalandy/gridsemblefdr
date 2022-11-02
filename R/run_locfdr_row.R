@@ -4,11 +4,12 @@
 #' @param test_statistics vector, test statistics
 #' @param locfdr_grid data.frame, each row is a set of hyperparameters
 #' @param row integer, row of locfdr_grid
+#' @param returnFdr boolean, whether to calculate Fdr form fdr
 #'
 #' @return
 #' \itemize{
 #'   \item fdr - estimated local false discovery rates
-#'   \item Fdr - estimated left tail-end false discovery rates
+#'   \item Fdr - estimated left tail-end false discovery rates if returnFdr = TRUE
 #'   \item pi0 - estimated proportion of tests that are null
 #' }
 #'

@@ -10,10 +10,6 @@
 
 Unsupervised models present a unique challenge for hyperparameter optimization because measures of accuracy used in standard supervised techniques cannot be computed. In practice, this means hyperparameters are chosen differently by each researcher and are often left as the default values in their package of choice. We introduce a novel ensemble framework to address this issue for unsupervised problems with latent labels. This framework selects models to ensemble by their approximate performances, which are estimated using simulated labeled data informed by domain knowledge of the latent label structure. We implement our framework to improve existing false discovery rate methodology, viewing multiple hypothesis testing as an unsupervised classification problem with binary latent labels. Our simulation studies show that an ensemble outperforms three popular methods with their default hyperparameters and that, within an ensemble, combining models chosen based on their approximate performances outperforms an ensemble over a random subset of models. The R package for the false discovery rate implementation of this framework, `gridsemblefdr`, can be installed here.
 
-<p align="left">
-  <img src="./diagram.png" width="1000">
-</p>
-
 ## Installation
 ```{r setup, eval = FALSE}
 # install package from GitHub:
@@ -66,7 +62,9 @@ gridsemble_res <- gridsemble(
 
 The hyperparameter sets considered are set to the default grid values in the functions `build_locfdr_grid`, `build_fdrtool_grid`, and `build_qvalue_grid`. 
 
-If a user wants a more personalized set of hyperparameters considered, they can build their own grids of options with these functions, or even exclude one of the three package from the ensemble entirely. Further, for continuous hyperparameters such as `pct_range`, the user can choose for the grid to be filled in with equally-spaced values (`method = 'grid'`), or with uniformly sampled values (`method = 'random'`).
+If a user wants a more personalized set of hyperparameters considered, they can build their own grids of options with these functions. Options for categorical variables are specified as a vector of unspecified length. Ranges for continuous variables are specified as a vector of two values: `c(min, max)`.
+
+Grids can be built such that continuous hyperprameters are chosen as equally-spaced values (`method = 'grid'`), or with uniformly-sampled values (`method = 'random'`).
 
 ```{r eval = FALSE}
 my_locfdr_grid <- build_locfdr_grid(
@@ -102,6 +100,17 @@ gridsemble_res <- gridsemble(
 )
 ```
 
+To exclude one of the three package from the ensemble entirely, set the grid value to `NULL`. 
+
+```{r eval = FALSE}
+gridsemble_noqvalue_res <- gridsemble(
+  test_statistics,
+  locfdr_grid = my_locfdr_grid,
+  fdrtool_grid = my_fdrtool_grid,
+  qvalue_grid = NULL
+)
+```
+
 #### Size of Simulated Datasets
 
 By default, the simulated datasets are the same size as the real data. If this is too large given a user's computational limitations, the size of simulated datasets can be specified with `sim_n`.
@@ -109,6 +118,6 @@ By default, the simulated datasets are the same size as the real data. If this i
 ```{r eval = FALSE}
 gridsemble_res <- gridsemble(
   test_statistics, 
-  sim_n = 1000
+  sim_size = 1000
 )
 ```

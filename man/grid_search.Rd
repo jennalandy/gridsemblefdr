@@ -5,34 +5,32 @@
 \title{Grid Search}
 \usage{
 grid_search(
-  n,
+  generating_model,
   nsim,
+  sim_size,
   ensemble_size,
-  fit,
-  method_list,
-  row_list,
   df = NULL,
   locfdr_grid = NULL,
   fdrtool_grid = NULL,
   qvalue_grid = NULL,
-  focus_metric = "pr",
-  large_abs_metric = TRUE,
-  params_type = "symmetric",
+  focus_metric = "fdrerror",
+  large_abs_metric = FALSE,
+  parallel = TRUE,
+  n_workers = parallel::detectCores() - 2,
   parallel_param = NULL,
-  sim_n = NULL,
   verbose = TRUE
 )
 }
 \arguments{
-\item{n}{integer, number of test statistics in each simulated dataset}
+\item{generating_model}{list, result of fit_generating_model()}
 
 \item{nsim}{integer, number of datasets to simulate.
 If 0, no datasets are simulated and model(s) are randomly selected.}
 
+\item{sim_size}{integer, sample size of each simulation.}
+
 \item{ensemble_size}{integer, number of models chosen to ensemble over OR double,
 proportion of grid size to ensemble over}
-
-\item{fit}{list, result of fit_sim()}
 
 \item{df}{integer, degrees of freedom of test statistics, if known, or NULL}
 
@@ -42,23 +40,23 @@ proportion of grid size to ensemble over}
 
 \item{qvalue_grid}{data.frame, each row is a set of hyperparameters for qvalue}
 
-\item{focus_metric}{string, one of one of c('fdrerror','Fdrerror','pr','roc','brier'),
+\item{focus_metric}{string, one of one of c('fdrerror'),
 which metric to optimize in the grid search}
 
 \item{large_abs_metric}{boolean, if TRUE, only consider focus_metric looking at the
 large absolute value test statistics (top quartile of abs(t))}
 
-\item{params_type}{string, type of simulation model fit, one of c('symmetric')}
+\item{parallel}{boolean, whether to utilize parallelization}
+
+\item{n_workers}{integer, number of cores to use if parallel, default 2 less than available.}
 
 \item{parallel_param}{BiocParallel object, specified to run in parallel or NULL}
-
-\item{sim_n}{integer, size of simulated datasets, default number of test statistics}
 
 \item{verbose}{boolean}
 }
 \value{
 \itemize{
-\item fit - list, result of fit_sim()
+\item generating_model - list, result of generating_model_sim()
 \item top_grid - data.frame, each row corresponds to a model
 to ensemble over. Each row references a method (locfdr, fdrtool,
 or qvalue) and row numbers in the respective grid

@@ -1,40 +1,39 @@
-#' @title Fit working model using EM algorithm
-#' @description Fit a null and alternative distribution in order to
-#' simulate labeled data for the grid search.
+#' @title Fit generating model using EM algorithm
 #'
 #' @param test_statistics vector, test statistics
-#' @param type string, one of c('symmetric'), set up this way to add other working model options later
+#'
 #' @param sigmasq0 double, initial value for sigmasq0
 #' @param sigmasq1 double, initial value for sigmasq1
 #' @param pi0 double, initial value for pi0
+#'
 #' @param maxiter integer, highest number of iterations of EM algorithm allowed
 #' @param tol double, tolerance for change in sum of squared differences in parameters
 #' in order to stop algorithm
 #'
-#' @return vector of named parameters for the fit densities and values across iterations
-fit_sim <- function(
+#' @return list, named parameters for the generating_model densities and values across iterations
+fit_generating_model <- function(
   test_statistics,
-  type = 'symmetric',
-  # initialize
+
   sigmasq0 = 2,
   sigmasq1 = 4,
-  sigmasq1n = 4,
-  sigmasq1p = 4,
-  pi1n = 0.5,
   pi0 = 0.9,
-  # learning parameters
+
   maxiter = 500,
   tol = 0.0001
 ) {
-  # set up this way to add other working model options later
+  type = 'symmetric'
+
+  # option to add other working model options later
   if (type == 'symmetric') {
     return(
-      fit_sim_symmetric(
-        test_statistics,
+      fit_generating_model_symmetric(
+        test_statistics = test_statistics,
+
         # initialize
         sigmasq0 = sigmasq0,
         sigmasq1 = sigmasq1,
         pi0 = pi0,
+
         # learning parameters
         maxiter = maxiter,
         tol = tol
@@ -45,29 +44,32 @@ fit_sim <- function(
   }
 }
 
-#' @title Fit Symmetric Working Model using EM algorithm
-#' @description Fit a null and alternative distribution in order to
-#' simulate labeled data for the grid search.
+#' @title Fit symmetric generating model using EM algorithm
 #'
 #' @param test_statistics vector, test statistics
+#'
 #' @param sigmasq0 double, initial value for sigmasq0
 #' @param sigmasq1 double, initial value for sigmasq1
 #' @param pi0 double, initial value for pi0
+#'
 #' @param maxiter integer, max number of iterations of EM algorithm allowed
 #' @param tol double, tolerance for change in sum of squared differences in parameters
 #' in order to stop algorithm
 #'
-#' @return list, named parameters for the fit densities and values across iterations
-fit_sim_symmetric <- function(
+#' @return list, named parameters for the generating_model densities and values across iterations
+fit_generating_model_symmetric <- function(
   test_statistics,
+
   # initialize
-  sigmasq0 = 2,
-  sigmasq1 = 4,
-  pi0 = 0.9,
+  sigmasq0,
+  sigmasq1,
+  pi0,
+
   # learning parameters
-  maxiter = 500,
-  tol = 0.0001
+  maxiter,
+  tol
 ) {
+
   prob_y1_given_t <- function(t, pi0, sigmasq0, sigmasq1) {
     (1-pi0)*(t^2/sigmasq1)*(1/sqrt(2*pi*sigmasq1))*exp(-(1/(2*sigmasq1))*t^2)/mix(
       t, pi0, sigmasq0, sigmasq1
@@ -124,6 +126,73 @@ fit_sim_symmetric <- function(
   ))
 }
 
+#' @title Simulate from generating model
+#'
+#' @param n integer, sample size
+#' @param generating_model list, result of fit_generating_model()
+#' @param df integer, degrees of freedom of test statistics, if known
+#'
+#' @importFrom stats quantile
+#' @return data.frame, n simulated t-statistic and truth pairs
+simulate_from_generating_model <- function(n, generating_model, df = NULL) {
+
+  n0 <- round(generating_model$parameters$pi0*n)
+
+  if (generating_model$type == 'symmetric'){
+    test_statistics = c(
+      sample_null(
+        n = n0,
+        sigmasq0 = generating_model$parameters$sigmasq0
+      ),
+      sample_alternative(
+        N = n-n0,
+        sigmasq1 = generating_model$parameters$sigmasq1
+      )
+    )
+    this_dat <- list(
+      t = test_statistics,
+      true_fdr = generating_model$parameters$pi0*null(
+        t = test_statistics,
+        sigmasq0 = generating_model$parameters$sigmasq0
+      ) / mix(
+        t = test_statistics,
+        pi0 = generating_model$parameters$pi0,
+        sigmasq0 = generating_model$parameters$sigmasq0,
+        sigmasq1 = generating_model$parameters$sigmasq1
+      ),
+      truth = c(
+        rep(0, n0),
+        rep(1, n-n0)
+      ),
+      topq = abs(test_statistics) > stats::quantile(abs(test_statistics))['75%']
+    )
+    this_dat$p = p_from_t(
+      test_statistics = this_dat$t,
+      df = df
+    )
+
+    this_dat$true_Fdr = get_true_Fdr(
+      test_statistics = this_dat$t,
+      truth = this_dat$truth
+    )
+
+    this_dat$mixture = function(t) {
+      mix(
+        t,
+        pi0 = generating_model$parameters$pi0,
+        sigmasq0 = generating_model$parameters$sigmasq0,
+        sigmasq1 = generating_model$parameters$sigmasq1
+      )
+    }
+
+    return(this_dat)
+  } else {
+    return(NULL)
+  }
+}
+
+# -------- Null ~ N(0, sigmasq0) --------
+
 #' @title Null pdf
 #'
 #' @param t double, test statistic
@@ -139,10 +208,13 @@ null <- function(t, sigmasq0) {
 #' @param n integer, sample size
 #' @param sigmasq0 double, variance of null distribution
 #'
+#' @importFrom stats rnorm
 #' @return vector, test statistics sampled from null density N(0, sigmasq0)
 sample_null <- function(n, sigmasq0) {
-  rnorm(n, mean = 0, sd = sqrt(sigmasq0))
+  stats::rnorm(n, mean = 0, sd = sqrt(sigmasq0))
 }
+
+# -------- Alt ~ t^2/sigmasq1 N(0, sigmasq1) --------
 
 #' @title Alternative pdf
 #'
@@ -159,6 +231,7 @@ alt <- function(t, sigmasq1) {
 #' @param N integer, number of test statistics to sample
 #' @param sigmasq1 double, variance of alternative distribution
 #' @param burn_in integer, number of iterations to use as burn in and discard
+#' @param t_init double, starting point for metropolis hastings
 #'
 #' @return vector, test statistics
 sample_alternative <- function(
@@ -186,9 +259,10 @@ sample_alternative <- function(
 #' @param given double, previous value
 #' @param sd double, standard deviation of proposal distribution
 #'
+#' @importFrom stats dnorm
 #' @return double, proposal pdf value
 proposal_pdf <- function(of, given, sd) {
-  dnorm(of, mean = given, sd = sd)
+  stats::dnorm(of, mean = given, sd = sd)
 }
 
 #' @title One Metropolis Hastings step to update t
@@ -196,10 +270,11 @@ proposal_pdf <- function(of, given, sd) {
 #' @param t double, current t value
 #' @param sigmasq1 double, variance of alternative distribution
 #'
+#' @importFrom stats rnorm runif
 #' @return double, next t value
 metropolis_hastings_step <- function(t, sigmasq1) {
   # sample t_next|t ~ q
-  t_next <- rnorm(1, mean = t, sd = 4)
+  t_next <- stats::rnorm(1, mean = t, sd = 4)
 
   # compute acceptance probability
   acceptance <- min(
@@ -209,7 +284,7 @@ metropolis_hastings_step <- function(t, sigmasq1) {
   )
 
   # accept t_next with acceptance probability, otherwise keep t
-  u <- runif(1, 0, 1)
+  u <- stats::runif(1, 0, 1)
   if (u < acceptance) {
     t <- t_next
   }
@@ -217,58 +292,16 @@ metropolis_hastings_step <- function(t, sigmasq1) {
   return(t)
 }
 
+# -------- Mixture = pi0*null + (1-pi0)*alt --------
+
 #' @title Mixture pdf
 #'
 #' @param t double, test statistic
 #' @param pi0 double, proportion null
 #' @param sigmasq0 double, variance of null distribution
-#' @param type string, one of c('symmetric')
+#' @param sigmasq1 double, variance of alternative distribution
 #'
 #' @return value of mixture density pdf at value t
 mix <- function(t, pi0, sigmasq0, sigmasq1) {
   pi0*null(t, sigmasq0) + (1-pi0)*alt(t, sigmasq1)
-}
-
-#' @title Simulate from fit
-#' @description simulate a dataset of size n from the mixture and record truth label
-#' of each value (null vs alternative)
-#'
-#' @param n integer, sample size
-#' @param fit list, result of fit_sim()
-#'
-#' @return data.frame, n simulated t-statistic and truth pairs
-simulate_from_fit <- function(n, fit) {
-
-  n0 <- round(fit$parameters$pi0*n)
-
-  if (fit$type == 'symmetric'){
-    test_statistics = c(
-      sample_null(
-        n = n0,
-        sigmasq0 = fit$parameters$sigmasq0
-      ),
-      sample_alternative(
-        N = n-n0,
-        sigmasq1 = fit$parameters$sigmasq1
-      )
-    )
-    return(data.frame(
-      t = test_statistics,
-      true_fdr = fit$parameters$pi0*null(
-        t = test_statistics,
-        sigmasq0 = fit$parameters$sigmasq0
-      ) / mix(
-        t = test_statistics,
-        pi0 = fit$parameters$pi0,
-        sigmasq0 = fit$parameters$sigmasq0,
-        sigmasq1 = fit$parameters$sigmasq1
-      ),
-      truth = c(
-        rep(0, n0),
-        rep(1, n-n0)
-      )
-    ))
-  } else {
-    return(NULL)
-  }
 }

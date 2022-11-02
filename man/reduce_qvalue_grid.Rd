@@ -18,6 +18,10 @@ reduce_qvalue_grid(
 
 \item{qvalue_grid}{data.frame, each row is a possible set of hyperparameters for qvalue}
 
+\item{lower_pi0}{double, exclude hyperparameter combinations that give pi0 estimates below this threshold}
+
+\item{df}{integer, degrees of freedom of test statistics, if known}
+
 \item{parallel_param}{BiocParallel object, specified to run in parallel or NULL}
 
 \item{verbose}{boolean}

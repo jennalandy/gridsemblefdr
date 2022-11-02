@@ -7,12 +7,12 @@
 ensemble(
   test_statistics,
   top_grid,
-  focus_metric,
-  large_abs_metric,
   locfdr_grid,
   fdrtool_grid,
   qvalue_grid,
   df = NULL,
+  focus_metric = "fdrerror",
+  large_abs_metric = FALSE,
   parallel_param = NULL,
   verbose = TRUE
 )
@@ -30,6 +30,12 @@ the best methods used in the ensemble}
 \item{qvalue_grid}{data.frame, each row is a set of hyperparameters for qvalue}
 
 \item{df}{integer, degrees of freedom of test statistics, if known}
+
+\item{focus_metric}{string, one of one of c('fdrerror'),
+which metric to optimize in the grid search}
+
+\item{large_abs_metric}{boolean, if TRUE, only consider focus_metric looking at the
+large absolute value test statistics (top quartile of abs(t))}
 
 \item{parallel_param}{BiocParallel object, specified to run in parallel or NULL}
 

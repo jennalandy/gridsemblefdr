@@ -14,6 +14,8 @@ check_locfdr_row(test_statistics, locfdr_grid, row, lower_pi0)
 \item{locfdr_grid}{data.frame, each row is a possible set of hyperparameters for locfdr}
 
 \item{row}{integer, row of locfdr_grid considered}
+
+\item{lower_pi0}{double, exclude hyperparameter combinations that give pi0 estimates below this threshold}
 }
 \value{
 boolean, whether the hyperparameter combination ran without error

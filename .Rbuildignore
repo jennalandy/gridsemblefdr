@@ -1,3 +1,7 @@
 ^gridsemblefdr\.Rproj$
 ^\.Rproj\.user$
 ^LICENSE\.md$
+^\.gitignore$
+^\.Rhistory$
+^\.DS_Store$
+^vignettes/\.gitignore$

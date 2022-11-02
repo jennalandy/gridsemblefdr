@@ -11,10 +11,12 @@ build_locfdr_grid(
   nulltype = 1:3,
   type = 0:1,
   grid_size = 40,
-  method = "grid",
   lower_pi0 = 0.7,
+  method = "grid",
   seed = NULL,
   parallel_param = NULL,
+  parallel = TRUE,
+  n_workers = parallel::detectCores() - 2,
   verbose = FALSE
 )
 }
@@ -38,7 +40,21 @@ use in the fdr calculations. 0 is the theoretical null N(0,1),
 \item{type}{vector, options for type hyperparameter. \code{type} is the type of
 fitting used for f; 0 is a natural spline, 1 is a polynomial.}
 
+\item{grid_size}{integer, maximum size of grid to use. Note that this is \emph{not the final grid size}
+as some hyperparameter combinations may fail when run on the data.}
+
+\item{lower_pi0}{double, exclude hyperparameter combinations that give pi0 estimates below this threshold}
+
+\item{method}{string, one of c('random', 'grid'). 'random' will sample from a uniform
+distribution within the ranges, 'grid' will select equally spaced values.}
+
+\item{seed}{integer, random seed used if method = 'random'}
+
 \item{parallel_param}{BiocParallel object, specified to run in parallel or NULL}
+
+\item{parallel}{boolean, whether to utilize parallelization}
+
+\item{n_workers}{integer, number of cores to use if parallel, default 2 less than available.}
 
 \item{verbose}{boolean}
 }

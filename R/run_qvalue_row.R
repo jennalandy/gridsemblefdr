@@ -1,33 +1,4 @@
 #' @title P from T
-#' @description get p-value from test statistic
-#'
-#' @param test_statistics vector, test statistics
-#' @param df integer, degrees of freedom to compute p-value from test statistics,
-#' assume standard normal if NULL
-#' @param sides string, one of c('one','two'), one- or two-sided p-values
-#'
-#' @return vector of p-values
-p_from_t <- function(test_statistics, df = NULL, sides = 'two') {
-
-  if (is.null(df)) {
-    # assume standard normal
-    one_sided <- unlist(lapply(test_statistics, function(z) {
-      pnorm(-1*abs(z))
-    }))
-  } else {
-    # assume t_df
-    one_sided <-unlist(lapply(test_statistics, function(z) {
-      pt(-1*abs(z), df = df)
-    }))
-  }
-
-  if (sides == 'two') {
-    return (2*one_sided)
-  } else {
-    return(one_sided)
-  }
-}
-
 #' @title Run qvalue
 #' @description Run qvalue with a specific set of parameters
 #'
@@ -36,12 +7,13 @@ p_from_t <- function(test_statistics, df = NULL, sides = 'two') {
 #' @param row integer, row of qvalue_grid
 #' @param df integer, degrees of freedom to compute p-value from test statistics,
 #' assume standard normal if NULL
+#' @param returnFdr boolean, whether to calculate Fdr form fdr
 #' @param verbose boolean
 #'
 #' @return
 #' \itemize{
 #'   \item fdr - estimated local false discovery rates
-#'   \item Fdr - estimated left tail-end false discovery rates
+#'   \item Fdr - estimated left tail-end false discovery rates if returnFdr = TRUE
 #'   \item pi0 - estimated proportion of tests that are null
 #' }
 #'
@@ -57,8 +29,7 @@ run_qvalue_row <- function(
 
   p <- p_from_t(
     test_statistics = test_statistics,
-    df = df,
-    sides = 'two'
+    df = df
   )
 
   res <- NULL

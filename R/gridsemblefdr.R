@@ -3,22 +3,23 @@
 #' false discovery rates.
 #'
 #' @param test_statistics vector, test statistics
-#' @param nsim integer, number of datasets to simulate and grid search over.
-#' If 0, no datasets are simulated and model(s) are randomly selected.
-#' @param ensemble_size integer, number of models chosen to ensemble over.
+#' @param df integer, degrees of freedom of test statistics, if known. Otherwise assumed
+#' to be from N(0, 1).
+#'
 #' @param locfdr_grid data.frame, each row is a set of hyperparameters for locfdr
 #' @param fdrtool_grid data.frame, each row is a set of hyperparameters for fdrtool
 #' @param qvalue_grid data.frame, each row is a set of hyperparameters for qvalue
-#' @param df integer, degrees of freedom of test statistics, if known. Otherwise assumed
-#' to be from N(0, 1).
-#' @param methods vector, methods to be used. Default c('locfdr','fdrtool','qvalue')
-#' @param focus_metric string, one of one of c('fdrerror','Fdrerror','pr','roc','brier'),
-#' which metric to optimize in the grid search
-#' @param large_abs_metric boolean, if TRUE, only consider focus_metric looking at the
-#' large absolute value test statistics (top quartile of abs(t))
-#' @param parallel boolean
-#' @param paralllel_param BiocParallel object, specified to run in parallel or NULL
-#' @param sim_n integer, size of simulated datasets, default number of test statistics
+#'
+#' @param nsim integer, number of datasets to simulate and grid search over.
+#' If 0, no datasets are simulated and model(s) are randomly selected.
+#' @param ensemble_size integer, number of models chosen to ensemble over.
+#' @param lower_pi0 double, lower bound cutoff of pi0 for model consideration.
+#' Default 0.7 (assume majority null tests).
+#' @param sim_size integer, size of simulated datasets, default number of test statistics
+#'
+#' @param parallel boolean, whether to utilize parallelization
+#' @param n_workers integer, number of cores to use if parallel, default 2 less than available.
+#' @param parallel_param BiocParallel object, specified to run in parallel or NULL
 #' @param verbose boolean
 #'
 #' @importFrom BiocParallel DoparParam
@@ -33,67 +34,49 @@
 #'      that were ensembled over and their metrics on simulated daa
 #'      \item all_grids dataframe containing all hyperparameter sets considered
 #'      and their metrics on simulated data
-#'      \item fit parameters used for simulation step
+#'      \item generating_model parameters used for simulation step
 #' }
 #' @export
 gridsemble <- function(
   test_statistics,
+  df = NULL,
+  locfdr_grid = build_locfdr_grid(test_statistics, lower_pi0 = lower_pi0, parallel = parallel,n_workers = n_workers, verbose = verbose),
+  fdrtool_grid = build_fdrtool_grid(test_statistics, lower_pi0 = lower_pi0, parallel = parallel, n_workers = n_workers, verbose = verbose),
+  qvalue_grid = build_qvalue_grid(test_statistics, df = df, lower_pi0 = lower_pi0, parallel = parallel, n_workers = n_workers, verbose = verbose),
   nsim = 10,
   ensemble_size = 10,
-  locfdr_grid = NULL,
-  fdrtool_grid = NULL,
-  qvalue_grid = NULL,
-  df = NULL,
-  methods = c('locfdr','fdrtool','qvalue'),
-  focus_metric = 'fdrerror',
   lower_pi0 = 0.7,
-  n_workers = NULL,
-  large_abs_metric = TRUE,
+  sim_size = length(test_statistics),
   parallel = TRUE,
+  n_workers = parallel::detectCores() - 2,
   parallel_param = NULL,
-  sim_n = NULL,
   verbose = TRUE
 ) {
 
-  if (parallel & is.null(parallel_param)) {
-    if (is.null(n_workers)) {
-      n_workers = parallel::detectCores() - 2
-    }
+  focus_metric = 'fdrerror'
+  large_abs_metric = FALSE
 
-    parallel_param <- BiocParallel::MulticoreParam(
+  if (parallel & is.null(parallel_param)) {
+    parallel_param = BiocParallel::MulticoreParam(
       workers = n_workers,
       tasks = n_workers
     )
   }
-  if (!parallel) {
-    parallel_param <- NULL
-  }
 
   p_values = p_from_t(
     test_statistics = test_statistics,
-    df = df,
-    sides = 'two'
+    df = df
   )
 
-  if (!(focus_metric %in% c('Fdrerror','fdrerror','roc','pr','brier','accuracy','recall','precision','specificity','f1'))) {
-    cat("focus_metric must be one of c('Fdrerror','fdrerror','roc','pr','brier'), using default (fdrerror)")
-    focus_metric = 'fdrerror'
+  methods = c()
+  if (!is.null(locfdr_grid)) {
+    methods = c(methods, 'locfdr')
   }
-
-  if ('locfdr' %in% methods) {
-    if (is.null(locfdr_grid)) {
-      locfdr_grid <- build_locfdr_grid(test_statistics, lower_pi0=lower_pi0, parallel_param = parallel_param)
-    }
+  if (is.null(fdrtool_grid)) {
+    methods = c(methods, 'fdrtool')
   }
-  if ('fdrtool' %in% methods) {
-    if (is.null(fdrtool_grid)) {
-      fdrtool_grid <- build_fdrtool_grid(test_statistics, lower_pi0=lower_pi0, parallel_param = parallel_param)
-    }
-  }
-  if ('qvalue' %in% methods) {
-    if (is.null(qvalue_grid)) {
-      qvalue_grid <- build_qvalue_grid(test_statistics, df = df, lower_pi0=lower_pi0, parallel_param = parallel_param)
-    }
+  if (is.null(qvalue_grid)) {
+    methods = c(methods, 'qvalue')
   }
 
   grid_size = nrow_null0(locfdr_grid) +
@@ -129,28 +112,28 @@ gridsemble <- function(
     default_qvalue <- qvalue::qvalue(p_values, plot = 0, lambda = 0)
   }
 
-  # fit simulation model to test statistics
+  # fit generating model to test statistics
   if (nsim > 0) {
-    fit <- fit_sim(test_statistics, type = 'symmetric')
+    generating_model <- fit_generating_model(test_statistics)
   } else {
-    fit <- NULL
+    generating_model <- NULL
   }
 
   # perform grid search on simulated datasets
   grid_res <- grid_search(
-    n = length(test_statistics),
+    generating_model = generating_model,
     nsim = nsim,
+    sim_size = sim_size,
     ensemble_size = ensemble_size,
-    fit = fit,
     df = df,
     locfdr_grid = locfdr_grid,
     qvalue_grid = qvalue_grid,
     fdrtool_grid = fdrtool_grid,
     focus_metric = focus_metric,
     large_abs_metric = large_abs_metric,
-    params_type = 'symmetric',
+    parallel = parallel,
+    n_workers =  n_workers,
     parallel_param = parallel_param,
-    sim_n = sim_n,
     verbose = verbose
   )
 
@@ -188,7 +171,7 @@ gridsemble <- function(
     'default_fdrtool' = default_fdrtool,
     'default_qvalue' = default_qvalue,
     'all_grids' = all_grids,
-    'fit' = fit,
+    'generating_model' = generating_model,
     'locfdr_grid' = locfdr_grid,
     'fdrtool_grid' = fdrtool_grid,
     'qvalue_grid' = qvalue_grid

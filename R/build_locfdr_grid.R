@@ -5,6 +5,7 @@
 #' @param test_statistics vector, test statistics
 #' @param locfdr_grid data.frame, each row is a possible set of hyperparameters for locfdr
 #' @param row integer, row of locfdr_grid considered
+#' @param lower_pi0 double, exclude hyperparameter combinations that give pi0 estimates below this threshold
 #'
 #' @return boolean, whether the hyperparameter combination ran without error
 check_locfdr_row <- function(
@@ -38,6 +39,7 @@ check_locfdr_row <- function(
 #'
 #' @param test_statistics vector, test statistics
 #' @param locfdr_grid data.frame, each row is a possible set of hyperparameters for locfdr
+#' @param lower_pi0 double, exclude hyperparameter combinations that give pi0 estimates below this threshold
 #' @param parallel_param BiocParallel object, specified to run in parallel or NULL
 #' @param verbose boolean
 #'
@@ -96,9 +98,19 @@ reduce_locfdr_grid <- function(
 #' 3 is a split normal version of 2.
 #' @param type vector, options for type hyperparameter. `type` is the type of
 #' fitting used for f; 0 is a natural spline, 1 is a polynomial.
+#' @param grid_size integer, maximum size of grid to use. Note that this is *not the final grid size*
+#' as some hyperparameter combinations may fail when run on the data.
+#' @param lower_pi0 double, exclude hyperparameter combinations that give pi0 estimates below this threshold
+#' @param method string, one of c('random', 'grid'). 'random' will sample from a uniform
+#' distribution within the ranges, 'grid' will select equally spaced values.
+#' @param seed integer, random seed used if method = 'random'
+#'
+#' @param parallel boolean, whether to utilize parallelization
+#' @param n_workers integer, number of cores to use if parallel, default 2 less than available.
 #' @param parallel_param BiocParallel object, specified to run in parallel or NULL
 #' @param verbose boolean
 #'
+#' @importFrom stats runif
 #' @return data.frame, each row is a possible set of hyperparameters for locfdr
 #' @export
 build_locfdr_grid <- function(
@@ -108,15 +120,24 @@ build_locfdr_grid <- function(
   nulltype = 1:3,
   type = 0:1,
   grid_size = 40,
-  method = 'grid',
   lower_pi0 = 0.7,
+  method = 'grid',
   seed = NULL,
   parallel_param = NULL,
+  parallel = TRUE,
+  n_workers = parallel::detectCores() - 2,
   verbose = FALSE
 ) {
 
   if (!is.null(seed)) {
     set.seed(seed)
+  }
+
+  if (parallel & is.null(parallel_param)) {
+    parallel_param = BiocParallel::MulticoreParam(
+      workers = n_workers,
+      tasks = n_workers
+    )
   }
 
   # if nulltypes 2 or 3 are options,
@@ -139,8 +160,8 @@ build_locfdr_grid <- function(
         # nulltype is selected from nulltypes_use_pct0
         # pct0 has multiple options
         data.frame(
-          pct = runif(n = n_nulltypes_use_pct0, min = pct_range[1], max = pct_range[2]),
-          pct0 = runif(n = n_nulltypes_use_pct0, min = pct0_range[1], max = pct0_range[2]),
+          pct = stats::runif(n = n_nulltypes_use_pct0, min = pct_range[1], max = pct_range[2]),
+          pct0 = stats::runif(n = n_nulltypes_use_pct0, min = pct0_range[1], max = pct0_range[2]),
           nulltype = sample(nulltypes_use_pct0, size = n_nulltypes_use_pct0, replace = TRUE),
           type = sample(type, size = n_nulltypes_use_pct0, replace = TRUE)
         ),
@@ -148,7 +169,7 @@ build_locfdr_grid <- function(
         # nulltype is selected from nulltype_no_pct0
         # pct0 has default value
         data.frame(
-          pct = runif(n = n_nulltype_no_pct0, min = pct_range[1], max = pct_range[2]),
+          pct = stats::runif(n = n_nulltype_no_pct0, min = pct_range[1], max = pct_range[2]),
           pct0 = rep(1/4, n_nulltype_no_pct0), # won't be used, keep as default
           nulltype = sample(nulltype_no_pct0, size = n_nulltype_no_pct0, replace = TRUE),
           type = sample(type, size = n_nulltype_no_pct0, replace = TRUE)
@@ -160,7 +181,7 @@ build_locfdr_grid <- function(
       # if nulltypes 2 or 3 are not options,
       # pct0 never matters, keep as default value
       locfdr_grid <- data.frame(
-        pct = runif(n = grid_size, min = pct_range[1], max = pct_range[2]),
+        pct = stats::runif(n = grid_size, min = pct_range[1], max = pct_range[2]),
         pct0 = rep(1/4, grid_size), # won't be used, keep as default
         nulltype = sample(nulltype, size = grid_size, replace = TRUE),
         type = sample(type, size = grid_size, replace = TRUE)
@@ -240,7 +261,7 @@ build_locfdr_grid <- function(
   if (verbose & nrow(locfdr_grid_reduced) < nrow(locfdr_grid)) {
     message(paste0(
       nrow(locfdr_grid) - nrow(locfdr_grid_reduced), " hyperparameter combinations failed",
-      ifelse(lower_pi0 > 0, paset(' or had pi0 below', lower_pi0), ''),
+      ifelse(lower_pi0 > 0, paste(' or had pi0 below', lower_pi0), ''),
       " when run on the data. Using a grid size of ", nrow(locfdr_grid_reduced), "."
     ))
   }

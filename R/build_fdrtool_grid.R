@@ -5,7 +5,7 @@
 #' @param test_statistics vector, test statistics
 #' @param fdrtool_grid data.frame, each row is a possible set of hyperparameters for fdrtool
 #' @param row integer, row of fdrtool_grid considered
-#' @param lower_pi0 double, hyperparameter combinations that give pi0 estimates below this are excluded from the grid
+#' @param lower_pi0 double, exclude hyperparameter combinations that give pi0 estimates below this threshold
 #'
 #' @return boolean, whether the hyperparameter combination run without error
 check_fdrtool_row <- function(
@@ -14,6 +14,7 @@ check_fdrtool_row <- function(
   row,
   lower_pi0
 ) {
+
   # for each row, attempt to run fdrtool
   run_i <- run_fdrtool_row(
     test_statistics = test_statistics,
@@ -39,6 +40,7 @@ check_fdrtool_row <- function(
 #'
 #' @param test_statistics vector, test statistics
 #' @param fdrtool_grid data.frame where each row is a possible set of hyperparameters for fdrtool
+#' @param lower_pi0 double, exclude hyperparameter combinations that give pi0 estimates below this threshold
 #' @param parallel_param BiocParallel object, specified to run in parallel or NULL
 #' @param verbose boolean
 #'
@@ -88,14 +90,18 @@ reduce_fdrtool_grid <- function(
 #' `cutoff.method` is one of "fndr" (default), "pct0", "locfdr".
 #' @param pct0_range vector c(min, max), range for pct0 hyperparameter. `pct0` is the
 #' fraction of data used for fitting null model - only if cutoff.method="pct0".
-#' @param grid_size integer, desired size of grid to use. Note that this is *not a guarantee*
+#' @param grid_size integer, maximum size of grid to use. Note that this is *not the final grid size*
 #' as some hyperparameter combinations may fail when run on the data.
-#' @param parallel_param BiocParallel object, specified to run in parallel or NULL
+#' @param lower_pi0 double, exclude hyperparameter combinations that give pi0 estimates below this threshold
 #' @param method string, one of c('random', 'grid'). 'random' will sample from a uniform
 #' distribution within the ranges, 'grid' will select equally spaced values.
 #' @param seed integer, random seed used if method = 'random'
+#' @param parallel boolean, whether to utilize parallelization
+#' @param n_workers integer, number of cores to use if parallel, default 2 less than available.
+#' @param parallel_param BiocParallel object, specified to run in parallel or NULL
 #' @param verbose boolean
 #'
+#' @importFrom stats runif
 #' @return data.frame, each row is a possible set of hyperparameters for fdrtool
 #' @export
 build_fdrtool_grid <- function(
@@ -103,15 +109,24 @@ build_fdrtool_grid <- function(
   cutoff.method = c('fndr','pct0','locfdr'),
   pct0_range = c(0, 0.5),
   grid_size = 40,
-  parallel_param = NULL,
-  method = 'grid',
   lower_pi0 = 0.7,
+  method = 'grid',
   seed = NULL,
+  parallel = TRUE,
+  n_workers = parallel::detectCores() - 2,
+  parallel_param = NULL,
   verbose = FALSE
 ) {
 
   if (!is.null(seed)) {
     set.seed(seed)
+  }
+
+  if (parallel & is.null(parallel_param)) {
+    parallel_param = BiocParallel::MulticoreParam(
+      workers = n_workers,
+      tasks = n_workers
+    )
   }
 
   #pct0 parameter is only used when cutoff.method = 'pct0'
@@ -121,7 +136,7 @@ build_fdrtool_grid <- function(
     if (method == 'random') {
       pct0_vec <- c(
         rep(0.75, grid_size - n_pct0),
-        runif(n = n_pct0, min = pct0_range[1], max = pct0_range[2])
+        stats::runif(n = n_pct0, min = pct0_range[1], max = pct0_range[2])
       )
     } else if (method == 'grid') {
       pct0_vec <- c(
@@ -161,7 +176,7 @@ build_fdrtool_grid <- function(
   if (verbose & nrow(fdrtool_grid_reduced) < nrow(fdrtool_grid)) {
     message(paste0(
       nrow(fdrtool_grid) - nrow(fdrtool_grid_reduced), " hyperparameter combinations failed",
-      ifelse(lower_pi0 > 0, paset(' or had pi0 below', lower_pi0), ''),
+      ifelse(lower_pi0 > 0, paste(' or had pi0 below', lower_pi0), ''),
       " when run on the data. Using a grid size of ", nrow(fdrtool_grid_reduced), "."
     ))
   }

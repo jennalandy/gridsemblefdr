@@ -4,25 +4,10 @@
 \alias{metrics}
 \title{Compute all metrics}
 \usage{
-metrics(
-  fdr,
-  Fdr,
-  test_statistics,
-  truth,
-  true_Fdr,
-  true_fdr,
-  topq,
-  cutoff = 0.2
-)
+metrics(fdr, true_fdr, topq)
 }
 \arguments{
 \item{fdr}{vector, estimated fdr values}
-
-\item{Fdr}{vector, estimated (tail end) Fdr values}
-
-\item{truth}{vector, truth values, vector of 0 and 1s}
-
-\item{true_Fdr}{vector, true Fdr values}
 
 \item{true_fdr}{vector, true fdr values}
 

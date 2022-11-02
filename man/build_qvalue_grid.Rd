@@ -12,10 +12,12 @@ build_qvalue_grid(
   smooth.log.pi0 = c(TRUE, FALSE),
   df = NULL,
   grid_size = 40,
-  method = "grid",
   lower_pi0 = 0.7,
+  method = "grid",
   seed = NULL,
   parallel_param = NULL,
+  parallel = TRUE,
+  n_workers = parallel::detectCores() - 2,
   verbose = FALSE
 )
 }
@@ -24,7 +26,7 @@ build_qvalue_grid(
 
 \item{transf}{vector, options for transf hyperparameter. \code{transf} is
 a transformation is applied to the p-values so that a local FDR estimate can
-be formed that does not involve edge effects of the \link{0,1} interval in which
+be formed that does not involve edge effects of the [0,1] interval in which
 the p-values lie, either "probit" or "logit".}
 
 \item{adj_range}{vector c(min, max), range for adj hyperparameter. \code{adj} is a numeric value
@@ -40,7 +42,23 @@ If \code{smooth.log.pi0} is TRUE and pi0.method = "smoother", pi_0 will be estim
 by applying a smoother to a scatterplot of log(pi_0) estimates against the
 tuning parameter lambda.}
 
+\item{df}{integer, degrees of freedom of test statistics, if known}
+
+\item{grid_size}{integer, maximum size of grid to use. Note that this is \emph{not the final grid size}
+as some hyperparameter combinations may fail when run on the data.}
+
+\item{lower_pi0}{double, exclude hyperparameter combinations that give pi0 estimates below this threshold}
+
+\item{method}{string, one of c('random', 'grid'). 'random' will sample from a uniform
+distribution within the ranges, 'grid' will select equally spaced values.}
+
+\item{seed}{integer, random seed used if method = 'random'}
+
 \item{parallel_param}{BiocParallel object, specified to run in parallel or NULL}
+
+\item{parallel}{boolean, whether to utilize parallelization}
+
+\item{n_workers}{integer, number of cores to use if parallel, default 2 less than available.}
 
 \item{verbose}{boolean}
 }

@@ -17,6 +17,8 @@ reduce_locfdr_grid(
 
 \item{locfdr_grid}{data.frame, each row is a possible set of hyperparameters for locfdr}
 
+\item{lower_pi0}{double, exclude hyperparameter combinations that give pi0 estimates below this threshold}
+
 \item{parallel_param}{BiocParallel object, specified to run in parallel or NULL}
 
 \item{verbose}{boolean}

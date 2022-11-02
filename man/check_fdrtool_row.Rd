@@ -13,7 +13,7 @@ check_fdrtool_row(test_statistics, fdrtool_grid, row, lower_pi0)
 
 \item{row}{integer, row of fdrtool_grid considered}
 
-\item{lower_pi0}{double, hyperparameter combinations that give pi0 estimates below this are excluded from the grid}
+\item{lower_pi0}{double, exclude hyperparameter combinations that give pi0 estimates below this threshold}
 }
 \value{
 boolean, whether the hyperparameter combination run without error

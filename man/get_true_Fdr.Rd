@@ -4,14 +4,12 @@
 \alias{get_true_Fdr}
 \title{Get true tail end Fdr from test statistics and truth labels}
 \usage{
-get_true_Fdr(test_statistics, truth, direction = "left")
+get_true_Fdr(test_statistics, truth)
 }
 \arguments{
 \item{test_statistics}{vector, test statistics}
 
 \item{truth}{vector, truth values}
-
-\item{direction}{string, one of c('left','right')}
 }
 \value{
 vector, tail end Fdr values

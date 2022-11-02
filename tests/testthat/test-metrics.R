@@ -26,33 +26,11 @@ test_that("get_MSE works", {
   expect_type(Fdr_error, "double")
 })
 
-test_that("get_brier works", {
-  my_fdr = runif(n = length(test_statistics))
-  prob_1 = 1-my_fdr
-  brier = get_brier(my_fdr, truth)
-  expect_equal(brier, mean((prob_1-truth)**2))
-  expect_type(brier, "double")
-})
-
-test_that("get_roc works", {
-  my_fdr = runif(n = length(test_statistics))
-  roc = get_roc(my_fdr, truth)
-  expect_type(roc, "double")
-})
-
-test_that("get_prauc works", {
-  my_fdr = runif(n = length(test_statistics))
-  auc = get_prauc(my_fdr, truth)
-  expect_type(auc, "double")
-})
-
 test_that("metrics works", {
   topq = test_statistics >= quantile(abs(test_statistics), 0.75)
   my_fdr = runif(n = length(test_statistics))
-  my_Fdr = rep(0, length(test_statistics))
-  true_Fdr = true_Fdr = runif(n = length(test_statistics))
-  my_pi0 = 0.4
-  my_metrics = metrics(my_fdr, my_Fdr, my_pi0, test_statistics, truth, true_Fdr, topq)
+  my_true_fdr = runif(n = length(test_statistics))
+  my_metrics = metrics(my_fdr, my_true_fdr, topq)
 
   expect_type(my_metrics, 'list')
 })

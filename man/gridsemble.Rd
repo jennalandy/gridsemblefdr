@@ -6,30 +6,28 @@
 \usage{
 gridsemble(
   test_statistics,
+  df = NULL,
+  locfdr_grid = build_locfdr_grid(test_statistics, lower_pi0 = lower_pi0, parallel =
+    parallel, n_workers = n_workers, verbose = verbose),
+  fdrtool_grid = build_fdrtool_grid(test_statistics, lower_pi0 = lower_pi0, parallel =
+    parallel, n_workers = n_workers, verbose = verbose),
+  qvalue_grid = build_qvalue_grid(test_statistics, df = df, lower_pi0 = lower_pi0,
+    parallel = parallel, n_workers = n_workers, verbose = verbose),
   nsim = 10,
   ensemble_size = 10,
-  locfdr_grid = NULL,
-  fdrtool_grid = NULL,
-  qvalue_grid = NULL,
-  df = NULL,
-  methods = c("locfdr", "fdrtool", "qvalue"),
-  focus_metric = "fdrerror",
   lower_pi0 = 0.7,
-  n_workers = NULL,
-  large_abs_metric = TRUE,
+  sim_size = length(test_statistics),
   parallel = TRUE,
+  n_workers = parallel::detectCores() - 2,
   parallel_param = NULL,
-  sim_n = NULL,
   verbose = TRUE
 )
 }
 \arguments{
 \item{test_statistics}{vector, test statistics}
 
-\item{nsim}{integer, number of datasets to simulate and grid search over.
-If 0, no datasets are simulated and model(s) are randomly selected.}
-
-\item{ensemble_size}{integer, number of models chosen to ensemble over.}
+\item{df}{integer, degrees of freedom of test statistics, if known. Otherwise assumed
+to be from N(0, 1).}
 
 \item{locfdr_grid}{data.frame, each row is a set of hyperparameters for locfdr}
 
@@ -37,24 +35,23 @@ If 0, no datasets are simulated and model(s) are randomly selected.}
 
 \item{qvalue_grid}{data.frame, each row is a set of hyperparameters for qvalue}
 
-\item{df}{integer, degrees of freedom of test statistics, if known. Otherwise assumed
-to be from N(0, 1).}
+\item{nsim}{integer, number of datasets to simulate and grid search over.
+If 0, no datasets are simulated and model(s) are randomly selected.}
 
-\item{methods}{vector, methods to be used. Default c('locfdr','fdrtool','qvalue')}
+\item{ensemble_size}{integer, number of models chosen to ensemble over.}
 
-\item{focus_metric}{string, one of one of c('fdrerror','Fdrerror','pr','roc','brier'),
-which metric to optimize in the grid search}
+\item{lower_pi0}{double, lower bound cutoff of pi0 for model consideration.
+Default 0.7 (assume majority null tests).}
 
-\item{large_abs_metric}{boolean, if TRUE, only consider focus_metric looking at the
-large absolute value test statistics (top quartile of abs(t))}
+\item{sim_size}{integer, size of simulated datasets, default number of test statistics}
 
-\item{parallel}{boolean}
+\item{parallel}{boolean, whether to utilize parallelization}
 
-\item{sim_n}{integer, size of simulated datasets, default number of test statistics}
+\item{n_workers}{integer, number of cores to use if parallel, default 2 less than available.}
+
+\item{parallel_param}{BiocParallel object, specified to run in parallel or NULL}
 
 \item{verbose}{boolean}
-
-\item{paralllel_param}{BiocParallel object, specified to run in parallel or NULL}
 }
 \value{
 \itemize{
@@ -65,7 +62,7 @@ large absolute value test statistics (top quartile of abs(t))}
 that were ensembled over and their metrics on simulated daa
 \item all_grids dataframe containing all hyperparameter sets considered
 and their metrics on simulated data
-\item fit parameters used for simulation step
+\item generating_model parameters used for simulation step
 }
 }
 \description{

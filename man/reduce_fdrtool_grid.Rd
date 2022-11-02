@@ -17,6 +17,8 @@ reduce_fdrtool_grid(
 
 \item{fdrtool_grid}{data.frame where each row is a possible set of hyperparameters for fdrtool}
 
+\item{lower_pi0}{double, exclude hyperparameter combinations that give pi0 estimates below this threshold}
+
 \item{parallel_param}{BiocParallel object, specified to run in parallel or NULL}
 
 \item{verbose}{boolean}

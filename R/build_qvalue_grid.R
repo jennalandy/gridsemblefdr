@@ -1,23 +1,27 @@
 #' Check qvalue Row
-#' For a given row of qvalue_grid, checks whether hyperparameter combinations
+#' @description For a given row of qvalue_grid, checks whether hyperparameter combinations
 #' can be used for qvalue on the provided data without error
 #'
 #' @param test_statistics vector, test statistics
 #' @param qvalue_grid data.frame, each row is a possible set of hyperparameters for locfdr
+#' @param lower_pi0 double, exclude hyperparameter combinations that give pi0 estimates below this threshold
 #' @param row integer, row of qvalue_grid considered
+#' @param df integer, degrees of freedom of test statistics, if known
 #'
 #' @return boolean, whether the hyperparameter combination ran without error
 check_qvalue_row <- function(
   test_statistics,
   qvalue_grid,
   lower_pi0,
-  row
+  row,
+  df
 ) {
   # for each row, attempt to run qvalue
   run_i <- run_qvalue_row(
     test_statistics = test_statistics,
     qvalue_grid = qvalue_grid,
     row = row,
+    df = df,
     returnFdr = FALSE
   )
 
@@ -38,6 +42,8 @@ check_qvalue_row <- function(
 #'
 #' @param test_statistics vector, test statistics
 #' @param qvalue_grid data.frame, each row is a possible set of hyperparameters for qvalue
+#' @param lower_pi0 double, exclude hyperparameter combinations that give pi0 estimates below this threshold
+#' @param df integer, degrees of freedom of test statistics, if known
 #' @param parallel_param BiocParallel object, specified to run in parallel or NULL
 #' @param verbose boolean
 #'
@@ -61,6 +67,7 @@ reduce_qvalue_grid <- function(
         test_statistics = test_statistics,
         qvalue_grid = qvalue_grid,
         row = i,
+        df = df,
         lower_pi0 = lower_pi0
       )) {
         return(i)
@@ -89,7 +96,7 @@ reduce_qvalue_grid <- function(
 #' @param test_statistics vector, test statistics
 #' @param transf vector, options for transf hyperparameter. `transf` is
 #' a transformation is applied to the p-values so that a local FDR estimate can
-#' be formed that does not involve edge effects of the [0,1] interval in which
+#' be formed that does not involve edge effects of the \[0,1\] interval in which
 #' the p-values lie, either "probit" or "logit".
 #' @param adj_range vector c(min, max), range for adj hyperparameter. `adj` is a numeric value
 #' that is applied as a multiple of the smoothing bandwidth used in the density
@@ -101,9 +108,21 @@ reduce_qvalue_grid <- function(
 #' If `smooth.log.pi0` is TRUE and pi0.method = "smoother", pi_0 will be estimated
 #' by applying a smoother to a scatterplot of log(pi_0) estimates against the
 #' tuning parameter lambda.
+#' @param df integer, degrees of freedom of test statistics, if known
+#'
+#' @param grid_size integer, maximum size of grid to use. Note that this is *not the final grid size*
+#' as some hyperparameter combinations may fail when run on the data.
+#' @param lower_pi0 double, exclude hyperparameter combinations that give pi0 estimates below this threshold
+#' @param method string, one of c('random', 'grid'). 'random' will sample from a uniform
+#' distribution within the ranges, 'grid' will select equally spaced values.
+#' @param seed integer, random seed used if method = 'random'
+#'
+#' @param parallel boolean, whether to utilize parallelization
+#' @param n_workers integer, number of cores to use if parallel, default 2 less than available.
 #' @param parallel_param BiocParallel object, specified to run in parallel or NULL
 #' @param verbose boolean
 #'
+#' @importFrom stats runif
 #' @return data.frame, each row is a possible set of hyperparameters for qvalue
 #' @export
 build_qvalue_grid <- function(
@@ -114,15 +133,24 @@ build_qvalue_grid <- function(
   smooth.log.pi0 = c(TRUE, FALSE),
   df = NULL,
   grid_size = 40,
-  method = 'grid',
   lower_pi0 = 0.7,
+  method = 'grid',
   seed = NULL,
   parallel_param = NULL,
+  parallel = TRUE,
+  n_workers = parallel::detectCores() - 2,
   verbose = FALSE
 ) {
 
   if (!is.null(seed)) {
     set.seed(seed)
+  }
+
+  if (parallel & is.null(parallel_param)) {
+    parallel_param = BiocParallel::MulticoreParam(
+      workers = n_workers,
+      tasks = n_workers
+    )
   }
 
   # smooth.log.pi0 is only used if pi0.method = 'smoother'
@@ -146,7 +174,7 @@ build_qvalue_grid <- function(
         # smooth.log.pi0 has multiple options
         data.frame(
           transf = sample(transf, size = n_smoother, replace = TRUE),
-          adj = runif(n = n_smoother, min = adj_range[1], max = adj_range[2]),
+          adj = stats::runif(n = n_smoother, min = adj_range[1], max = adj_range[2]),
           pi0.method = rep('smoother', n_smoother), #all smoother
           smooth.log.pi0 = sample(smooth.log.pi0, size = n_smoother, replace = TRUE)
         ),
@@ -155,7 +183,7 @@ build_qvalue_grid <- function(
         # smooth.log.pi0 has default value
         data.frame(
           transf = sample(transf, size = n_non_smoother, replace = TRUE),
-          adj = runif(n = n_non_smoother, min = adj_range[1], max = adj_range[2]),
+          adj = stats::runif(n = n_non_smoother, min = adj_range[1], max = adj_range[2]),
           pi0.method = sample(non_smoother, size = n_non_smoother, replace = TRUE), # sample from non-smoother
           smooth.log.pi0 = rep(FALSE, n_non_smoother) #won't be used, keep as default
         )
@@ -166,7 +194,7 @@ build_qvalue_grid <- function(
       # smooth.log.pi0 never matters, keep as default value
       qvalue_grid <- data.frame(
         transf = sample(transf, size = grid_size, replace = TRUE),
-        adj = runif(n = grid_size, min = adj_range[1], max = adj_range[2]),
+        adj = stats::runif(n = grid_size, min = adj_range[1], max = adj_range[2]),
         pi0.method = sample(pi0.method, size = grid_size, replace = TRUE),
         smooth.log.pi0 = rep(FALSE, grid_size) #won't be used, keep as default
       )
@@ -234,7 +262,7 @@ build_qvalue_grid <- function(
   if (verbose & nrow(qvalue_grid_reduced) < nrow(qvalue_grid)) {
     message(paste0(
       nrow(qvalue_grid) - nrow(qvalue_grid_reduced), " hyperparameter combinations failed",
-      ifelse(lower_pi0 > 0, paset(' or had pi0 below', lower_pi0), ''),
+      ifelse(lower_pi0 > 0, paste(' or had pi0 below', lower_pi0), ''),
       " when run on the data. Using a grid size of ", nrow(qvalue_grid_reduced), "."
     ))
   }

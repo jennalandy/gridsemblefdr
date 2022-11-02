@@ -2,7 +2,7 @@
 % Please edit documentation in R/run_fdrtool_row.R
 \name{run_fdrtool_row}
 \alias{run_fdrtool_row}
-\title{Run fdrtool}
+\title{Run fdrtool with a specific set of parameters}
 \usage{
 run_fdrtool_row(test_statistics, fdrtool_grid, row, returnFdr = TRUE)
 }
@@ -12,11 +12,13 @@ run_fdrtool_row(test_statistics, fdrtool_grid, row, returnFdr = TRUE)
 \item{fdrtool_grid}{data.frame, each row is a set of hyperparameters}
 
 \item{row}{integer, row of fdrtool_grid}
+
+\item{returnFdr}{boolean, whether to calculate Fdr form fdr}
 }
 \value{
 \itemize{
 \item fdr - estimated local false discovery rates
-\item Fdr - estimated left tail-end false discovery rates
+\item Fdr - estimated left tail-end false discovery rates if returnFdr is TRUE
 \item pi0 - estimated proportion of tests that are null
 }
 }

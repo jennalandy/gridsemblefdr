@@ -12,11 +12,13 @@ run_locfdr_row(test_statistics, locfdr_grid, row, returnFdr = TRUE)
 \item{locfdr_grid}{data.frame, each row is a set of hyperparameters}
 
 \item{row}{integer, row of locfdr_grid}
+
+\item{returnFdr}{boolean, whether to calculate Fdr form fdr}
 }
 \value{
 \itemize{
 \item fdr - estimated local false discovery rates
-\item Fdr - estimated left tail-end false discovery rates
+\item Fdr - estimated left tail-end false discovery rates if returnFdr = TRUE
 \item pi0 - estimated proportion of tests that are null
 }
 }
