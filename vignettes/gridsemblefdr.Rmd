@@ -1,6 +1,6 @@
 ---
 title: "gridsemblefdr Vignette"
-output: rmarkdown::html_vignette
+output: BiocStyle::html_document
 vignette: >
   %\VignetteIndexEntry{gridsemblefdr}
   %\VignetteEngine{knitr::knitr}
@@ -14,61 +14,79 @@ knitr::opts_chunk$set(
 )
 ```
 
+```{r}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(gridsemblefdr)
+```
+
 ## Overview
 
 `gridsemblefdr` computes local and tail-end false discovery rates using ensemble methods. This method is introduced in the in-progress paper "Ensembling for Unsupervised Learning with Application to False Discovery Rates".
 
 Unsupervised models present a unique challenge for hyperparameter optimization because measures of accuracy used in standard supervised techniques cannot be computed. In practice, this means hyperparameters are chosen differently by each researcher and are often left as the default values in their package of choice. We introduce a novel ensemble framework to address this issue for unsupervised problems with latent labels. This framework selects models to ensemble by their approximate performances, which are estimated using simulated labeled data informed by domain knowledge of the latent label structure. We implement our framework to improve existing false discovery rate methodology, viewing multiple hypothesis testing as an unsupervised classification problem with binary latent labels. Our simulation studies show that an ensemble outperforms three popular methods with their default hyperparameters and that, within an ensemble, combining models chosen based on their approximate performances outperforms an ensemble over a random subset of models. The R package for the false discovery rate implementation of this framework, `gridsemblefdr`, can be installed here.
 
-## Installation
-```{r setup, eval = FALSE}
-# install.packages("devtools")
-library(devtools)
-devtools::install_github("jennalandy/gridsemblefdr")
-
-library(gridsemblefdr)
-```
-
 ## Quick start guide
 
-Given a vector of test statistics, the `gridsemble` function can be used to compute local and tail-end false discovery rates. Here is an example using `gridsemblefdr` on a simulation study of 1000 t-statistics:
+Given a vector of test statistics, the `gridsemble` function can be used to compute local and tail-end false discovery rates. Here is an example using `gridsemblefdr` on a simulation study of 1000 t-statistics. You can choose to utilize parallelization (default `parallel = TRUE`) as well as whether to print details of the algorithm (default `verbose = TRUE`).
 
 ```{r}
-library(gridsemblefdr)
-
+# get some fake data
 set.seed(123)
 test_statistics = c(
   rnorm(900, 0, 3),   # 90% of values near 0
   runif(50, -10, -3), # add 5% negative extreme values
   runif(50, 3, 10)    # add 5% positivive extreme values
 )
+truth = c(
+  rep(FALSE, 900),
+  rep(TRUE, 100)
+)
+true_pi0 = 0.9
+```
 
-gridsemble_res <- gridsemble(test_statistics, verbose = FALSE)
+```{r}
+# run gridsemble in parallel
+set.seed(234)
+gridsemble_res <- gridsemble(
+  test_statistics, 
+  verbose = TRUE, 
+  parallel = FALSE
+)
+```
+
+```{r}
+# or run gridsemble not in parallel
+set.seed(234)
+gridsemble_res <- gridsemble(
+  test_statistics, 
+  verbose = FALSE, 
+  parallel = TRUE
+)
 ```
 
 Local and tail-end false discovery rates, as well as the proportion of test statistics from the null distribution, pi0, can be accessed from the `gridsemble_res` object.
 
-```{r fig.width = 8}
+```{r}
 fdr <- gridsemble_res$fdr
 Fdr <- gridsemble_res$Fdr
 pi0 <- gridsemble_res$pi0
-
-# compare pi0 predictions between 
-# gridsemble and locfdr with default parameters
-# true = 0.9
-print(pi0)
-print(gridsemble_res$default_locfdr$fp0['mlest','p0'])
-
-# compare distributions of fdr between
-# gridsemble and locfdr with default parameters
-par(mfrow = c(1,2))
-hist(fdr, main = 'gridsemble')
-hist(gridsemble_res$default_locfdr$fdr, main = 'locfdr - default')
 ```
 
-### Options
+We can compare pi0 predictions between gridsemble and locfdr with default parameters. The results of each package with default hyperparameters are stored in the gridsemble output as `default_[package]`.
 
-#### Number of Simulations and Ensemble Size
+```{r fig.width = 8}
+cat(paste0(
+  'estimated gridsemble pi0 = ', round(pi0, 4),
+  '\ndefault locfdr pi0 = ', round(gridsemble_res$default_locfdr$fp0['mlest','p0'], 4),
+  '\ncompared to true pi0 = ', true_pi0
+))
+```
+
+## Options
+
+### Number of Simulations and Ensemble Size
 
 By default, `gridsemblefdr` will build `nsim = 10` simulated datasets to compute approximate metrics, and choose the top `ensemble_size = 10` set of hyperparameters from each to ensemble over. This can easily be changed by the user.
 
@@ -79,10 +97,13 @@ gridsemble_res <- gridsemble(
   ensemble_size = 20,
   verbose = FALSE
 )
-print(gridsemble_res$pi0)
+cat(paste0(
+  'estimated gridsemble pi0 = ', round(gridsemble_res$pi0, 4),
+  '\ncompared to true pi0 = ', true_pi0
+))
 ```
 
-#### Hyperparameter Grids
+### Hyperparameter Grids
 
 The hyperparameter sets considered are set to the default grid values in the functions `build_locfdr_grid`, `build_fdrtool_grid`, and `build_qvalue_grid`. 
 
@@ -123,7 +144,10 @@ gridsemble_res <- gridsemble(
   qvalue_grid = my_qvalue_grid,
   verbose = FALSE
 )
-print(gridsemble_res$pi0)
+cat(paste0(
+  'estimated gridsemble pi0 = ', round(gridsemble_res$pi0, 4),
+  '\ncompared to true pi0 = ', true_pi0
+))
 ```
 
 To exclude one of the three package from the ensemble entirely, set the grid value to `NULL`. 
@@ -132,22 +156,28 @@ To exclude one of the three package from the ensemble entirely, set the grid val
 gridsemble_noqvalue_res <- gridsemble(
   test_statistics,
   locfdr_grid = my_locfdr_grid,
-  fdrtool_grid = my_fdrtool_grid,
-  qvalue_grid = NULL,
+  fdrtool_grid = NULL,
+  qvalue_grid = my_qvalue_grid,
   verbose = FALSE
 )
-print(gridsemble_res$pi0)
+cat(paste0(
+  'estimated gridsemble pi0 = ', round(gridsemble_noqvalue_res$pi0, 4),
+  '\ncompared to true pi0 = ', true_pi0
+))
 ```
 
-#### Size of Simulated Datasets
+### Size of Simulated Datasets
 
-By default, the simulated datasets are the same size as the real data. If this is too large given a user's computational limitations, the size of simulated datasets can be specified with `sim_n`.
+By default, the simulated datasets are the same size as the real data. If this is too large given a user's computational limitations, the size of simulated datasets can be specified with `sim_size`.
 
 ```{r}
 gridsemble_res <- gridsemble(
   test_statistics, 
-  sim_size = 500,
+  sim_size = 100,
   verbose = FALSE
 )
-print(gridsemble_res$pi0)
+cat(paste0(
+  'estimated gridsemble pi0 = ', round(gridsemble_res$pi0, 4),
+  '\ncompared to true pi0 = ', true_pi0
+))
 ```
