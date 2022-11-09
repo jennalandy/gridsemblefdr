@@ -14,7 +14,6 @@ build_qvalue_grid(
   grid_size = 40,
   lower_pi0 = 0.7,
   method = "grid",
-  seed = NULL,
   parallel_param = NULL,
   parallel = min(TRUE, n_workers > 1),
   n_workers = max(parallel::detectCores() - 2, 1),
@@ -29,36 +28,34 @@ a transformation is applied to the p-values so that a local FDR estimate can
 be formed that does not involve edge effects of the [0,1] interval in which
 the p-values lie, either "probit" or "logit".}
 
-\item{adj_range}{vector c(min, max), range for adj hyperparameter. \code{adj} is a numeric value
-that is applied as a multiple of the smoothing bandwidth used in the density
-estimation.}
+\item{adj_range}{vector c(min, max), range for adj hyperparameter. \code{adj} is a
+numeric value that is applied as a multiple of the smoothing bandwidth used
+in the density estimation.}
 
 \item{pi0.method}{vector, options for pi0.method hyperparameter. \code{pi0.method}
-is the method for automatically choosing tuning parameter in the estimation of
-pi_0, the proportion of true null hypotheses, either "smoother" or "bootstrap".}
+is the method for automatically choosing tuning parameter in the estimation
+of pi_0, the proportion of true null tests, one of c("smoother","bootstrap").}
 
 \item{smooth.log.pi0}{vector of options for smooth.log.pi0 hyperparameter.
-If \code{smooth.log.pi0} is TRUE and pi0.method = "smoother", pi_0 will be estimated
-by applying a smoother to a scatterplot of log(pi_0) estimates against the
-tuning parameter lambda.}
+If \code{smooth.log.pi0} is TRUE and pi0.method = "smoother", pi_0 will be e
+stimated by applying a smoother to a scatterplot of log(pi_0) estimates
+against the tuning parameter lambda.}
 
 \item{df}{integer, degrees of freedom of test statistics, if known}
 
-\item{grid_size}{integer, maximum size of grid to use. Note that this is \emph{not the final grid size}
-as some hyperparameter combinations may fail when run on the data.}
+\item{grid_size}{integer, maximum size of grid to use. Note that this is
+\emph{not the final grid size}, combinations may fail when run on the data.}
 
-\item{lower_pi0}{double, exclude hyperparameter combinations that give pi0 estimates below this threshold}
+\item{lower_pi0}{double, exclude models with pi0 estimates below threshold}
 
-\item{method}{string, one of c('random', 'grid'). 'random' will sample from a uniform
-distribution within the ranges, 'grid' will select equally spaced values.}
+\item{method}{string, one of c('random', 'grid'). 'random' will sample
+uniformly within the ranges, 'grid' will select equally spaced values}
 
-\item{seed}{integer, random seed used if method = 'random'}
-
-\item{parallel_param}{BiocParallel object, specified to run in parallel or NULL}
+\item{parallel_param}{BiocParallel object}
 
 \item{parallel}{boolean, whether to utilize parallelization}
 
-\item{n_workers}{integer, number of cores to use if parallel, default 2 less than available.}
+\item{n_workers}{integer, number of cores to use if parallel}
 
 \item{verbose}{boolean}
 }
@@ -66,6 +63,11 @@ distribution within the ranges, 'grid' will select equally spaced values.}
 data.frame, each row is a possible set of hyperparameters for qvalue
 }
 \description{
-Build a factorial grid of possible hyperparameters for qvalue and
+Build a factorial grid of hyperparameters for qvalue and
 reduce to hyperparameter sets that can be run on provided data without error.
+}
+\examples{
+set.seed(123)
+test_statistics = c(rnorm(800), runif(100, -10, -5), runif(100, 5, 10))
+qvalue_grid = build_qvalue_grid(test_statistics)
 }

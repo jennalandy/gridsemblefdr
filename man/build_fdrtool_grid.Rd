@@ -7,11 +7,10 @@
 build_fdrtool_grid(
   test_statistics,
   cutoff.method = c("fndr", "pct0", "locfdr"),
-  pct0_range = c(0, 0.5),
+  pct0_range = c(0, 0.8),
   grid_size = 40,
   lower_pi0 = 0.7,
   method = "grid",
-  seed = NULL,
   parallel = min(TRUE, n_workers > 1),
   n_workers = max(parallel::detectCores() - 2, 1),
   parallel_param = NULL,
@@ -24,24 +23,22 @@ build_fdrtool_grid(
 \item{cutoff.method}{vector, options for cutoff method hyperparameter.
 \code{cutoff.method} is one of "fndr" (default), "pct0", "locfdr".}
 
-\item{pct0_range}{vector c(min, max), range for pct0 hyperparameter. \code{pct0} is the
+\item{pct0_range}{vector c(min, max), range for pct0 hyperparameter, the
 fraction of data used for fitting null model - only if cutoff.method="pct0".}
 
-\item{grid_size}{integer, maximum size of grid to use. Note that this is \emph{not the final grid size}
-as some hyperparameter combinations may fail when run on the data.}
+\item{grid_size}{integer, maximum size of grid to use. Note that this is
+\emph{not the final grid size}, combinations may fail when run on the data.}
 
-\item{lower_pi0}{double, exclude hyperparameter combinations that give pi0 estimates below this threshold}
+\item{lower_pi0}{double, exclude models with pi0 estimates below threshold}
 
-\item{method}{string, one of c('random', 'grid'). 'random' will sample from a uniform
-distribution within the ranges, 'grid' will select equally spaced values.}
-
-\item{seed}{integer, random seed used if method = 'random'}
+\item{method}{string, one of c('random', 'grid'). 'random' will sample
+uniformly within the ranges, 'grid' will select equally spaced values}
 
 \item{parallel}{boolean, whether to utilize parallelization}
 
-\item{n_workers}{integer, number of cores to use if parallel, default 2 less than available.}
+\item{n_workers}{integer, number of cores to use if parallel}
 
-\item{parallel_param}{BiocParallel object, specified to run in parallel or NULL}
+\item{parallel_param}{BiocParallel object}
 
 \item{verbose}{boolean}
 }
@@ -49,6 +46,11 @@ distribution within the ranges, 'grid' will select equally spaced values.}
 data.frame, each row is a possible set of hyperparameters for fdrtool
 }
 \description{
-Build a factorial grid of possible hyperparameters for fdrtool and
-reduce to hyperparameter sets that can be run on provided data without error.
+Build a grid of possible hyperparameters for fdrtool and reduce
+to hyperparameter sets that can be run on provided data without error.
+}
+\examples{
+set.seed(123)
+test_statistics = c(rnorm(800), runif(100, -10, -5), runif(100, 5, 10))
+fdrtool_grid = build_fdrtool_grid(test_statistics)
 }

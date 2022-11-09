@@ -8,3 +8,4 @@ R/in_progress.R
 ..Rcheck/*
 gridsemblefdr.Rcheck/*
 *.Rproj
+..Rcheck/00check.log

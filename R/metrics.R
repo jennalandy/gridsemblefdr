@@ -6,6 +6,7 @@
 #' is in the largest absolute quantile
 #'
 #' @return labeled list of metrics
+#' @noRd
 metrics <- function(
   fdr, true_fdr, topq
 ) {
@@ -28,6 +29,7 @@ metrics <- function(
 #' @param true vector, true values
 #'
 #' @return double, MSE
+#' @noRd
 get_MSE <- function(estimate, true) {
   mean((true - estimate)^2)
 }

@@ -7,10 +7,12 @@
 #' @param pi0 double, initial value for pi0
 #'
 #' @param maxiter integer, highest number of iterations of EM algorithm allowed
-#' @param tol double, tolerance for change in sum of squared differences in parameters
-#' in order to stop algorithm
+#' @param tol double, tolerance for change in sum of squared differences in
+#' parameters in order to stop algorithm
 #'
-#' @return list, named parameters for the generating_model densities and values across iterations
+#' @return list, named parameters for the generating_model densities and values
+#' across iterations
+#' @noRd
 fit_generating_model <- function(
   test_statistics,
 
@@ -59,73 +61,50 @@ fit_generating_model <- function(
 #' @param pi0 double, initial value for pi0
 #'
 #' @param maxiter integer, max number of iterations of EM algorithm allowed
-#' @param tol double, tolerance for change in sum of squared differences in parameters
-#' in order to stop algorithm
+#' @param tol double, tolerance for change in sum of squared differences in
+#' parameters in order to stop algorithm
 #'
-#' @return list, named parameters for the generating_model densities and values across iterations
+#' @return list, named parameters for the generating_model densities and values
+#' across iterations
+#' @noRd
 fit_generating_model_symmetric <- function(
-  test_statistics,
-
-  # initialize
-  sigmasq0,
-  sigmasq1,
-  pi0,
-
-  # learning parameters
-  maxiter,
-  tol
+  test_statistics, sigmasq0, sigmasq1, pi0, maxiter, tol
 ) {
 
   prob_y1_given_t <- function(t, pi0, sigmasq0, sigmasq1) {
-    (1-pi0)*(t^2/sigmasq1)*(1/sqrt(2*pi*sigmasq1))*exp(-(1/(2*sigmasq1))*t^2)/mix(
-      t, pi0, sigmasq0, sigmasq1
-    )
+    (1-pi0)*(t^2/sigmasq1)*(1/sqrt(2*pi*sigmasq1))*exp(-(1/(2*sigmasq1))*t^2)/
+      mix(t, pi0, sigmasq0, sigmasq1)
   }
   prob_y0_given_t <- function(t, pi0, sigmasq0, sigmasq1) {
-    pi0*(1/sqrt(2*pi*sigmasq0))*exp(-(1/(2*sigmasq0))*t^2)/mix(
-      t, pi0, sigmasq0, sigmasq1
-    )
+    pi0*(1/sqrt(2*pi*sigmasq0))*exp(-(1/(2*sigmasq0))*t^2)/
+      mix(t, pi0, sigmasq0, sigmasq1)
   }
 
   thetas <- matrix(nrow = maxiter, ncol = 3)
-  thetas[1,] <- c(pi0, sigmasq0, sigmasq1)
+  i <- 1
+  while( i < maxiter ) {
+    thetas[i,] <- c(pi0, sigmasq0, sigmasq1)
 
-  for (i in 2:maxiter) {
-    # estimate
     P_y1_given_t <- prob_y1_given_t(test_statistics, pi0, sigmasq0, sigmasq1)
     P_y0_given_t <- prob_y0_given_t(test_statistics, pi0, sigmasq0, sigmasq1)
 
-    # maximize
-    # MLEs, with means weighted by probabities
-    sigmasq0 <- sum(P_y0_given_t*test_statistics^2, na.rm = TRUE)/sum(P_y0_given_t, na.rm = TRUE)
-    sigmasq1 <- sum(P_y1_given_t*test_statistics^2, na.rm = TRUE)/(3*sum(P_y1_given_t, na.rm = TRUE))
+    sigmasq0 <- sum(P_y0_given_t*test_statistics^2, na.rm = TRUE)/
+      sum(P_y0_given_t, na.rm = TRUE)
+    sigmasq1 <- sum(P_y1_given_t*test_statistics^2, na.rm = TRUE)/
+      (3*sum(P_y1_given_t, na.rm = TRUE))
 
-    # definition of pi0
     pi0 <- mean(P_y0_given_t, na.rm = TRUE)
 
-    thetas[i,] <- c(pi0, sigmasq0, sigmasq1)
-
-    # check if we can break early
+    i <- i + 1
     diff = sum((thetas[i,] - thetas[i-1,])^2)
-    if (is.na(diff)) {
-      break
-    } else if (diff < tol) {
-      break
-    }
+    if (is.na(diff)) { break } else if (diff < tol) { break }
   }
-
+  thetas[i,] <- c(pi0, sigmasq0, sigmasq1)
   thetas <- thetas[!is.na(thetas[,1]),]
-
   colnames(thetas) = c('pi0', 'sigmasq0', 'sigmasq1')
 
-  parameters_list = list(
-    sigmasq0 = sigmasq0,
-    sigmasq1 = sigmasq1,
-    pi0 = pi0
-  )
-
   return(list(
-    'parameters' = parameters_list,
+    'parameters' = list(sigmasq0 = sigmasq0, sigmasq1 = sigmasq1, pi0 = pi0),
     'thetas' = thetas,
     'type' = 'symmetric',
     'iters' = i
@@ -140,6 +119,7 @@ fit_generating_model_symmetric <- function(
 #'
 #' @importFrom stats quantile
 #' @return data.frame, n simulated t-statistic and truth pairs
+#' @noRd
 simulate_from_generating_model <- function(n, generating_model, df = NULL) {
 
   n0 <- round(generating_model$parameters$pi0*n)
@@ -205,6 +185,7 @@ simulate_from_generating_model <- function(n, generating_model, df = NULL) {
 #' @param sigmasq0 double, variance of null density
 #'
 #' @return double, value of null density pdf at value t
+#' @noRd
 null <- function(t, sigmasq0) {
   (2*pi*sigmasq0)^(-1/2) * exp(-t^2/(2*sigmasq0))
 }
@@ -216,6 +197,7 @@ null <- function(t, sigmasq0) {
 #'
 #' @importFrom stats rnorm
 #' @return vector, test statistics sampled from null density N(0, sigmasq0)
+#' @noRd
 sample_null <- function(n, sigmasq0) {
   stats::rnorm(n, mean = 0, sd = sqrt(sigmasq0))
 }
@@ -228,6 +210,7 @@ sample_null <- function(n, sigmasq0) {
 #' @param sigmasq1 double, variance of alternative distribution if symmetric
 #'
 #' @return double, value of alternative density pdf at value t
+#' @noRd
 alt <- function(t, sigmasq1) {
   (t^2/sigmasq1) * (2*pi*sigmasq1)^(-1/2) * exp(-t^2/(2*sigmasq1))
 }
@@ -240,6 +223,7 @@ alt <- function(t, sigmasq1) {
 #' @param t_init double, starting point for metropolis hastings
 #'
 #' @return vector, test statistics
+#' @noRd
 sample_alternative <- function(
   N,
   sigmasq1,
@@ -248,7 +232,7 @@ sample_alternative <- function(
 ) {
   t_vec = vector(length = N)
   t = t_init
-  for (i in 1:(N + burn_in)) {
+  for (i in seq_len(N + burn_in)) {
     t = metropolis_hastings_step(t, sigmasq1)
 
     # use first 1000 as burn-in
@@ -267,6 +251,7 @@ sample_alternative <- function(
 #'
 #' @importFrom stats dnorm
 #' @return double, proposal pdf value
+#' @noRd
 proposal_pdf <- function(of, given, sd) {
   stats::dnorm(of, mean = given, sd = sd)
 }
@@ -278,6 +263,7 @@ proposal_pdf <- function(of, given, sd) {
 #'
 #' @importFrom stats rnorm runif
 #' @return double, next t value
+#' @noRd
 metropolis_hastings_step <- function(t, sigmasq1) {
   # sample t_next|t ~ q
   t_next <- stats::rnorm(1, mean = t, sd = 4)
@@ -308,6 +294,7 @@ metropolis_hastings_step <- function(t, sigmasq1) {
 #' @param sigmasq1 double, variance of alternative distribution
 #'
 #' @return value of mixture density pdf at value t
+#' @noRd
 mix <- function(t, pi0, sigmasq0, sigmasq1) {
   pi0*null(t, sigmasq0) + (1-pi0)*alt(t, sigmasq1)
 }

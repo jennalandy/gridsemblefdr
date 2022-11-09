@@ -1,7 +1,8 @@
 #' Run grid row
 #'
 #' @param test_statistics vector, test statistics
-#' @param df integer, degrees of freedom of test statistics, if known
+#' @param df integer, degrees of freedom of test statistics t-distribution,
+#' otherwise assumed standard normal
 #' @param grids list, grids named by method
 #' @param method string, one of c('locfdr','fdrtool','qvalue')
 #' @param row integer, which row of method grid to consider
@@ -9,11 +10,13 @@
 #' @param verbose boolean
 #'
 #' @return
+#' list of estimates
 #' \itemize{
-#'   \item fdr - estimated local false discovery rates
-#'   \item Fdr - estimated left tail-end false discovery rates if returnFdr = TRUE
-#'   \item pi0 - estimated proportion of tests that are null
+#'   \item `fdr`: vector, local false discovery rates
+#'   \item `Fdr`: vector, tail-end false discovery rates if returnFdr = TRUE
+#'   \item `pi0`: double, proportion of tests that are null
 #' }
+#' @noRd
 run_row <- function(
     test_statistics,
     grids,

@@ -6,13 +6,15 @@
 #' @param returnFdr boolean, whether to calculate Fdr form fdr
 #'
 #' @return
+#' list of estimates
 #' \itemize{
-#'   \item fdr - estimated local false discovery rates
-#'   \item Fdr - estimated left tail-end false discovery rates if returnFdr is TRUE
-#'   \item pi0 - estimated proportion of tests that are null
+#'   \item `fdr`: vector, local false discovery rates
+#'   \item `Fdr`: vector, tail-end false discovery rates if returnFdr = TRUE
+#'   \item `pi0`: double, proportion of tests that are null
 #' }
-#
+#'
 #' @importFrom fdrtool fdrtool
+#' @noRd
 run_fdrtool_row <- function(
   test_statistics,
   fdrtool_grid,

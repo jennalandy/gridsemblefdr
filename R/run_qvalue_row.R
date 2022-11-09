@@ -1,23 +1,24 @@
-#' @title P from T
 #' @title Run qvalue
 #' @description Run qvalue with a specific set of parameters
 #'
 #' @param test_statistics vector, test statistics
 #' @param qvalue_grid data.frame, each row is a set of hyperparameters
 #' @param row integer, row of qvalue_grid
-#' @param df integer, degrees of freedom to compute p-value from test statistics,
-#' assume standard normal if NULL
+#' @param df integer, degrees of freedom of test statistics t-distribution,
+#' otherwise assumed standard normal
 #' @param returnFdr boolean, whether to calculate Fdr form fdr
 #' @param verbose boolean
 #'
 #' @return
+#' list of estimates
 #' \itemize{
-#'   \item fdr - estimated local false discovery rates
-#'   \item Fdr - estimated left tail-end false discovery rates if returnFdr = TRUE
-#'   \item pi0 - estimated proportion of tests that are null
+#'   \item `fdr`: vector, local false discovery rates
+#'   \item `Fdr`: vector, tail-end false discovery rates if returnFdr = TRUE
+#'   \item `pi0`: double, proportion of tests that are null
 #' }
 #'
 #' @importFrom qvalue qvalue
+#' @noRd
 run_qvalue_row <- function(
   test_statistics,
   qvalue_grid,

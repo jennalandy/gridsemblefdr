@@ -1,13 +1,16 @@
 Package: gridsemblefdr
 Title: Estimating Local and Tail End False Discovery Rates With Ensemble Methods
-Version: 0.0.0.9000
+Version: 0.99.0
 Authors@R: 
     person(given = "Jenna",
            family = "Landy",
            role = c("aut", "cre"),
            email = "jlandy@g.harvard.edu",
            comment = c(ORCID = "0000-0002-1411-8750"))
-Description: Estimates local (fdr) and tail-end (Fdr) false discovery rates with ensemble methods, where the models ensembled over are those that perform best on simulated, labeled data similar based on the true, unlabelled data.
+Description: 
+  Gridsemblefdr computes local and tail-end false discovery rates using ensemble methods. 
+  This method is introduced in the in-progress paper "Ensembling for Unsupervised Learning with Application to False Discovery Rates". 
+  This framework selects models to ensemble by their approximate performances, which are estimated using simulated labeled data informed by domain knowledge of the latent label structure.
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
@@ -15,7 +18,10 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.1
 URL: https://github.com/jennalandy/gridsemblefdr
 BugReports: https://github.com/jennalandy/gridsemblefdr/issues
-biocViews:
+biocViews: 
+  Software, 
+  DifferentialExpression, 
+  MultipleComparison
 Imports: 
     dplyr,
     fdrtool,
@@ -24,7 +30,8 @@ Imports:
     parallel,
     magrittr,
     BiocParallel,
-    rlang
+    rlang,
+    stats
 Requires: 
     dplyr,
     fdrtool,
@@ -33,7 +40,8 @@ Requires:
     parallel,
     magrittr,
     BiocParallel,
-    rlang
+    rlang,
+    stats
 Suggests: 
     rmarkdown,
     knitr,

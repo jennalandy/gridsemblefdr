@@ -7,18 +7,15 @@
 gridsemble(
   test_statistics,
   df = NULL,
-  locfdr_grid = build_locfdr_grid(test_statistics, lower_pi0 = lower_pi0, parallel =
-    parallel, n_workers = n_workers, verbose = verbose),
-  fdrtool_grid = build_fdrtool_grid(test_statistics, lower_pi0 = lower_pi0, parallel =
-    parallel, n_workers = n_workers, verbose = verbose),
-  qvalue_grid = build_qvalue_grid(test_statistics, df = df, lower_pi0 = lower_pi0,
-    parallel = parallel, n_workers = n_workers, verbose = verbose),
-  nsim = 10,
+  locfdr_grid = "default",
+  fdrtool_grid = "default",
+  qvalue_grid = "default",
   ensemble_size = 10,
+  nsim = 10,
   lower_pi0 = 0.7,
   sim_size = length(test_statistics),
-  parallel = min(TRUE, n_workers > 1),
   n_workers = max(parallel::detectCores() - 2, 1),
+  parallel = min(TRUE, n_workers > 1),
   parallel_param = NULL,
   verbose = TRUE
 )
@@ -26,46 +23,59 @@ gridsemble(
 \arguments{
 \item{test_statistics}{vector, test statistics}
 
-\item{df}{integer, degrees of freedom of test statistics, if known. Otherwise assumed
-to be from N(0, 1).}
+\item{df}{integer, degrees of freedom of test statistics t-distribution,
+otherwise assumed standard normal}
 
-\item{locfdr_grid}{data.frame, each row is a set of hyperparameters for locfdr}
+\item{locfdr_grid}{data.frame or 'default', rows are possible hyperparameters
+for locfdr, or \code{build_locfdr_grid} will be run with default values, NULL to
+exclude locfdr from gridsemble}
 
-\item{fdrtool_grid}{data.frame, each row is a set of hyperparameters for fdrtool}
+\item{fdrtool_grid}{data.frame or 'default', rows are possible
+hyperparameters for fdrtool, or \code{build_fdrtool_grid} will be run with default
+values, NULL to exclude fdrtool from gridsemble}
 
-\item{qvalue_grid}{data.frame, each row is a set of hyperparameters for qvalue}
+\item{qvalue_grid}{data.frame or 'default', rows are possible hyperparameters
+for qvalue, or \code{build_qvalue_grid} will be run with default values, NULL to
+exclude qvalue from gridsemble}
 
-\item{nsim}{integer, number of datasets to simulate and grid search over.
-If 0, no datasets are simulated and model(s) are randomly selected.}
+\item{ensemble_size}{integer, number of models to ensemble}
 
-\item{ensemble_size}{integer, number of models chosen to ensemble over.}
+\item{nsim}{integer, number of datasets to simulate and perform grid search
+over, or 0 for models to be randomly selected.}
 
-\item{lower_pi0}{double, lower bound cutoff of pi0 for model consideration.
-Default 0.7 (assume majority null tests).}
+\item{lower_pi0}{double, lower bound cutoff of \code{pi0} for model consideration,
+efault 0.7 (assume majority null tests)}
 
-\item{sim_size}{integer, size of simulated datasets, default number of test statistics}
+\item{sim_size}{integer, size of simulated datasets}
+
+\item{n_workers}{integer, number of cores to use if parallel}
 
 \item{parallel}{boolean, whether to utilize parallelization}
 
-\item{n_workers}{integer, number of cores to use if parallel, default 2 less than available.}
-
-\item{parallel_param}{BiocParallel object, specified to run in parallel or NULL}
+\item{parallel_param}{\code{BiocParallel} object}
 
 \item{verbose}{boolean}
 }
 \value{
 \itemize{
-\item fdr local false discovery rates
-\item Fdr left tail false discovery rates
-\item pi0 proportion of null test statistics
-\item top_grid dataframe containing hyperparameter sets
-that were ensembled over and their metrics on simulated daa
-\item all_grids dataframe containing all hyperparameter sets considered
+\item \code{fdr}: vector, local false discovery rates
+\item \code{Fdr}: vector, left tail false discovery rates
+\item \code{pi0}: double, proportion of null test statistics
+\item \code{top_grid}: data.frame, hyperparameter sets in ensemble and
+their metrics on each simulated dataset
+\item \code{all_grids}: data.frame, all hyperparameter sets considered
 and their metrics on simulated data
-\item generating_model parameters used for simulation step
+\item \code{generating_model}: list, parameters of generating model
 }
 }
 \description{
 use ensemble methods to estimate local (fdr) and tail-end (Fdr)
 false discovery rates.
+}
+\examples{
+set.seed(123)
+test_statistics = c(rnorm(800), runif(100, -10, -5), runif(100, 5, 10))
+res = gridsemble(test_statistics)
+res$pi0
+res$fdr
 }

@@ -6,14 +6,13 @@
 \usage{
 build_locfdr_grid(
   test_statistics,
-  pct_range = c(0, 0.1),
-  pct0_range = c(0, 1/3),
-  nulltype = 1:3,
-  type = 0:1,
+  pct_range = c(0, 0.4),
+  pct0_range = c(0, 0.75),
+  nulltype = c(1, 2, 3),
+  type = c(0, 1),
   grid_size = 40,
   lower_pi0 = 0.7,
   method = "grid",
-  seed = NULL,
   parallel_param = NULL,
   parallel = min(TRUE, n_workers > 1),
   n_workers = max(parallel::detectCores() - 2, 1),
@@ -23,12 +22,12 @@ build_locfdr_grid(
 \arguments{
 \item{test_statistics}{vector, test statistics}
 
-\item{pct_range}{vector c(min, max), range for pct hyperparameter. \code{pct} is the
-excluded tail proportions of zz's when fitting f(z).
+\item{pct_range}{vector c(min, max), range for pct hyperparameter. \code{pct} is
+the excluded tail proportions of zz's when fitting f(z).
 pct=0 includes full range of zz's.}
 
-\item{pct0_range}{vector c(min, max), range for pct0 hyperparameter. \code{pct0} is the
-proportion of the zz distribution used in fitting the null density
+\item{pct0_range}{vector c(min, max), range for pct0 hyperparameter. \code{pct0}
+is the proportion of the zz distribution used in fitting the null density
 f0(z) by central matching.}
 
 \item{nulltype}{vector, options for nulltype hyperparameter. \code{nulltype}
@@ -40,21 +39,19 @@ use in the fdr calculations. 0 is the theoretical null N(0,1),
 \item{type}{vector, options for type hyperparameter. \code{type} is the type of
 fitting used for f; 0 is a natural spline, 1 is a polynomial.}
 
-\item{grid_size}{integer, maximum size of grid to use. Note that this is \emph{not the final grid size}
-as some hyperparameter combinations may fail when run on the data.}
+\item{grid_size}{integer, maximum size of grid to use. Note that this is
+\emph{not the final grid size}, combinations may fail when run on the data.}
 
-\item{lower_pi0}{double, exclude hyperparameter combinations that give pi0 estimates below this threshold}
+\item{lower_pi0}{double, exclude models with pi0 estimates below threshold}
 
-\item{method}{string, one of c('random', 'grid'). 'random' will sample from a uniform
-distribution within the ranges, 'grid' will select equally spaced values.}
+\item{method}{string, one of c('random', 'grid'). 'random' will sample
+uniformly within the ranges, 'grid' will select equally spaced values}
 
-\item{seed}{integer, random seed used if method = 'random'}
-
-\item{parallel_param}{BiocParallel object, specified to run in parallel or NULL}
+\item{parallel_param}{BiocParallel object}
 
 \item{parallel}{boolean, whether to utilize parallelization}
 
-\item{n_workers}{integer, number of cores to use if parallel, default 2 less than available.}
+\item{n_workers}{integer, number of cores to use if parallel}
 
 \item{verbose}{boolean}
 }
@@ -62,6 +59,11 @@ distribution within the ranges, 'grid' will select equally spaced values.}
 data.frame, each row is a possible set of hyperparameters for locfdr
 }
 \description{
-Build a factorial grid of possible hyperparameters for locfdr and
+Build a factorial grid of hyperparameters for locfdr and
 reduce to hyperparameter sets that can be run on provided data without error.
+}
+\examples{
+set.seed(123)
+test_statistics = c(rnorm(800), runif(100, -10, -5), runif(100, 5, 10))
+locfdr_grid = build_locfdr_grid(test_statistics)
 }
