@@ -22,6 +22,8 @@
 #' @param lower_pi0 double, lower bound cutoff of `pi0` for model consideration,
 #' efault 0.7 (assume majority null tests)
 #' @param sim_size integer, size of simulated datasets
+#' @param large_abs_metric boolean, if TRUE, only consider fdrerror looking
+#' at the large absolute value test statistics (top quartile of abs(t))
 #'
 #' @param n_workers integer, number of cores to use if parallel
 #' @param parallel boolean, whether to utilize parallelization
@@ -59,6 +61,7 @@ gridsemble <- function(
   nsim = 10,
   lower_pi0 = 0.7,
   sim_size = length(test_statistics),
+  large_abs_metric = FALSE,
   n_workers = max(parallel::detectCores() - 2, 1),
   parallel = min(TRUE, n_workers > 1),
   parallel_param = NULL,

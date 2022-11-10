@@ -23,15 +23,13 @@ parlapply <- function(X, FUN, parallel_param, ...) {
 #'
 #' @param fdr vector, local false discovery rate estimates
 #' @param test_statistics vector, test statistics
-#' @param direction string, one of c('left','right'), direction of tail-end
-#' false discovery rate
 #'
 #' @importFrom dplyr cummean last arrange mutate group_by summarize pull
 #' @importFrom magrittr %>%
 #'
 #' @return vector, tail-end false discovery rates
 #' @noRd
-Fdr_from_fdr <- function(fdr, test_statistics, direction = 'left') {
+Fdr_from_fdr <- function(fdr, test_statistics) {
 
   Fdr = vector(length = length(test_statistics))
   for (i in seq_len(length(test_statistics))) {

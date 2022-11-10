@@ -36,8 +36,7 @@ run_fdrtool_row <- function(
       if (returnFdr) {
         Fdr = Fdr_from_fdr(
           fdr = res$lfdr,
-          test_statistics = test_statistics,
-          direction = 'left'
+          test_statistics = test_statistics
         )
       } else {
         Fdr = 'not computed'

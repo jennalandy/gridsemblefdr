@@ -14,6 +14,7 @@ gridsemble(
   nsim = 10,
   lower_pi0 = 0.7,
   sim_size = length(test_statistics),
+  large_abs_metric = FALSE,
   n_workers = max(parallel::detectCores() - 2, 1),
   parallel = min(TRUE, n_workers > 1),
   parallel_param = NULL,
@@ -47,6 +48,9 @@ over, or 0 for models to be randomly selected.}
 efault 0.7 (assume majority null tests)}
 
 \item{sim_size}{integer, size of simulated datasets}
+
+\item{large_abs_metric}{boolean, if TRUE, only consider fdrerror looking
+at the large absolute value test statistics (top quartile of abs(t))}
 
 \item{n_workers}{integer, number of cores to use if parallel}
 
