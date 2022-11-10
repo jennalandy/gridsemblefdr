@@ -123,6 +123,7 @@ fit_generating_model_symmetric <- function(
 simulate_from_generating_model <- function(n, generating_model, df = NULL) {
 
   n0 <- round(generating_model$parameters$pi0*n)
+  n1 <- max(n-n0, 1)
 
   if (generating_model$type == 'symmetric'){
     test_statistics = c(
@@ -131,7 +132,7 @@ simulate_from_generating_model <- function(n, generating_model, df = NULL) {
         sigmasq0 = generating_model$parameters$sigmasq0
       ),
       sample_alternative(
-        N = n-n0,
+        N = n1,
         sigmasq1 = generating_model$parameters$sigmasq1
       )
     )
@@ -148,7 +149,7 @@ simulate_from_generating_model <- function(n, generating_model, df = NULL) {
       ),
       truth = c(
         rep(0, n0),
-        rep(1, n-n0)
+        rep(1, n1)
       ),
       topq = abs(test_statistics) > stats::quantile(abs(test_statistics))['75%']
     )
