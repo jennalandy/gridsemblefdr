@@ -122,7 +122,7 @@ fit_generating_model_symmetric <- function(
 #' @noRd
 simulate_from_generating_model <- function(n, generating_model, df = NULL) {
 
-  n0 <- round(generating_model$parameters$pi0*n)
+  n0 <- max(round(generating_model$parameters$pi0*n), 1)
   n1 <- max(n-n0, 1)
 
   if (generating_model$type == 'symmetric'){
