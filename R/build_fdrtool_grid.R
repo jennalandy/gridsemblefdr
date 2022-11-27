@@ -159,17 +159,14 @@ build_fdrtool_grid <- function(
     )
   } else if (method == 'grid') {
     non <- cutoff.method[cutoff.method != 'pct0']
-    n_non = round(grid_size*length(non)/length(cutoff.method))
-    n_pct = grid_size - n_non
-
-    nG_pct = ceiling(n_pct/length(cutoff.method))
-    nG_non = ceiling(n_non/length(non))
+    # pct0 method uses pct0 parameter, others dont
+    n_pct = grid_size - length(non)
 
     fdrtool_grid <- rbind(
       expand.grid(
         cutoff.method = c('pct0'),
         pct0 = seq(
-          from = pct0_range[1], to = pct0_range[2], length.out = nG_pct
+          from = pct0_range[1], to = pct0_range[2], length.out = n_pct
         )
       ),
       expand.grid(

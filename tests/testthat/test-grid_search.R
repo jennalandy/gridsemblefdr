@@ -17,26 +17,17 @@ truth <- c(
   rep(1, 200)
 )
 
-method_list = c()
-row_list = c()
-
 default_locfdr_grid <- build_locfdr_grid(
   test_statistics = test_statistics
 )
-method_list = c(method_list, rep('locfdr', nrow(default_locfdr_grid)))
-row_list = c(row_list, 1:nrow(default_locfdr_grid))
 
 default_fdrtool_grid <- build_fdrtool_grid(
   test_statistics = test_statistics
 )
-method_list = c(method_list, rep('fdrtool', nrow(default_fdrtool_grid)))
-row_list = c(row_list, 1:nrow(default_fdrtool_grid))
 
 default_qvalue_grid <- build_qvalue_grid(
   test_statistics = test_statistics
 )
-method_list = c(method_list, rep('qvalue', nrow(default_qvalue_grid)))
-row_list = c(row_list, 1:nrow(default_qvalue_grid))
 
 
 test_that("grid_search works", {

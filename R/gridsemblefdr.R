@@ -68,6 +68,8 @@ gridsemble <- function(
   verbose = TRUE
 ) {
 
+  focus_metric = 'fdrerror'
+
   if (typeof(locfdr_grid) == "character") {if (locfdr_grid == 'default') {
     locfdr_grid = build_locfdr_grid(
       test_statistics, lower_pi0 = lower_pi0, parallel = parallel,
@@ -86,9 +88,6 @@ gridsemble <- function(
       n_workers = n_workers, verbose = verbose
     )
   }}
-
-  focus_metric = 'fdrerror'
-  large_abs_metric = FALSE
 
   n_workers = min(n_workers, nsim)
   if (parallel & is.null(parallel_param) & n_workers > 1) {

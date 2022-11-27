@@ -172,11 +172,11 @@ build_locfdr_grid <- function(
     # calculate number of values for pct and pct0 to each expand grid with
     nG <- ceiling(sqrt(grid_size/(length(nulltype)*length(type))))
     locfdr_grid <- expand.grid(
-        pct = seq(from = pct_range[1], to = pct_range[2], length.out = nG),
-        pct0 = seq(from = pct0_range[1], to = pct0_range[2], length.out = nG),
-        nulltype = nulltype,
-        type = type
-      )
+      pct = seq(from = pct_range[1], to = pct_range[2], length.out = nG),
+      pct0 = seq(from = pct0_range[1], to = pct0_range[2], length.out = nG),
+      nulltype = nulltype,
+      type = type
+    )
   }
 
   if (verbose & nrow(locfdr_grid) > grid_size & method == 'grid') {
