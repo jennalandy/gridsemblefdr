@@ -52,7 +52,7 @@ set.seed(234)
 gridsemble_res <- gridsemble(
   test_statistics, 
   verbose = TRUE, 
-  parallel = FALSE
+  parallel = TRUE
 )
 ```
 
@@ -62,7 +62,7 @@ set.seed(234)
 gridsemble_res <- gridsemble(
   test_statistics, 
   verbose = FALSE, 
-  parallel = TRUE
+  parallel = FALSE
 )
 ```
 
