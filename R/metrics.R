@@ -2,23 +2,19 @@
 #'
 #' @param fdr vector, estimated fdr values
 #' @param true_fdr vector, true fdr values
-#' @param topq vector, booleans for whether each test statistic
-#' is in the largest absolute quantile
 #'
 #' @return labeled list of metrics
 #' @noRd
 metrics <- function(
-  fdr, true_fdr, topq
+  fdr, true_fdr
 ) {
   if (length(fdr) > 0) {
     list(
-      'fdrerror' = get_MSE(estimate = fdr, true = true_fdr),
-      'fdrerror_topq' = get_MSE(estimate = fdr[topq], true = true_fdr[topq])
+      'fdrerror' = get_MSE(estimate = fdr, true = true_fdr)
     )
   } else {
     list(
-      'fdrerror' = NA,
-      'fdrerror_topq' = NA
+      'fdrerror' = NA
     )
   }
 }

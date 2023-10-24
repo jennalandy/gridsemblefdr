@@ -4,7 +4,6 @@
 #'
 #' @param test_statistics vector, test statistics
 #' @param qvalue_grid data.frame, rows are possible hyperparameters for locfdr
-#' @param lower_pi0 double, exclude models with pi0 estimates below threshold
 #' @param row integer, row of qvalue_grid considered
 #' @param df integer, degrees of freedom of test statistics, if known
 #'
@@ -13,7 +12,6 @@
 check_qvalue_row <- function(
   test_statistics,
   qvalue_grid,
-  lower_pi0,
   row,
   df
 ) {
@@ -31,9 +29,7 @@ check_qvalue_row <- function(
   if (!is.null(run_i)) {
     if (run_i$pi0 > 1) {
       return('pi0 > 1')
-    } else if (run_i$pi0 < lower_pi0) {
-      return('pi0 < lower_pi0')
-    } else {
+    }  else {
       return(TRUE)
     }
   }
@@ -47,7 +43,6 @@ check_qvalue_row <- function(
 #'
 #' @param test_statistics vector, test statistics
 #' @param qvalue_grid data.frame, rows are possible hyperparameters for qvalue
-#' @param lower_pi0 double, exclude models with pi0 estimates below threshold
 #' @param df integer, degrees of freedom of test statistics, if known
 #' @param parallel_param BiocParallel object
 #' @param verbose boolean
@@ -59,7 +54,6 @@ check_qvalue_row <- function(
 reduce_qvalue_grid <- function(
   test_statistics,
   qvalue_grid,
-  lower_pi0,
   df = NULL,
   parallel_param = NULL,
   verbose = FALSE
@@ -73,8 +67,7 @@ reduce_qvalue_grid <- function(
         test_statistics = test_statistics,
         qvalue_grid = qvalue_grid,
         row = i,
-        df = df,
-        lower_pi0 = lower_pi0
+        df = df
       )
       if (check == TRUE) {
         return(i)
@@ -136,7 +129,6 @@ reduce_qvalue_grid <- function(
 #'
 #' @param grid_size integer, maximum size of grid to use. Note that this is
 #' *not the final grid size*, combinations may fail when run on the data.
-#' @param lower_pi0 double, exclude models with pi0 estimates below threshold
 #' @param method string, one of c('random', 'grid'). 'random' will sample
 #' uniformly within the ranges, 'grid' will select equally spaced values
 #'
@@ -156,7 +148,7 @@ reduce_qvalue_grid <- function(
 build_qvalue_grid <- function(
   test_statistics, transf = c('probit', 'logit'), adj_range = c(0.5, 1.5),
   pi0.method = c('bootstrap','smoother'), smooth.log.pi0 = c(TRUE, FALSE),
-  df = NULL, grid_size = 40, lower_pi0 = 0.7, method = 'grid',
+  df = NULL, grid_size = 40, method = 'grid',
   parallel_param = NULL, parallel = min(TRUE, n_workers > 1),
   n_workers = max(parallel::detectCores() - 2, 1), verbose = FALSE
 ) {
@@ -215,7 +207,7 @@ build_qvalue_grid <- function(
 
   qvalue_grid_reduced <- reduce_qvalue_grid(
     test_statistics = test_statistics, qvalue_grid = qvalue_grid, df = df,
-    lower_pi0 = lower_pi0, parallel_param = parallel_param, verbose = verbose
+    parallel_param = parallel_param, verbose = verbose
   )
 
   return(qvalue_grid_reduced)

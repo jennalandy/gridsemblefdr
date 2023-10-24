@@ -5,6 +5,10 @@
 #' @param test_statistics vector, test statistics
 #' @param df integer, degrees of freedom of test statistics t-distribution,
 #' otherwise assumed standard normal
+#' @param ensemble_size integer, number of models to ensemble
+#' @param nsim integer, number of datasets to simulate and perform grid search
+#' over, or 0 for models to be randomly selected.
+#' @param synthetic_size integer, size of synthetic datasets
 #'
 #' @param locfdr_grid data.frame or 'default', rows are possible hyperparameters
 #' for locfdr, or `build_locfdr_grid` will be run with default values, NULL to
@@ -16,33 +20,23 @@
 #' for qvalue, or `build_qvalue_grid` will be run with default values, NULL to
 #' exclude qvalue from gridsemble
 #'
-#' @param ensemble_size integer, number of models to ensemble
-#' @param nsim integer, number of datasets to simulate and perform grid search
-#' over, or 0 for models to be randomly selected.
-#' @param lower_pi0 double, lower bound cutoff of `pi0` for model consideration,
-#' efault 0.7 (assume majority null tests)
-#' @param sim_size integer, size of simulated datasets
-#' @param large_abs_metric boolean, if TRUE, only consider fdrerror looking
-#' at the large absolute value test statistics (top quartile of abs(t))
-#'
 #' @param n_workers integer, number of cores to use if parallel
 #' @param parallel boolean, whether to utilize parallelization
-#' @param parallel_param `BiocParallel` object
-#' @param verbose boolean
+#' @param verbose boolean, whether to report status
 #'
 #' @importFrom BiocParallel DoparParam
 #' @importFrom parallel detectCores
 #'
 #' @return
 #' \itemize{
-#'      \item `fdr`: vector, local false discovery rates
-#'      \item `Fdr`: vector, left tail false discovery rates
-#'      \item `pi0`: double, proportion of null test statistics
+#'      \item `fdr`: vector, estimated local false discovery rates
+#'      \item `Fdr`: vector, estimated left tail-end false discovery rates
+#'      \item `pi0`: double, estimated proportion of null test statistics
 #'      \item `top_grid`: data.frame, hyperparameter sets in ensemble and
-#'      their metrics on each simulated dataset
+#'      their estimated metrics on each simulated dataset
 #'      \item `all_grids`: data.frame, all hyperparameter sets considered
-#'      and their metrics on simulated data
-#'      \item `generating_model`: list, parameters of generating model
+#'      and their estimated metrics on simulated data
+#'      \item `working_model`: list, parameters of working model
 #' }
 #' @export
 #' @examples
@@ -54,17 +48,14 @@
 gridsemble <- function(
   test_statistics,
   df = NULL,
+  ensemble_size = 10,
+  nsim = 10,
+  synthetic_size = length(test_statistics),
   locfdr_grid = 'default',
   fdrtool_grid = 'default',
   qvalue_grid = 'default',
-  ensemble_size = 10,
-  nsim = 10,
-  lower_pi0 = 0.7,
-  sim_size = length(test_statistics),
-  large_abs_metric = FALSE,
   n_workers = max(parallel::detectCores() - 2, 1),
   parallel = min(TRUE, n_workers > 1),
-  parallel_param = NULL,
   verbose = TRUE
 ) {
 
@@ -72,29 +63,31 @@ gridsemble <- function(
 
   if (typeof(locfdr_grid) == "character") {if (locfdr_grid == 'default') {
     locfdr_grid = build_locfdr_grid(
-      test_statistics, lower_pi0 = lower_pi0, parallel = parallel,
+      test_statistics, parallel = parallel,
       n_workers = n_workers, verbose = verbose
     )
   }}
   if (typeof(fdrtool_grid) == "character") {if (fdrtool_grid == 'default') {
     fdrtool_grid = build_fdrtool_grid(
-      test_statistics, lower_pi0 = lower_pi0, parallel = parallel,
+      test_statistics, parallel = parallel,
       n_workers = n_workers, verbose = verbose
     )
   }}
   if (typeof(qvalue_grid) == "character") {if (qvalue_grid == 'default') {
     qvalue_grid = build_qvalue_grid(
-      test_statistics, df = df, lower_pi0 = lower_pi0, parallel = parallel,
+      test_statistics, df = df, parallel = parallel,
       n_workers = n_workers, verbose = verbose
     )
   }}
 
   n_workers = min(n_workers, nsim)
-  if (parallel & is.null(parallel_param) & n_workers > 1) {
+  if (parallel & n_workers > 1) {
     parallel_param = BiocParallel::MulticoreParam(
       workers = n_workers,
       tasks = n_workers
     )
+  } else {
+    parallel_param = NULL
   }
 
   p_values = p_from_t(
@@ -150,11 +143,11 @@ gridsemble <- function(
     default_qvalue <- qvalue::qvalue(p_values, plot = 0, lambda = 0)
   }
 
-  # fit generating model to test statistics
+  # fit working model to test statistics
   if (nsim > 0) {
-    generating_model <- fit_generating_model(test_statistics, verbose = verbose)
-  } else {
-    generating_model <- NULL
+    working_model <- fit_working_model(test_statistics, verbose = verbose)
+  } else if (nsim == 0) {
+    working_model <- NULL
     if (verbose) {
       message('No generting model fit with nsim = 0')
     }
@@ -162,16 +155,15 @@ gridsemble <- function(
 
   # perform grid search on simulated datasets
   grid_res <- grid_search(
-    generating_model = generating_model,
+    working_model = working_model,
     nsim = nsim,
-    sim_size = sim_size,
+    synthetic_size = synthetic_size,
     ensemble_size = ensemble_size,
     df = df,
     locfdr_grid = locfdr_grid,
     qvalue_grid = qvalue_grid,
     fdrtool_grid = fdrtool_grid,
     focus_metric = focus_metric,
-    large_abs_metric = large_abs_metric,
     parallel = parallel,
     n_workers =  n_workers,
     parallel_param = parallel_param,
@@ -185,7 +177,6 @@ gridsemble <- function(
   ensemble_res = ensemble(
     test_statistics = test_statistics,
     focus_metric = focus_metric,
-    large_abs_metric = large_abs_metric,
     top_grid = top_grid,
     locfdr_grid = locfdr_grid,
     fdrtool_grid = fdrtool_grid,
@@ -212,7 +203,7 @@ gridsemble <- function(
     'default_fdrtool' = default_fdrtool,
     'default_qvalue' = default_qvalue,
     'all_grids' = all_grids,
-    'generating_model' = generating_model,
+    'working_model' = working_model,
     'locfdr_grid' = locfdr_grid,
     'fdrtool_grid' = fdrtool_grid,
     'qvalue_grid' = qvalue_grid

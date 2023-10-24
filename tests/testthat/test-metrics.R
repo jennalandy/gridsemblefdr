@@ -27,10 +27,9 @@ test_that("get_MSE works", {
 })
 
 test_that("metrics works", {
-  topq = test_statistics >= quantile(abs(test_statistics), 0.75)
   my_fdr = runif(n = length(test_statistics))
   my_true_fdr = runif(n = length(test_statistics))
-  my_metrics = metrics(my_fdr, my_true_fdr, topq)
+  my_metrics = metrics(my_fdr, my_true_fdr)
 
   expect_type(my_metrics, 'list')
 })

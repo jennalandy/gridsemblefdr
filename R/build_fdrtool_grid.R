@@ -5,15 +5,13 @@
 #' @param test_statistics vector, test statistics
 #' @param fdrtool_grid data.frame, rows are possible hyperparameters for fdrtool
 #' @param row integer, row of fdrtool_grid considered
-#' @param lower_pi0 double, exclude models with pi0 estimates below threshold
 #'
 #' @return boolean, whether the hyperparameter combination run without error
 #' @noRd
 check_fdrtool_row <- function(
   test_statistics,
   fdrtool_grid,
-  row,
-  lower_pi0
+  row
 ) {
 
   # for each row, attempt to run fdrtool
@@ -29,9 +27,7 @@ check_fdrtool_row <- function(
   if (!is.null(run_i)) {
     if (run_i$pi0 > 1) {
       return('pi0 > 1')
-    } else if (run_i$pi0 < lower_pi0) {
-      return('pi0 < lower_pi0')
-    } else {
+    }  else {
       return(TRUE)
     }
   }
@@ -45,7 +41,6 @@ check_fdrtool_row <- function(
 #'
 #' @param test_statistics vector, test statistics
 #' @param fdrtool_grid data.frame, rows are possible hyperparameters for fdrtool
-#' @param lower_pi0 double, exclude models with pi0 estimates below threshold
 #' @param parallel_param BiocParallel object
 #' @param verbose boolean
 #'
@@ -54,7 +49,6 @@ check_fdrtool_row <- function(
 reduce_fdrtool_grid <- function(
   test_statistics,
   fdrtool_grid,
-  lower_pi0,
   parallel_param = NULL,
   verbose = FALSE
 ) {
@@ -66,8 +60,7 @@ reduce_fdrtool_grid <- function(
       check = check_fdrtool_row(
         test_statistics = test_statistics,
         fdrtool_grid = fdrtool_grid,
-        row = i,
-        lower_pi0 = lower_pi0
+        row = i
       )
 
       if (check == TRUE) {
@@ -117,7 +110,6 @@ reduce_fdrtool_grid <- function(
 #' fraction of data used for fitting null model - only if cutoff.method="pct0".
 #' @param grid_size integer, maximum size of grid to use. Note that this is
 #' *not the final grid size*, combinations may fail when run on the data.
-#' @param lower_pi0 double, exclude models with pi0 estimates below threshold
 #' @param method string, one of c('random', 'grid'). 'random' will sample
 #' uniformly within the ranges, 'grid' will select equally spaced values
 #' @param parallel boolean, whether to utilize parallelization
@@ -135,7 +127,7 @@ reduce_fdrtool_grid <- function(
 #' fdrtool_grid = build_fdrtool_grid(test_statistics)
 build_fdrtool_grid <- function(
   test_statistics, cutoff.method = c('fndr','pct0','locfdr'),
-  pct0_range = c(0,0.8), grid_size = 40, lower_pi0 = 0.7, method = 'grid',
+  pct0_range = c(0,0.8), grid_size = 40, method = 'grid',
   parallel = min(TRUE, n_workers > 1),
   n_workers = max(parallel::detectCores() - 2, 1), parallel_param = NULL,
   verbose = FALSE
@@ -189,7 +181,7 @@ build_fdrtool_grid <- function(
 
   fdrtool_grid_reduced <- reduce_fdrtool_grid(
     test_statistics = test_statistics, fdrtool_grid = fdrtool_grid,
-    lower_pi0 = lower_pi0, parallel_param = parallel_param, verbose = verbose
+    parallel_param = parallel_param, verbose = verbose
   )
 
   return(fdrtool_grid_reduced)

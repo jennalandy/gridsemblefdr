@@ -29,7 +29,7 @@ get_true_Fdr <- function(test_statistics, truth)  {
 #' Single Grid Search
 #' @description run grid search on a given dataset
 #'
-#' @param this_dat list, result of simulate_from_generating_model()
+#' @param this_dat list, result of simulate_from_working_model()
 #' @param df integer, degrees of freedom of test statistics, if known, or NULL
 #'
 #' @param method_list vector, methods to consider
@@ -82,16 +82,14 @@ single_grid_search <- function(
         # if not null, record pi0 estimate and metrics
         this_metrics <- metrics(
           fdr = row_res$fdr,
-          true_fdr = this_dat$true_fdr,
-          topq = this_dat$topq
+          true_fdr = this_dat$true_fdr
         )
         this_metrics$pi0 <- row_res$pi0
       } else {
         # o.w. record placeholder (NA) metrics and pi0 estimate
         this_metrics <- metrics(
           fdr = NULL,
-          true_fdr = this_dat$true_fdr,
-          topq = this_dat$topq
+          true_fdr = this_dat$true_fdr
         )
         this_metrics$pi0 <- NA
       }
@@ -142,10 +140,10 @@ get_method_row_list <- function(
 #' @description simulate data and run grid search to determine which
 #' models to ensemble over on the real dataset
 #'
-#' @param generating_model list, result of fit_generating_model()
+#' @param working_model list, result of fit_working_model()
 #' @param nsim integer, number of datasets to simulate.
 #' If 0, no datasets are simulated and model(s) are randomly selected.
-#' @param sim_size integer, sample size of each simulation.
+#' @param synthetic_size integer, sample size of each synthetic dataset
 #' @param ensemble_size integer, number of models chosen to ensemble over
 #'
 #' @param df integer, degrees of freedom of test statistics, if known, or NULL
@@ -155,8 +153,6 @@ get_method_row_list <- function(
 #'
 #' @param focus_metric string, one of one of c('fdrerror'),
 #' which metric to optimize in the grid search
-#' @param large_abs_metric boolean, if TRUE, only consider focus_metric looking
-#' at the large absolute value test statistics (top quartile of abs(t))
 #'
 #' @param parallel boolean, whether to utilize parallelization
 #' @param n_workers integer, number of cores to use if parallel
@@ -166,7 +162,6 @@ get_method_row_list <- function(
 #'
 #' @return
 #' \itemize{
-#'    \item generating_model - list, result of generating_model_sim()
 #'    \item top_grid - data.frame, each row corresponds to a model
 #'    to ensemble over. Each row references a method (locfdr, fdrtool,
 #'    or qvalue) and row numbers in the respective grid
@@ -178,11 +173,15 @@ get_method_row_list <- function(
 #' @importFrom rlang sym
 #' @noRd
 grid_search <- function(
-  generating_model, nsim, sim_size, ensemble_size,
-  df = NULL, locfdr_grid = NULL, fdrtool_grid = NULL, qvalue_grid = NULL,
-  focus_metric = 'fdrerror', large_abs_metric = FALSE,
+  working_model, nsim, synthetic_size, ensemble_size,
+  df = NULL,
+  locfdr_grid = NULL,
+  fdrtool_grid = NULL,
+  qvalue_grid = NULL,
+  focus_metric = 'fdrerror',
   parallel = min(TRUE, n_workers > 1),
-  n_workers =  max(parallel::detectCores() - 2, 1), parallel_param = NULL,
+  n_workers =  max(parallel::detectCores() - 2, 1),
+  parallel_param = NULL,
   verbose = TRUE
 ) {
 
@@ -196,10 +195,6 @@ grid_search <- function(
   if (!is.null(parallel_param) & verbose) {
     message('Running grid search in parallel')
   } else if (verbose) { message('Running grid search') }
-
-  if (large_abs_metric) {
-    focus_metric = paste(focus_metric, '_topq', sep = '')
-  }
 
   methods_rows <- get_method_row_list(
     locfdr_grid = locfdr_grid,
@@ -216,17 +211,17 @@ grid_search <- function(
       sample(seq_len(nrow(all_grids)), size = ensemble_size),
     ]
     return(list(
-      'generating_model' = NA,
+      'working_model' = NA,
       'top_grid' = top_grid,
       'all_grids' = all_grids
     ))
   }
 
-  # simulate data from generating_model
+  # simulate data from working_model
   generated_dat <- list()
   for (sim in seq_len(nsim)) {
-    generated_dat[[sim]] <- simulate_from_generating_model(
-      sim_size, generating_model
+    generated_dat[[sim]] <- simulate_from_working_model(
+      synthetic_size, working_model
     )
   }
 
@@ -234,9 +229,9 @@ grid_search <- function(
   all_grids <- do.call(rbind, parlapply(
     X = seq_len(nsim), parallel_param = parallel_param,
     FUN = function(
-      generated_dat, sim, nsim, sim_size, focus_metric, generating_model, df,
+      generated_dat, sim, nsim, synthetic_size, focus_metric, working_model, df,
       method_list, row_list, fdrtool_grid, locfdr_grid, qvalue_grid, verbose,
-      simulate_from_generating_model, p_from_t, get_true_Fdr, metrics,
+      simulate_from_working_model, p_from_t, get_true_Fdr, metrics,
       run_fdrtool_row, run_locfdr_row, run_qvalue_row
     ){
       if(verbose) { message(paste0('\tSimulation ',sim, '/', nsim)) }
@@ -251,9 +246,9 @@ grid_search <- function(
       this_score$sim <- sim
       return(this_score)
     },
-    generated_dat = generated_dat, sim_size = sim_size, nsim = nsim,
-    simulate_from_generating_model = simulate_from_generating_model,
-    generating_model = generating_model, focus_metric = focus_metric,
+    generated_dat = generated_dat, synthetic_size = synthetic_size, nsim = nsim,
+    simulate_from_working_model = simulate_from_working_model,
+    working_model = working_model, focus_metric = focus_metric,
     p_from_t = p_from_t, df = df, get_true_Fdr = get_true_Fdr,
     method_list = methods_rows$methods, row_list = methods_rows$rows,
     metrics = metrics, run_fdrtool_row = run_fdrtool_row,
@@ -275,7 +270,7 @@ grid_search <- function(
   sorted[best_rows, 'best'] = TRUE
 
   return(list(
-    'generating_model' = generating_model, 'top_grid' = sorted[sorted$best,],
-    'avg_grid' = sorted, 'all_grids' = all_grids
+    'top_grid' = sorted[sorted$best,],
+    'all_grids' = all_grids
   ))
 }

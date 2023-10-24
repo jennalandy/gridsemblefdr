@@ -1,4 +1,4 @@
-#' @title Fit generating model using EM algorithm
+#' @title Fit working model using EM algorithm
 #'
 #' @param test_statistics vector, test statistics
 #'
@@ -6,19 +6,27 @@
 #' @param sigmasq1 double, initial value for sigmasq1
 #' @param pi0 double, initial value for pi0
 #'
+#' @param sigmasq0_fixed logical, whether sigmasq0 should be learned or kept at sigmasq0
+#' @param sigmasq1_fixed logical, whether sigmasq1 should be learned or kept at sigmasq1
+#' @param pi0_fixed logical, whether pi0 should be learned or kept at pi0
+#'
 #' @param maxiter integer, highest number of iterations of EM algorithm allowed
 #' @param tol double, tolerance for change in sum of squared differences in
 #' parameters in order to stop algorithm
 #'
-#' @return list, named parameters for the generating_model densities and values
+#' @return list, named parameters for the working_model densities and values
 #' across iterations
-#' @noRd
-fit_generating_model <- function(
+#' @export
+fit_working_model <- function(
   test_statistics,
 
   sigmasq0 = 2,
   sigmasq1 = 4,
   pi0 = 0.9,
+
+  sigmasq0_fixed = FALSE,
+  sigmasq1_fixed = FALSE,
+  pi0_fixed = FALSE,
 
   maxiter = 500,
   tol = 0.0001,
@@ -26,7 +34,7 @@ fit_generating_model <- function(
   verbose = TRUE
 ) {
   if (verbose) {
-    message('Fitting generating model')
+    message('Fitting working model')
   }
 
   type = 'symmetric'
@@ -34,13 +42,18 @@ fit_generating_model <- function(
   # option to add other working model options later
   if (type == 'symmetric') {
     return(
-      fit_generating_model_symmetric(
+      fit_working_model_symmetric(
         test_statistics = test_statistics,
 
         # initialize
         sigmasq0 = sigmasq0,
         sigmasq1 = sigmasq1,
         pi0 = pi0,
+
+
+        sigmasq0_fixed = sigmasq0_fixed,
+        sigmasq1_fixed = sigmasq1_fixed,
+        pi0_fixed = pi0_fixed,
 
         # learning parameters
         maxiter = maxiter,
@@ -52,7 +65,7 @@ fit_generating_model <- function(
   }
 }
 
-#' @title Fit symmetric generating model using EM algorithm
+#' @title Fit symmetric working model using EM algorithm
 #'
 #' @param test_statistics vector, test statistics
 #'
@@ -60,15 +73,21 @@ fit_generating_model <- function(
 #' @param sigmasq1 double, initial value for sigmasq1
 #' @param pi0 double, initial value for pi0
 #'
+#' @param sigmasq0_fixed logical, whether sigmasq0 should be learned or kept at sigmasq0
+#' @param sigmasq1_fixed logical, whether sigmasq1 should be learned or kept at sigmasq1
+#' @param pi0_fixed logical, whether pi0 should be learned or kept at pi0
+#'
 #' @param maxiter integer, max number of iterations of EM algorithm allowed
 #' @param tol double, tolerance for change in sum of squared differences in
 #' parameters in order to stop algorithm
 #'
-#' @return list, named parameters for the generating_model densities and values
+#' @return list, named parameters for the working_model densities and values
 #' across iterations
 #' @noRd
-fit_generating_model_symmetric <- function(
-  test_statistics, sigmasq0, sigmasq1, pi0, maxiter, tol
+fit_working_model_symmetric <- function(
+  test_statistics, sigmasq0, sigmasq1, pi0,
+  sigmasq0_fixed, sigmasq1_fixed, pi0_fixed,
+  maxiter, tol
 ) {
 
   prob_y1_given_t <- function(t, pi0, sigmasq0, sigmasq1) {
@@ -88,12 +107,19 @@ fit_generating_model_symmetric <- function(
     P_y1_given_t <- prob_y1_given_t(test_statistics, pi0, sigmasq0, sigmasq1)
     P_y0_given_t <- prob_y0_given_t(test_statistics, pi0, sigmasq0, sigmasq1)
 
-    sigmasq0 <- sum(P_y0_given_t*test_statistics^2, na.rm = TRUE)/
-      sum(P_y0_given_t, na.rm = TRUE)
-    sigmasq1 <- sum(P_y1_given_t*test_statistics^2, na.rm = TRUE)/
-      (3*sum(P_y1_given_t, na.rm = TRUE))
+    if (!sigmasq0_fixed) {
+      sigmasq0 <- sum(P_y0_given_t*test_statistics^2, na.rm = TRUE)/
+        sum(P_y0_given_t, na.rm = TRUE)
+    }
 
-    pi0 <- mean(P_y0_given_t, na.rm = TRUE)
+    if (!sigmasq1_fixed) {
+      sigmasq1 <- sum(P_y1_given_t*test_statistics^2, na.rm = TRUE)/
+        (3*sum(P_y1_given_t, na.rm = TRUE))
+    }
+
+    if (!pi0_fixed) {
+      pi0 <- mean(P_y0_given_t, na.rm = TRUE)
+    }
 
     i <- i + 1
     diff = sum((thetas[i,] - thetas[i-1,])^2)
@@ -111,47 +137,46 @@ fit_generating_model_symmetric <- function(
   ))
 }
 
-#' @title Simulate from generating model
+#' @title Simulate from working model
 #'
 #' @param n integer, sample size
-#' @param generating_model list, result of fit_generating_model()
+#' @param working_model list, result of fit_working_model()
 #' @param df integer, degrees of freedom of test statistics, if known
 #'
 #' @importFrom stats quantile
 #' @return data.frame, n simulated t-statistic and truth pairs
 #' @noRd
-simulate_from_generating_model <- function(n, generating_model, df = NULL) {
+simulate_from_working_model <- function(n, working_model, df = NULL) {
 
-  n0 <- max(round(generating_model$parameters$pi0*n), 1)
+  n0 <- max(round(working_model$parameters$pi0*n), 1)
   n1 <- max(n-n0, 1)
 
-  if (generating_model$type == 'symmetric'){
+  if (working_model$type == 'symmetric'){
     test_statistics = c(
       sample_null(
         n = n0,
-        sigmasq0 = generating_model$parameters$sigmasq0
+        sigmasq0 = working_model$parameters$sigmasq0
       ),
       sample_alternative(
         N = n1,
-        sigmasq1 = generating_model$parameters$sigmasq1
+        sigmasq1 = working_model$parameters$sigmasq1
       )
     )
     this_dat <- list(
       t = test_statistics,
-      true_fdr = generating_model$parameters$pi0*null(
+      true_fdr = working_model$parameters$pi0*null(
         t = test_statistics,
-        sigmasq0 = generating_model$parameters$sigmasq0
+        sigmasq0 = working_model$parameters$sigmasq0
       ) / mix(
         t = test_statistics,
-        pi0 = generating_model$parameters$pi0,
-        sigmasq0 = generating_model$parameters$sigmasq0,
-        sigmasq1 = generating_model$parameters$sigmasq1
+        pi0 = working_model$parameters$pi0,
+        sigmasq0 = working_model$parameters$sigmasq0,
+        sigmasq1 = working_model$parameters$sigmasq1
       ),
       truth = c(
         rep(0, n0),
         rep(1, n1)
-      ),
-      topq = abs(test_statistics) > stats::quantile(abs(test_statistics))['75%']
+      )
     )
     this_dat$p = p_from_t(
       test_statistics = this_dat$t,
@@ -166,9 +191,9 @@ simulate_from_generating_model <- function(n, generating_model, df = NULL) {
     this_dat$mixture = function(t) {
       mix(
         t,
-        pi0 = generating_model$parameters$pi0,
-        sigmasq0 = generating_model$parameters$sigmasq0,
-        sigmasq1 = generating_model$parameters$sigmasq1
+        pi0 = working_model$parameters$pi0,
+        sigmasq0 = working_model$parameters$sigmasq0,
+        sigmasq1 = working_model$parameters$sigmasq1
       )
     }
 

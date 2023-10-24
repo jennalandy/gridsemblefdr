@@ -5,15 +5,13 @@
 #' @param test_statistics vector, test statistics
 #' @param locfdr_grid data.frame, rows are possible hyperparameters for locfdr
 #' @param row integer, row of locfdr_grid considered
-#' @param lower_pi0 double, exclude models with pi0 estimates below threshold
 #'
 #' @return boolean, whether the hyperparameter combination ran without error
 #' @noRd
 check_locfdr_row <- function(
   test_statistics,
   locfdr_grid,
-  row,
-  lower_pi0
+  row
 ) {
   # for each row, attempt to run fdrtool
   run_i <- run_locfdr_row(
@@ -28,8 +26,6 @@ check_locfdr_row <- function(
   if (!is.null(run_i)) {
     if (run_i$pi0 > 1) {
       return('pi0 > 1')
-    } else if (run_i$pi0 < lower_pi0) {
-      return('pi0 < lower_pi0')
     } else {
       return(TRUE)
     }
@@ -44,7 +40,6 @@ check_locfdr_row <- function(
 #'
 #' @param test_statistics vector, test statistics
 #' @param locfdr_grid data.frame, rows are possible hyperparameters for locfdr
-#' @param lower_pi0 double, exclude models with pi0 estimates below threshold
 #' @param parallel_param BiocParallel object
 #' @param verbose boolean
 #'
@@ -53,7 +48,6 @@ check_locfdr_row <- function(
 reduce_locfdr_grid <- function(
   test_statistics,
   locfdr_grid,
-  lower_pi0,
   parallel_param = NULL,
   verbose = FALSE
 ) {
@@ -65,8 +59,7 @@ reduce_locfdr_grid <- function(
       check = check_locfdr_row(
         test_statistics,
         locfdr_grid,
-        row = i,
-        lower_pi0 = lower_pi0
+        row = i
       )
 
       if (check == TRUE) {
@@ -125,7 +118,6 @@ reduce_locfdr_grid <- function(
 #' fitting used for f; 0 is a natural spline, 1 is a polynomial.
 #' @param grid_size integer, maximum size of grid to use. Note that this is
 #' *not the final grid size*, combinations may fail when run on the data.
-#' @param lower_pi0 double, exclude models with pi0 estimates below threshold
 #' @param method string, one of c('random', 'grid'). 'random' will sample
 #' uniformly within the ranges, 'grid' will select equally spaced values
 #'
@@ -143,7 +135,7 @@ reduce_locfdr_grid <- function(
 #' locfdr_grid = build_locfdr_grid(test_statistics)
 build_locfdr_grid <- function(
   test_statistics, pct_range = c(0, 0.4), pct0_range = c(0, 0.75),
-  nulltype = c(1,2,3), type = c(0,1), grid_size = 40, lower_pi0 = 0.7,
+  nulltype = c(1,2,3), type = c(0,1), grid_size = 40,
   method = 'grid', parallel_param = NULL, parallel = min(TRUE, n_workers > 1),
   n_workers = max(parallel::detectCores() - 2, 1), verbose = FALSE
 ) {
@@ -188,7 +180,6 @@ build_locfdr_grid <- function(
   locfdr_grid_reduced <- reduce_locfdr_grid(
     test_statistics = test_statistics,
     locfdr_grid = locfdr_grid,
-    lower_pi0 = lower_pi0,
     parallel_param = parallel_param,
     verbose = verbose
   )
