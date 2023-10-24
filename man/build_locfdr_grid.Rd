@@ -11,7 +11,6 @@ build_locfdr_grid(
   nulltype = c(1, 2, 3),
   type = c(0, 1),
   grid_size = 40,
-  lower_pi0 = 0.7,
   method = "grid",
   parallel_param = NULL,
   parallel = min(TRUE, n_workers > 1),
@@ -41,8 +40,6 @@ fitting used for f; 0 is a natural spline, 1 is a polynomial.}
 
 \item{grid_size}{integer, maximum size of grid to use. Note that this is
 \emph{not the final grid size}, combinations may fail when run on the data.}
-
-\item{lower_pi0}{double, exclude models with pi0 estimates below threshold}
 
 \item{method}{string, one of c('random', 'grid'). 'random' will sample
 uniformly within the ranges, 'grid' will select equally spaced values}

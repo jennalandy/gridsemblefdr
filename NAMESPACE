@@ -3,6 +3,7 @@
 export(build_fdrtool_grid)
 export(build_locfdr_grid)
 export(build_qvalue_grid)
+export(fit_working_model)
 export(gridsemble)
 importFrom(BiocParallel,DoparParam)
 importFrom(BiocParallel,bplapply)

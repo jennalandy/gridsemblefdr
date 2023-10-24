@@ -1,7 +1,6 @@
 # Building grids takes in a max grid size (reduced to avoid errors on given test_statistics)
 # and a method ('random' for a random search and 'grid' for evenly spaced options).
 # If method = 'random', a seed can be specified.
-# For either method, a lower cutoff for pi0 can be specified. This will further reduce the grid.
 # A parallel parameter can be specified to test each set of parameters on given test_statistics
 # across multiple cores.
 
@@ -125,7 +124,6 @@ test_that("random fdrtool grid works", {
   fdrtool_grid <- build_fdrtool_grid(
     test_statistics = test_statistics,
     grid_size = 40,
-    lower_pi0 = 0,
     method = 'random'
   )
 
@@ -139,7 +137,7 @@ test_that("random fdrtool grid works", {
   )
 })
 
-test_that("random fdrtool grid works, no pct0", {
+test_that("random fdrtool grid works", {
 
   set.seed(123)
   fdrtool_grid <- build_fdrtool_grid(
@@ -147,7 +145,6 @@ test_that("random fdrtool grid works, no pct0", {
     cutoff.method = c('fndr','locfdr'),
     pct0_range = c(0, 0.5),
     grid_size = 40,
-    lower_pi0 = 0,
     method = 'random'
   )
 
@@ -168,7 +165,6 @@ test_that("parallel random fdrtool grid works and is faster", {
   t1 = system.time({ fdrtool_grid <- build_fdrtool_grid(
     test_statistics = test_statistics,
     grid_size = 40,
-    lower_pi0 = 0,
     method = 'random'
   )})
 
@@ -182,7 +178,6 @@ test_that("parallel random fdrtool grid works and is faster", {
   t2 = system.time({ fdrtool_grid <- build_fdrtool_grid(
     test_statistics = test_statistics,
     grid_size = 40,
-    lower_pi0 = 0,
     method = 'random',
     parallel_param = parallel_param
   ) })
@@ -205,8 +200,7 @@ test_that("grid fdrtool grid works", {
   fdrtool_grid <- build_fdrtool_grid(
     test_statistics = test_statistics,
     grid_size = 40,
-    method = 'grid',
-    lower_pi0 = 0
+    method = 'grid'
   )
   expect_equal(
     names(fdrtool_grid),
@@ -218,34 +212,13 @@ test_that("grid fdrtool grid works", {
   )
 })
 
-test_that("lower pi0 works for fdrtool", {
-
-  fdrtool_grid <- build_fdrtool_grid(
-    test_statistics = test_statistics,
-    grid_size = 40,
-    lower_pi0 = 0.7,
-    method = 'grid'
-  )
-
-  expect_equal(
-    names(fdrtool_grid),
-    c('cutoff.method','pct0')
-  )
-  expect_gt(
-    nrow(fdrtool_grid),
-    0
-  )
-
-})
-
-test_that("grid fdrtool grid works, no pct0", {
+test_that("grid fdrtool grid works", {
 
   fdrtool_grid <- build_fdrtool_grid(
     test_statistics = test_statistics,
     cutoff.method = c('fndr','locfdr'),
     pct0_range = c(0, 0.5),
     grid_size = 40,
-    lower_pi0 = 0,
     method = 'grid'
   )
 
@@ -263,8 +236,7 @@ test_that("random qvalue grid works", {
   set.seed(123)
   qvalue_grid <- build_qvalue_grid(
     test_statistics = test_statistics,
-    method = 'random',
-    lower_pi0 = 0
+    method = 'random'
   )
 
   expect_equal(
@@ -285,8 +257,7 @@ test_that("random qvalue grid works no smoother", {
     adj_range = c(0.5, 1.5),
     pi0.method = c('bootstrap'),
     smooth.log.pi0 = c(TRUE, FALSE),
-    method = 'random',
-    lower_pi0 = 0
+    method = 'random'
   )
 
   expect_equal(
@@ -304,8 +275,7 @@ test_that("parallel random qvalue grid works and is not slower", {
   set.seed(123)
   t1 = system.time({ qvalue_grid <- build_qvalue_grid(
     test_statistics = test_statistics,
-    method = 'random',
-    lower_pi0 = 0
+    method = 'random'
   )})
 
   n_workers = parallel::detectCores() - 2
@@ -317,8 +287,7 @@ test_that("parallel random qvalue grid works and is not slower", {
   set.seed(123)
   t2 = system.time({ qvalue_grid <- build_qvalue_grid(
     test_statistics = test_statistics,
-    method = 'random',
-    lower_pi0 = 0
+    method = 'random'
   ) })
 
   expect_gt(t1['elapsed'] - t2['elapsed'], -0.05)
@@ -338,8 +307,7 @@ test_that("grid qvalue grid works", {
 
   qvalue_grid <- build_qvalue_grid(
     test_statistics = test_statistics,
-    method = 'grid',
-    lower_pi0 = 0
+    method = 'grid'
   )
 
   expect_equal(
@@ -358,8 +326,7 @@ test_that("grid qvalue grid works with df", {
   qvalue_grid <- build_qvalue_grid(
     test_statistics = test_statistics,
     method = 'grid',
-    df = 67,
-    lower_pi0 = 0
+    df = 67
   )
 
   expect_equal(
@@ -380,8 +347,7 @@ test_that("grid qvalue grid works no smoother", {
     adj_range = c(0.5, 1.5),
     pi0.method = c('bootstrap'),
     smooth.log.pi0 = c(TRUE, FALSE),
-    method = 'grid',
-    lower_pi0 = 0
+    method = 'grid'
   )
 
   expect_equal(

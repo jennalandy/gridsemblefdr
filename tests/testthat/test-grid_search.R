@@ -31,15 +31,15 @@ default_qvalue_grid <- build_qvalue_grid(
 
 
 test_that("grid_search works", {
-  generating_model <- fit_generating_model(
+  working_model <- fit_working_model(
     test_statistics = test_statistics,
     verbose = FALSE
   )
 
   gs1 <- grid_search(
-    generating_model = generating_model,
+    working_model = working_model,
     nsim = 10,
-    sim_size = length(test_statistics),
+    synthetic_size = length(test_statistics),
     ensemble_size = 1,
     df = NULL,
     locfdr_grid = default_locfdr_grid,
@@ -48,22 +48,17 @@ test_that("grid_search works", {
     verbose = FALSE
   )
 
-  expect_equal(gs1$generating_model, generating_model)
   expect_equal(nrow(gs1$top_grid), 1)
   expect_equal(nrow(gs1$all_grids),
                10*(nrow_null0(default_locfdr_grid) +
                nrow_null0(default_fdrtool_grid) +
                nrow_null0(default_qvalue_grid)))
-  expect_equal(nrow(gs1$avg_grid),
-               (nrow_null0(default_locfdr_grid) +
-                     nrow_null0(default_fdrtool_grid) +
-                     nrow_null0(default_qvalue_grid)))
   expect_true(sum(unlist(gs1$all_grids$fdrerror), na.rm = TRUE) > 0)
 
   gs2 <- grid_search(
-    generating_model = generating_model,
+    working_model = working_model,
     nsim = 2,
-    sim_size = length(test_statistics),
+    synthetic_size = length(test_statistics),
     ensemble_size = 3,
     df = NULL,
     locfdr_grid = default_locfdr_grid,
@@ -72,14 +67,13 @@ test_that("grid_search works", {
     verbose = FALSE
   )
 
-  expect_equal(gs2$generating_model, generating_model)
   expect_equal(nrow(gs2$top_grid), 3)
 
 
   gs3 <- grid_search(
-    generating_model = generating_model,
+    working_model = working_model,
     nsim = 1,
-    sim_size = length(test_statistics),
+    synthetic_size = length(test_statistics),
     ensemble_size = 1,
     df = NULL,
     locfdr_grid = default_locfdr_grid,
@@ -88,7 +82,6 @@ test_that("grid_search works", {
     verbose = FALSE
   )
 
-  expect_equal(gs3$generating_model, generating_model)
   expect_equal(nrow(gs3$top_grid), 1)
 })
 
@@ -115,15 +108,15 @@ test_that('grid_search on random grids works', {
     smooth.log.pi0 = c(TRUE, FALSE)
   )
 
-  generating_model <- fit_generating_model(
+  working_model <- fit_working_model(
     test_statistics = test_statistics,
     verbose = FALSE
   )
 
   gs <- grid_search(
-    generating_model = generating_model,
+    working_model = working_model,
     nsim = 1,
-    sim_size = length(test_statistics),
+    synthetic_size = length(test_statistics),
     ensemble_size = 10,
     df = NULL,
     locfdr_grid = default_locfdr_grid,
@@ -132,7 +125,6 @@ test_that('grid_search on random grids works', {
     verbose = FALSE
   )
 
-  expect_equal(gs$generating_model, generating_model)
   expect_equal(nrow(gs$top_grid), 10)
   expect_equal(nrow(gs$all_grids),
                (nrow_null0(default_locfdr_grid) +

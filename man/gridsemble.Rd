@@ -7,17 +7,14 @@
 gridsemble(
   test_statistics,
   df = NULL,
+  ensemble_size = 10,
+  nsim = 10,
+  synthetic_size = length(test_statistics),
   locfdr_grid = "default",
   fdrtool_grid = "default",
   qvalue_grid = "default",
-  ensemble_size = 10,
-  nsim = 10,
-  lower_pi0 = 0.7,
-  sim_size = length(test_statistics),
-  large_abs_metric = FALSE,
   n_workers = max(parallel::detectCores() - 2, 1),
   parallel = min(TRUE, n_workers > 1),
-  parallel_param = NULL,
   verbose = TRUE
 )
 }
@@ -26,6 +23,13 @@ gridsemble(
 
 \item{df}{integer, degrees of freedom of test statistics t-distribution,
 otherwise assumed standard normal}
+
+\item{ensemble_size}{integer, number of models to ensemble}
+
+\item{nsim}{integer, number of datasets to simulate and perform grid search
+over, or 0 for models to be randomly selected.}
+
+\item{synthetic_size}{integer, size of synthetic datasets}
 
 \item{locfdr_grid}{data.frame or 'default', rows are possible hyperparameters
 for locfdr, or \code{build_locfdr_grid} will be run with default values, NULL to
@@ -39,37 +43,22 @@ values, NULL to exclude fdrtool from gridsemble}
 for qvalue, or \code{build_qvalue_grid} will be run with default values, NULL to
 exclude qvalue from gridsemble}
 
-\item{ensemble_size}{integer, number of models to ensemble}
-
-\item{nsim}{integer, number of datasets to simulate and perform grid search
-over, or 0 for models to be randomly selected.}
-
-\item{lower_pi0}{double, lower bound cutoff of \code{pi0} for model consideration,
-efault 0.7 (assume majority null tests)}
-
-\item{sim_size}{integer, size of simulated datasets}
-
-\item{large_abs_metric}{boolean, if TRUE, only consider fdrerror looking
-at the large absolute value test statistics (top quartile of abs(t))}
-
 \item{n_workers}{integer, number of cores to use if parallel}
 
 \item{parallel}{boolean, whether to utilize parallelization}
 
-\item{parallel_param}{\code{BiocParallel} object}
-
-\item{verbose}{boolean}
+\item{verbose}{boolean, whether to report status}
 }
 \value{
 \itemize{
-\item \code{fdr}: vector, local false discovery rates
-\item \code{Fdr}: vector, left tail false discovery rates
-\item \code{pi0}: double, proportion of null test statistics
+\item \code{fdr}: vector, estimated local false discovery rates
+\item \code{Fdr}: vector, estimated left tail-end false discovery rates
+\item \code{pi0}: double, estimated proportion of null test statistics
 \item \code{top_grid}: data.frame, hyperparameter sets in ensemble and
-their metrics on each simulated dataset
+their estimated metrics on each simulated dataset
 \item \code{all_grids}: data.frame, all hyperparameter sets considered
-and their metrics on simulated data
-\item \code{generating_model}: list, parameters of generating model
+and their estimated metrics on simulated data
+\item \code{working_model}: list, parameters of working model
 }
 }
 \description{

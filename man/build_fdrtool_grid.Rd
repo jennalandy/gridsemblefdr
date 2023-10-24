@@ -9,7 +9,6 @@ build_fdrtool_grid(
   cutoff.method = c("fndr", "pct0", "locfdr"),
   pct0_range = c(0, 0.8),
   grid_size = 40,
-  lower_pi0 = 0.7,
   method = "grid",
   parallel = min(TRUE, n_workers > 1),
   n_workers = max(parallel::detectCores() - 2, 1),
@@ -28,8 +27,6 @@ fraction of data used for fitting null model - only if cutoff.method="pct0".}
 
 \item{grid_size}{integer, maximum size of grid to use. Note that this is
 \emph{not the final grid size}, combinations may fail when run on the data.}
-
-\item{lower_pi0}{double, exclude models with pi0 estimates below threshold}
 
 \item{method}{string, one of c('random', 'grid'). 'random' will sample
 uniformly within the ranges, 'grid' will select equally spaced values}
