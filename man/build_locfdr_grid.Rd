@@ -6,11 +6,11 @@
 \usage{
 build_locfdr_grid(
   test_statistics,
-  pct_range = c(0, 0.4),
-  pct0_range = c(0, 0.75),
+  pct_range = c(0, 0.3),
+  pct0_range = c(0, 0.45),
   nulltype = c(1, 2, 3),
   type = c(0, 1),
-  grid_size = 40,
+  grid_size = 50,
   method = "grid",
   parallel_param = NULL,
   parallel = min(TRUE, n_workers > 1),

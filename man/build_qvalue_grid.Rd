@@ -7,11 +7,11 @@
 build_qvalue_grid(
   test_statistics,
   transf = c("probit", "logit"),
-  adj_range = c(0.5, 1.5),
+  adj_range = c(0.5, 2),
   pi0.method = c("bootstrap", "smoother"),
   smooth.log.pi0 = c(TRUE, FALSE),
   df = NULL,
-  grid_size = 40,
+  grid_size = 50,
   method = "grid",
   parallel_param = NULL,
   parallel = min(TRUE, n_workers > 1),

@@ -6,6 +6,8 @@
 \usage{
 fit_working_model(
   test_statistics,
+  df = NULL,
+  type = "Normal",
   sigmasq0 = 2,
   sigmasq1 = 4,
   pi0 = 0.9,
@@ -19,6 +21,10 @@ fit_working_model(
 }
 \arguments{
 \item{test_statistics}{vector, test statistics}
+
+\item{df}{integer, degrees of freedom, required if \code{type = "t"}}
+
+\item{type}{string, type of null distribution, one of c("Normal","t")}
 
 \item{sigmasq0}{double, initial value for sigmasq0}
 
