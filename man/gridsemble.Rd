@@ -13,6 +13,7 @@ gridsemble(
   locfdr_grid = "default",
   fdrtool_grid = "default",
   qvalue_grid = "default",
+  working_nulltype = "Normal",
   n_workers = max(parallel::detectCores() - 2, 1),
   parallel = min(TRUE, n_workers > 1),
   verbose = TRUE
@@ -42,6 +43,8 @@ values, NULL to exclude fdrtool from gridsemble}
 \item{qvalue_grid}{data.frame or 'default', rows are possible hyperparameters
 for qvalue, or \code{build_qvalue_grid} will be run with default values, NULL to
 exclude qvalue from gridsemble}
+
+\item{working_nulltype}{string, null distribution of working model one of c("Normal","t")}
 
 \item{n_workers}{integer, number of cores to use if parallel}
 

@@ -41,18 +41,6 @@ fit_working_model <- function(
     message('Fitting working model')
   }
 
-  if (!(type %in% c("Normal","t"))) {
-    stop(
-      "`type` must be one of c('Normal','t')"
-    )
-  }
-
-  if (type == "t") {
-    if (is.na(df)) {
-      stop("df must be provided when type == 't'")
-    }
-  }
-
   # option to add other working model options later
   if (type == 'Normal') {
     return(
@@ -387,7 +375,7 @@ sample_null <- function(n, sigmasq0) {
 #' @return double, value of null density pdf at value t
 #' @noRd
 null_t <- function(t, df) {
-  dt(t, df)
+  stats::dt(t, df = df)
 }
 
 #' @title Sample from null density

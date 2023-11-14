@@ -221,7 +221,7 @@ grid_search <- function(
   generated_dat <- list()
   for (sim in seq_len(nsim)) {
     generated_dat[[sim]] <- simulate_from_working_model(
-      synthetic_size, working_model
+      synthetic_size, working_model, df = df
     )
   }
 
