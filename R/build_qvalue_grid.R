@@ -146,9 +146,9 @@ reduce_qvalue_grid <- function(
 #' test_statistics = c(rnorm(800), runif(100, -10, -5), runif(100, 5, 10))
 #' qvalue_grid = build_qvalue_grid(test_statistics)
 build_qvalue_grid <- function(
-  test_statistics, transf = c('probit', 'logit'), adj_range = c(0.5, 1.5),
+  test_statistics, transf = c('probit', 'logit'), adj_range = c(0.5, 2),
   pi0.method = c('bootstrap','smoother'), smooth.log.pi0 = c(TRUE, FALSE),
-  df = NULL, grid_size = 40, method = 'grid',
+  df = NULL, grid_size = 50, method = 'grid',
   parallel_param = NULL, parallel = min(TRUE, n_workers > 1),
   n_workers = max(parallel::detectCores() - 2, 1), verbose = FALSE
 ) {
@@ -182,17 +182,18 @@ build_qvalue_grid <- function(
 
     nG_sm = ceiling(n_sm/(length(transf)*length(smooth.log.pi0)))
     nG_non = ceiling(n_non/(length(transf)*length(non)))
+    nG = max(nG_sm, nG_non)
 
     qvalue_grid <- rbind(
       expand.grid(
         transf = transf,
-        adj = seq(from = adj_range[1], to = adj_range[2], length.out = nG_sm),
+        adj = seq(from = adj_range[1], to = adj_range[2], length.out = nG),
         pi0.method = "smoother",
         smooth.log.pi0 = smooth.log.pi0
       ),
       expand.grid(
         transf = transf,
-        adj = seq(from = adj_range[1], to = adj_range[2], length.out = nG_non),
+        adj = seq(from = adj_range[1], to = adj_range[2], length.out = nG),
         pi0.method = non,
         smooth.log.pi0 = FALSE
       )

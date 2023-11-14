@@ -134,8 +134,8 @@ reduce_locfdr_grid <- function(
 #' test_statistics = c(rnorm(800), runif(100, -10, -5), runif(100, 5, 10))
 #' locfdr_grid = build_locfdr_grid(test_statistics)
 build_locfdr_grid <- function(
-  test_statistics, pct_range = c(0, 0.4), pct0_range = c(0, 0.75),
-  nulltype = c(1,2,3), type = c(0,1), grid_size = 40,
+  test_statistics, pct_range = c(0, 0.3), pct0_range = c(0, 0.45),
+  nulltype = c(1,2,3), type = c(0,1), grid_size = 50,
   method = 'grid', parallel_param = NULL, parallel = min(TRUE, n_workers > 1),
   n_workers = max(parallel::detectCores() - 2, 1), verbose = FALSE
 ) {
