@@ -148,7 +148,7 @@ reduce_qvalue_grid <- function(
 build_qvalue_grid <- function(
   test_statistics, transf = c('probit', 'logit'), adj_range = c(0.5, 2),
   pi0.method = c('bootstrap','smoother'), smooth.log.pi0 = c(TRUE, FALSE),
-  df = NULL, grid_size = 50, method = 'grid',
+  df = NULL, grid_size = 40, method = 'grid',
   parallel_param = NULL, parallel = min(TRUE, n_workers > 1),
   n_workers = max(parallel::detectCores() - 2, 1), verbose = FALSE
 ) {

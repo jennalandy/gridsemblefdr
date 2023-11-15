@@ -8,6 +8,7 @@ fit_working_model(
   test_statistics,
   df = NULL,
   type = "Normal",
+  standardize = FALSE,
   sigmasq0 = 2,
   sigmasq1 = 4,
   pi0 = 0.9,

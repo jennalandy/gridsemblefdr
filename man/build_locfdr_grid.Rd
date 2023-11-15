@@ -10,7 +10,7 @@ build_locfdr_grid(
   pct0_range = c(0, 0.45),
   nulltype = c(1, 2, 3),
   type = c(0, 1),
-  grid_size = 50,
+  grid_size = 40,
   method = "grid",
   parallel_param = NULL,
   parallel = min(TRUE, n_workers > 1),

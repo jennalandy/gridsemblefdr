@@ -23,6 +23,7 @@ fit_working_model <- function(
   test_statistics,
   df = NULL,
   type = "Normal",
+  standardize = FALSE,
 
   sigmasq0 = 2,
   sigmasq1 = 4,
@@ -66,6 +67,7 @@ fit_working_model <- function(
     fit_working_model_t(
       test_statistics = test_statistics,
       df = df,
+      standardize = standardize,
 
       # initialize
       sigmasq1 = sigmasq1,
@@ -180,8 +182,23 @@ fit_working_model_t <- function(
     test_statistics, df,
     sigmasq1, pi0,
     sigmasq1_fixed, pi0_fixed,
-    maxiter, tol
+    maxiter, tol,
+    standardize = FALSE
 ) {
+
+  if (standardize) {
+    scale = list(
+      location = mean(test_statistics),
+      scale = sd(test_statistics)
+    )
+  } else {
+    scale = list(
+      location = 0,
+      scale = 1
+    )
+  }
+
+  test_statistics = (test_statistics - scale$location)/(scale$scale)
 
   prob_y1_given_t <- function(t, pi0, df, sigmasq1) {
     (1-pi0)*alt(t, sigmasq1)/
@@ -222,7 +239,8 @@ fit_working_model_t <- function(
     'parameters' = list(sigmasq1 = sigmasq1, pi0 = pi0),
     'thetas' = thetas,
     'type' = 't',
-    'iters' = i
+    'iters' = i,
+    'scale' = scale
   ))
 }
 
@@ -298,6 +316,8 @@ simulate_from_working_model <- function(n, working_model, df = NULL) {
         sigmasq1 = working_model$parameters$sigmasq1
       )
     )
+
+    test_statistics = test_statistics*working_model$scale$scale + working_model$scale$location
 
     this_dat <- list(
       t = test_statistics,
