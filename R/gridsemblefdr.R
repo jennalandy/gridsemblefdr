@@ -159,7 +159,12 @@ gridsemble <- function(
 
   # fit working model to test statistics
   if (nsim > 0) {
-    working_model <- fit_working_model(test_statistics, df = df, type = working_nulltype, verbose = verbose)
+    working_model <- fit_working_model(
+      test_statistics,
+      df = df,
+      type = working_nulltype,
+      verbose = verbose
+    )
   } else if (nsim == 0) {
     working_model <- NULL
     if (verbose) {
