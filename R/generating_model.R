@@ -3,6 +3,7 @@
 #' @param test_statistics vector, test statistics
 #' @param df integer, degrees of freedom, required if `type = "t"`
 #' @param type string, type of null distribution, one of c("Normal","t")
+#' @param standardize logical, whether to divide by standard deviation before fitting
 #'
 #' @param sigmasq0 double, initial value for sigmasq0
 #' @param sigmasq1 double, initial value for sigmasq1
@@ -174,6 +175,7 @@ fit_working_model_z <- function(
 #' @param maxiter integer, max number of iterations of EM algorithm allowed
 #' @param tol double, tolerance for change in sum of squared differences in
 #' parameters in order to stop algorithm
+#' @param standardize logical, whether to divide by standard deviation before fitting
 #'
 #' @return list, named parameters for the working_model densities and values
 #' across iterations
@@ -255,8 +257,8 @@ fit_working_model_t <- function(
 #' @noRd
 simulate_from_working_model <- function(n, working_model, df = NULL) {
 
-  n0 <- max(round(working_model$parameters$pi0*n), 1)
-  n1 <- max(n-n0, 1)
+  n0 <- max(round(working_model$parameters$pi0*n), 0)
+  n1 <- max(n-n0, 0)
 
   if (working_model$type == 'Normal'){
     test_statistics = c(

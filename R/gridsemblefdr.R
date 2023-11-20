@@ -20,6 +20,7 @@
 #' for qvalue, or `build_qvalue_grid` will be run with default values, NULL to
 #' exclude qvalue from gridsemble
 #' @param working_nulltype string, null distribution of working model one of c("Normal","t")
+#' @param standardize logical, whether to divide by standard deviation before fitting
 #'
 #' @param n_workers integer, number of cores to use if parallel
 #' @param parallel boolean, whether to utilize parallelization
@@ -56,6 +57,7 @@ gridsemble <- function(
   fdrtool_grid = 'default',
   qvalue_grid = 'default',
   working_nulltype = "Normal",
+  standardize = FALSE,
   n_workers = max(parallel::detectCores() - 2, 1),
   parallel = min(TRUE, n_workers > 1),
   verbose = TRUE
@@ -163,6 +165,7 @@ gridsemble <- function(
       test_statistics,
       df = df,
       type = working_nulltype,
+      standardize = standardize,
       verbose = verbose
     )
   } else if (nsim == 0) {

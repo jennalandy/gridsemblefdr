@@ -14,6 +14,7 @@ gridsemble(
   fdrtool_grid = "default",
   qvalue_grid = "default",
   working_nulltype = "Normal",
+  standardize = FALSE,
   n_workers = max(parallel::detectCores() - 2, 1),
   parallel = min(TRUE, n_workers > 1),
   verbose = TRUE
@@ -45,6 +46,8 @@ for qvalue, or \code{build_qvalue_grid} will be run with default values, NULL to
 exclude qvalue from gridsemble}
 
 \item{working_nulltype}{string, null distribution of working model one of c("Normal","t")}
+
+\item{standardize}{logical, whether to divide by standard deviation before fitting}
 
 \item{n_workers}{integer, number of cores to use if parallel}
 
