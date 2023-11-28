@@ -319,10 +319,10 @@ simulate_from_working_model <- function(n, working_model, df = NULL) {
       )
     )
 
-    test_statistics = test_statistics*working_model$scale$scale + working_model$scale$location
+    scaled_test_statistics = test_statistics*working_model$scale$scale + working_model$scale$location
 
     this_dat <- list(
-      t = test_statistics,
+      t = scaled_test_statistics,
       true_fdr = working_model$parameters$pi0*null_t(
         t = test_statistics,
         df = df
