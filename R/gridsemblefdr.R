@@ -21,6 +21,7 @@
 #' exclude qvalue from gridsemble
 #' @param working_nulltype string, null distribution of working model one of c("Normal","t")
 #' @param standardize logical, whether to divide by standard deviation before fitting
+#' @param standardize_by
 #'
 #' @param n_workers integer, number of cores to use if parallel
 #' @param parallel boolean, whether to utilize parallelization
@@ -58,6 +59,7 @@ gridsemble <- function(
   qvalue_grid = 'default',
   working_nulltype = "Normal",
   standardize = FALSE,
+  standardize_by = "sd",
   n_workers = max(parallel::detectCores() - 2, 1),
   parallel = min(TRUE, n_workers > 1),
   verbose = TRUE
@@ -166,6 +168,7 @@ gridsemble <- function(
       df = df,
       type = working_nulltype,
       standardize = standardize,
+      standardize_by = standardize_by,
       verbose = verbose
     )
   } else if (nsim == 0) {

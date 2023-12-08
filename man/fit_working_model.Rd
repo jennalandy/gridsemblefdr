@@ -9,6 +9,7 @@ fit_working_model(
   df = NULL,
   type = "Normal",
   standardize = FALSE,
+  standardize_by = "sd",
   sigmasq0 = 2,
   sigmasq1 = 4,
   pi0 = 0.9,
@@ -28,6 +29,8 @@ fit_working_model(
 \item{type}{string, type of null distribution, one of c("Normal","t")}
 
 \item{standardize}{logical, whether to divide by standard deviation before fitting}
+
+\item{standardize_by}{}
 
 \item{sigmasq0}{double, initial value for sigmasq0}
 
