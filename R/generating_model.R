@@ -4,6 +4,7 @@
 #' @param df integer, degrees of freedom, required if `type = "t"`
 #' @param type string, type of null distribution, one of c("Normal","t")
 #' @param standardize logical, whether to divide by standard deviation before fitting
+#' @param standardize_by
 #'
 #' @param sigmasq0 double, initial value for sigmasq0
 #' @param sigmasq1 double, initial value for sigmasq1
@@ -25,6 +26,7 @@ fit_working_model <- function(
   df = NULL,
   type = "Normal",
   standardize = FALSE,
+  standardize_by = "sd",
 
   sigmasq0 = 2,
   sigmasq1 = 4,
@@ -69,6 +71,7 @@ fit_working_model <- function(
       test_statistics = test_statistics,
       df = df,
       standardize = standardize,
+      standardize_by = standardize_by,
 
       # initialize
       sigmasq1 = sigmasq1,
@@ -176,6 +179,7 @@ fit_working_model_z <- function(
 #' @param tol double, tolerance for change in sum of squared differences in
 #' parameters in order to stop algorithm
 #' @param standardize logical, whether to divide by standard deviation before fitting
+#' @param standardize_by
 #'
 #' @return list, named parameters for the working_model densities and values
 #' across iterations
@@ -185,14 +189,22 @@ fit_working_model_t <- function(
     sigmasq1, pi0,
     sigmasq1_fixed, pi0_fixed,
     maxiter, tol,
-    standardize = FALSE
+    standardize = FALSE,
+    standardize_by = "sd"
 ) {
 
   if (standardize) {
-    scale = list(
-      location = mean(test_statistics),
-      scale = sd(test_statistics)
-    )
+    if (standardize_by == "sd") {
+      scale = list(
+        location = mean(test_statistics),
+        scale = sd(test_statistics)
+      )
+    } else if (standardize_by == "IQR") {
+      scale = list(
+        location = mean(test_statistics),
+        scale = IQR(test_statistics)
+      )
+    }
   } else {
     scale = list(
       location = 0,
