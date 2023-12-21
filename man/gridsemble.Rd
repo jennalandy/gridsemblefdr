@@ -8,11 +8,11 @@ gridsemble(
   test_statistics,
   df = NULL,
   ensemble_size = 10,
-  nsim = 10,
-  synthetic_size = length(test_statistics),
+  n_synthetic = 10,
   locfdr_grid = "default",
   fdrtool_grid = "default",
   qvalue_grid = "default",
+  synthetic_size = length(test_statistics),
   n_workers = max(parallel::detectCores() - 2, 1),
   parallel = min(TRUE, n_workers > 1),
   verbose = TRUE
@@ -26,10 +26,8 @@ otherwise assumed standard normal}
 
 \item{ensemble_size}{integer, number of models to ensemble}
 
-\item{nsim}{integer, number of datasets to simulate and perform grid search
+\item{n_synthetic}{integer, number of datasets to simulate and perform grid search
 over, or 0 for models to be randomly selected.}
-
-\item{synthetic_size}{integer, size of synthetic datasets}
 
 \item{locfdr_grid}{data.frame or 'default', rows are possible hyperparameters
 for locfdr, or \code{build_locfdr_grid} will be run with default values, NULL to
@@ -42,6 +40,9 @@ values, NULL to exclude fdrtool from gridsemble}
 \item{qvalue_grid}{data.frame or 'default', rows are possible hyperparameters
 for qvalue, or \code{build_qvalue_grid} will be run with default values, NULL to
 exclude qvalue from gridsemble}
+
+\item{synthetic_size}{integer, size of synthetic datasets. Defaults to
+\code{length(test_statistics)}. Can be reduced for time/memory constraints.}
 
 \item{n_workers}{integer, number of cores to use if parallel}
 
