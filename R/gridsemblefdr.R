@@ -19,9 +19,6 @@
 #' @param qvalue_grid data.frame or 'default', rows are possible hyperparameters
 #' for qvalue, or `build_qvalue_grid` will be run with default values, NULL to
 #' exclude qvalue from gridsemble
-#' @param working_nulltype string, null distribution of working model one of c("Normal","t")
-#' @param standardize logical, whether to divide by standard deviation before fitting
-#' @param standardize_by
 #'
 #' @param n_workers integer, number of cores to use if parallel
 #' @param parallel boolean, whether to utilize parallelization
@@ -57,27 +54,12 @@ gridsemble <- function(
   locfdr_grid = 'default',
   fdrtool_grid = 'default',
   qvalue_grid = 'default',
-  working_nulltype = "Normal",
-  standardize = FALSE,
-  standardize_by = "sd",
   n_workers = max(parallel::detectCores() - 2, 1),
   parallel = min(TRUE, n_workers > 1),
   verbose = TRUE
 ) {
 
   focus_metric = 'fdrerror'
-
-  if (!(working_nulltype %in% c("Normal","t"))) {
-    stop(
-      "`working_nulltype` must be one of c('Normal','t')"
-    )
-  }
-
-  if (working_nulltype == "t") {
-    if (is.na(df)) {
-      stop("df must be provided when working_nulltype == 't'")
-    }
-  }
 
   if (typeof(locfdr_grid) == "character") {if (locfdr_grid == 'default') {
     locfdr_grid = build_locfdr_grid(
@@ -166,9 +148,6 @@ gridsemble <- function(
     working_model <- fit_working_model(
       test_statistics,
       df = df,
-      type = working_nulltype,
-      standardize = standardize,
-      standardize_by = standardize_by,
       verbose = verbose
     )
   } else if (nsim == 0) {

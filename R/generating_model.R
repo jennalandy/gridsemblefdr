@@ -24,9 +24,6 @@
 fit_working_model <- function(
   test_statistics,
   df = NULL,
-  type = "Normal",
-  standardize = FALSE,
-  standardize_by = "sd",
 
   sigmasq0 = 2,
   sigmasq1 = 4,
@@ -46,38 +43,17 @@ fit_working_model <- function(
   }
 
   # option to add other working model options later
-  if (type == 'Normal') {
-    return(
-      fit_working_model_z(
-        test_statistics = test_statistics,
-
-        # initialize
-        sigmasq0 = sigmasq0,
-        sigmasq1 = sigmasq1,
-        pi0 = pi0,
-
-
-        sigmasq0_fixed = sigmasq0_fixed,
-        sigmasq1_fixed = sigmasq1_fixed,
-        pi0_fixed = pi0_fixed,
-
-        # learning parameters
-        maxiter = maxiter,
-        tol = tol
-      )
-    )
-  } else if (type == 't') {
-    fit_working_model_t(
+  return(
+    fit_working_model_z(
       test_statistics = test_statistics,
-      df = df,
-      standardize = standardize,
-      standardize_by = standardize_by,
 
       # initialize
+      sigmasq0 = sigmasq0,
       sigmasq1 = sigmasq1,
       pi0 = pi0,
 
 
+      sigmasq0_fixed = sigmasq0_fixed,
       sigmasq1_fixed = sigmasq1_fixed,
       pi0_fixed = pi0_fixed,
 
@@ -85,9 +61,7 @@ fit_working_model <- function(
       maxiter = maxiter,
       tol = tol
     )
-  } else {
-    return(NULL)
-  }
+  )
 }
 
 #' @title Fit normal-based working model using EM algorithm
@@ -158,103 +132,7 @@ fit_working_model_z <- function(
   return(list(
     'parameters' = list(sigmasq0 = sigmasq0, sigmasq1 = sigmasq1, pi0 = pi0),
     'thetas' = thetas,
-    'type' = 'Normal',
     'iters' = i
-  ))
-}
-
-#' @title Fit student's t-based working model using EM algorithm
-#'
-#' @param test_statistics vector, test statistics
-#'
-#' @param sigmasq0 double, initial value for sigmasq0
-#' @param sigmasq1 double, initial value for sigmasq1
-#' @param pi0 double, initial value for pi0
-#'
-#' @param sigmasq0_fixed logical, whether sigmasq0 should be learned or kept at sigmasq0
-#' @param sigmasq1_fixed logical, whether sigmasq1 should be learned or kept at sigmasq1
-#' @param pi0_fixed logical, whether pi0 should be learned or kept at pi0
-#'
-#' @param maxiter integer, max number of iterations of EM algorithm allowed
-#' @param tol double, tolerance for change in sum of squared differences in
-#' parameters in order to stop algorithm
-#' @param standardize logical, whether to divide by standard deviation before fitting
-#' @param standardize_by
-#'
-#' @return list, named parameters for the working_model densities and values
-#' across iterations
-#' @noRd
-fit_working_model_t <- function(
-    test_statistics, df,
-    sigmasq1, pi0,
-    sigmasq1_fixed, pi0_fixed,
-    maxiter, tol,
-    standardize = FALSE,
-    standardize_by = "sd"
-) {
-
-  if (standardize) {
-    if (standardize_by == "sd") {
-      scale = list(
-        location = mean(test_statistics),
-        scale = sd(test_statistics)
-      )
-    } else if (standardize_by == "IQR") {
-      scale = list(
-        location = mean(test_statistics),
-        scale = IQR(test_statistics)
-      )
-    }
-  } else {
-    scale = list(
-      location = 0,
-      scale = 1
-    )
-  }
-
-  test_statistics = (test_statistics - scale$location)/(scale$scale)
-
-  prob_y1_given_t <- function(t, pi0, df, sigmasq1) {
-    (1-pi0)*alt(t, sigmasq1)/
-      mix_t(t, pi0, df, sigmasq1)
-  }
-  prob_y0_given_t <- function(t, pi0, df, sigmasq1) {
-    pi0*null_t(t, df)/
-      mix_t(t, pi0, df, sigmasq1)
-  }
-
-  thetas <- matrix(nrow = maxiter, ncol = 2)
-  thetas[1,] <- c(pi0, sigmasq1)
-  diff = 100
-  i <- 2
-  while( i < maxiter) {
-    P_y1_given_t <- prob_y1_given_t(test_statistics, pi0, df, sigmasq1)
-    P_y0_given_t <- prob_y0_given_t(test_statistics, pi0, df, sigmasq1)
-
-    if (!sigmasq1_fixed) {
-      sigmasq1 <- sum(P_y1_given_t*test_statistics^2, na.rm = TRUE)/
-        (3*sum(P_y1_given_t, na.rm = TRUE))
-    }
-
-    if (!pi0_fixed) {
-      pi0 <- mean(P_y0_given_t, na.rm = TRUE)
-    }
-
-    thetas[i,] <- c(pi0, sigmasq1)
-    diff = sum((thetas[i,] - thetas[i-1,])^2)
-    if (is.na(diff)) { break } else if (diff < tol) { break }
-
-    i <- i + 1
-  }
-  thetas <- thetas[!is.na(thetas[,1]),]
-  colnames(thetas) = c('pi0', 'sigmasq1')
-
-  return(list(
-    'parameters' = list(sigmasq1 = sigmasq1, pi0 = pi0),
-    'thetas' = thetas,
-    'type' = 't',
-    'iters' = i,
-    'scale' = scale
   ))
 }
 
@@ -272,106 +150,52 @@ simulate_from_working_model <- function(n, working_model, df = NULL) {
   n0 <- max(round(working_model$parameters$pi0*n), 0)
   n1 <- max(n-n0, 0)
 
-  if (working_model$type == 'Normal'){
-    test_statistics = c(
-      sample_null(
-        n = n0,
-        sigmasq0 = working_model$parameters$sigmasq0
-      ),
-      sample_alternative(
-        N = n1,
-        sigmasq1 = working_model$parameters$sigmasq1
-      )
+  test_statistics = c(
+    sample_null(
+      n = n0,
+      sigmasq0 = working_model$parameters$sigmasq0
+    ),
+    sample_alternative(
+      N = n1,
+      sigmasq1 = working_model$parameters$sigmasq1
     )
-    this_dat <- list(
+  )
+  this_dat <- list(
+    t = test_statistics,
+    true_fdr = working_model$parameters$pi0*null(
       t = test_statistics,
-      true_fdr = working_model$parameters$pi0*null(
-        t = test_statistics,
-        sigmasq0 = working_model$parameters$sigmasq0
-      ) / mix(
-        t = test_statistics,
-        pi0 = working_model$parameters$pi0,
-        sigmasq0 = working_model$parameters$sigmasq0,
-        sigmasq1 = working_model$parameters$sigmasq1
-      ),
-      truth = c(
-        rep(0, n0),
-        rep(1, n1)
-      )
+      sigmasq0 = working_model$parameters$sigmasq0
+    ) / mix(
+      t = test_statistics,
+      pi0 = working_model$parameters$pi0,
+      sigmasq0 = working_model$parameters$sigmasq0,
+      sigmasq1 = working_model$parameters$sigmasq1
+    ),
+    truth = c(
+      rep(0, n0),
+      rep(1, n1)
     )
-    this_dat$p = p_from_t(
-      test_statistics = this_dat$t,
-      df = df
+  )
+  this_dat$p = p_from_t(
+    test_statistics = this_dat$t,
+    df = df
+  )
+
+  this_dat$true_Fdr = get_true_Fdr(
+    test_statistics = this_dat$t,
+    truth = this_dat$truth
+  )
+
+  this_dat$mixture = function(t) {
+    mix(
+      t,
+      pi0 = working_model$parameters$pi0,
+      sigmasq0 = working_model$parameters$sigmasq0,
+      sigmasq1 = working_model$parameters$sigmasq1
     )
-
-    this_dat$true_Fdr = get_true_Fdr(
-      test_statistics = this_dat$t,
-      truth = this_dat$truth
-    )
-
-    this_dat$mixture = function(t) {
-      mix(
-        t,
-        pi0 = working_model$parameters$pi0,
-        sigmasq0 = working_model$parameters$sigmasq0,
-        sigmasq1 = working_model$parameters$sigmasq1
-      )
-    }
-
-    return(this_dat)
-  } else if (working_model$type == "t") {
-    test_statistics = c(
-      sample_null_t(
-        n = n0,
-        df = df
-      ),
-      sample_alternative(
-        N = n1,
-        sigmasq1 = working_model$parameters$sigmasq1
-      )
-    )
-
-    scaled_test_statistics = test_statistics*working_model$scale$scale + working_model$scale$location
-
-    this_dat <- list(
-      t = scaled_test_statistics,
-      true_fdr = working_model$parameters$pi0*null_t(
-        t = test_statistics,
-        df = df
-      ) / mix_t(
-        t = test_statistics,
-        pi0 = working_model$parameters$pi0,
-        df = df,
-        sigmasq1 = working_model$parameters$sigmasq1
-      ),
-      truth = c(
-        rep(0, n0),
-        rep(1, n1)
-      )
-    )
-    this_dat$p = p_from_t(
-      test_statistics = this_dat$t,
-      df = df
-    )
-
-    this_dat$true_Fdr = get_true_Fdr(
-      test_statistics = this_dat$t,
-      truth = this_dat$truth
-    )
-
-    this_dat$mixture = function(t) {
-      mix_t(
-        t,
-        pi0 = working_model$parameters$pi0,
-        df = df,
-        sigmasq1 = working_model$parameters$sigmasq1
-      )
-    }
-
-    return(this_dat)
-  } else {
-    return(NULL)
   }
+
+  return(this_dat)
 }
 
 # -------- Null ~ N(0, sigmasq0) --------
@@ -397,31 +221,6 @@ null <- function(t, sigmasq0) {
 #' @noRd
 sample_null <- function(n, sigmasq0) {
   stats::rnorm(n, mean = 0, sd = sqrt(sigmasq0))
-}
-
-# -------- Null ~ t(df) --------
-
-#' @title Null pdf
-#'
-#' @param t double, test statistic
-#' @param df integer, degrees of freedom
-#'
-#' @return double, value of null density pdf at value t
-#' @noRd
-null_t <- function(t, df) {
-  stats::dt(t, df = df)
-}
-
-#' @title Sample from null density
-#'
-#' @param n integer, sample size
-#' @param df integer, degrees of freedom
-#'
-#' @importFrom stats rnorm
-#' @return vector, test statistics sampled from null density N(0, sigmasq0)
-#' @noRd
-sample_null_t <- function(n, df) {
-  rt(n, df)
 }
 
 # -------- Alt ~ t^2/sigmasq1 N(0, sigmasq1) --------

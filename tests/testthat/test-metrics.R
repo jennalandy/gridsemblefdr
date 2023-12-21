@@ -14,7 +14,9 @@ test_that("get_true_Fdr works", {
     t = test_statistics, truth = truth
   )
   expect_equal(length(true_Fdr), length(test_statistics))
-  expect_equal(true_Fdr[10], mean(1 - truth[test_statistics <= test_statistics[10]]))
+  expect_equal(true_Fdr[10], mean(1 - truth[
+    abs(test_statistics) >= abs(test_statistics[10])
+  ]))
 })
 
 test_that("get_MSE works", {
