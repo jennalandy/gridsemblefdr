@@ -11,8 +11,7 @@ build_qvalue_grid(
   pi0.method = c("bootstrap", "smoother"),
   smooth.log.pi0 = c(TRUE, FALSE),
   df = NULL,
-  grid_size = 40,
-  method = "grid",
+  grid_depth = 5,
   parallel_param = NULL,
   parallel = min(TRUE, n_workers > 1),
   n_workers = max(parallel::detectCores() - 2, 1),
@@ -42,11 +41,8 @@ against the tuning parameter lambda.}
 
 \item{df}{integer, degrees of freedom of test statistics, if known}
 
-\item{grid_size}{integer, maximum size of grid to use. Note that this is
-\emph{not the final grid size}, combinations may fail when run on the data.}
-
-\item{method}{string, one of c('random', 'grid'). 'random' will sample
-uniformly within the ranges, 'grid' will select equally spaced values}
+\item{grid_depth}{integer, number of evenly-spaced values of continuous parameters
+considered within their respective \verb{_range}.}
 
 \item{parallel_param}{BiocParallel object}
 
@@ -55,6 +51,9 @@ uniformly within the ranges, 'grid' will select equally spaced values}
 \item{n_workers}{integer, number of cores to use if parallel}
 
 \item{verbose}{boolean}
+
+\item{method}{string, one of c('random', 'grid'). 'random' will sample
+uniformly within the ranges, 'grid' will select equally spaced values}
 }
 \value{
 data.frame, each row is a possible set of hyperparameters for qvalue

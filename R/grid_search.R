@@ -20,8 +20,8 @@ get_true_Fdr <- function(test_statistics, truth)  {
   out <- rep(NA, length(test_statistics))
   for (i in seq_len(length(test_statistics))) {
     t = test_statistics[i]
-    # Pr(null | T <= t) = Pr(truth = 0 | T <= t)
-    out[i] <- mean(1 - truth[test_statistics <= t])
+    # Pr(null | |T| >= |t|) = Pr(truth = 0 | |T| >= |t|)
+    out[i] <- mean(1 - truth[abs(test_statistics) >= abs(t)])
   }
   return(out)
 }

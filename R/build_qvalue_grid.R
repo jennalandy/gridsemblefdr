@@ -88,7 +88,7 @@ reduce_qvalue_grid <- function(
   if(verbose) {
     message(paste0(
       '\t', length(ok_rows),'/',nrow(qvalue_grid),
-      ' qvalue thetas included'
+      ' qvalue models included'
     ))
   }
 
@@ -97,7 +97,7 @@ reduce_qvalue_grid <- function(
     for (reason in names(fails_tab)) {
       message(paste0(
         '\t\t', fails_tab[reason],
-        ' thetas dropped for ',
+        ' models dropped for ',
         reason
       ))
     }
@@ -127,8 +127,8 @@ reduce_qvalue_grid <- function(
 #' against the tuning parameter lambda.
 #' @param df integer, degrees of freedom of test statistics, if known
 #'
-#' @param grid_size integer, maximum size of grid to use. Note that this is
-#' *not the final grid size*, combinations may fail when run on the data.
+#' @param grid_depth integer, number of evenly-spaced values of continuous parameters
+#' considered within their respective `_range`.
 #' @param method string, one of c('random', 'grid'). 'random' will sample
 #' uniformly within the ranges, 'grid' will select equally spaced values
 #'
@@ -148,10 +148,12 @@ reduce_qvalue_grid <- function(
 build_qvalue_grid <- function(
   test_statistics, transf = c('probit', 'logit'), adj_range = c(0.5, 2),
   pi0.method = c('bootstrap','smoother'), smooth.log.pi0 = c(TRUE, FALSE),
-  df = NULL, grid_size = 40, method = 'grid',
+  df = NULL, grid_depth = 5,
   parallel_param = NULL, parallel = min(TRUE, n_workers > 1),
   n_workers = max(parallel::detectCores() - 2, 1), verbose = FALSE
 ) {
+
+  adj = seq(adj_range[1], adj_range[2], length.out = grid_depth)
 
   if (parallel & is.null(parallel_param) & n_workers > 1) {
     parallel_param = BiocParallel::MulticoreParam(
@@ -161,49 +163,28 @@ build_qvalue_grid <- function(
   }
   if (!is.null(parallel_param) & verbose) {
     message('Building qvalue grid in parallel')
-  } else if (verbose) { message('Building qvalue grid') }
-
-  # if random method, select from uniform distribution within ranges
-  if (method == 'random') {
-    qvalue_grid <- data.frame(
-      transf = sample(transf, size = grid_size, replace = TRUE),
-      adj = stats::runif(n = grid_size, min = adj_range[1], max = adj_range[2]),
-      pi0.method = sample(pi0.method, size = grid_size, replace = TRUE),
-      smooth.log.pi0 = sample(smooth.log.pi0, size = grid_size, replace = TRUE)
-    )
-
-  # if grid method, select equally spaced values within ranges
-  } else if (method == 'grid') {
-
-    # smooth.log.pi0 is only used if pi0.method = 'smoother'
-    non = pi0.method[pi0.method != 'smoother']
-    n_non = round(grid_size*length(non)/length(pi0.method))
-    n_sm = grid_size - n_non
-
-    nG_sm = ceiling(n_sm/(length(transf)*length(smooth.log.pi0)))
-    nG_non = ceiling(n_non/(length(transf)*length(non)))
-    nG = max(nG_sm, nG_non)
-
-    qvalue_grid <- rbind(
-      expand.grid(
-        transf = transf,
-        adj = seq(from = adj_range[1], to = adj_range[2], length.out = nG),
-        pi0.method = "smoother",
-        smooth.log.pi0 = smooth.log.pi0
-      ),
-      expand.grid(
-        transf = transf,
-        adj = seq(from = adj_range[1], to = adj_range[2], length.out = nG),
-        pi0.method = non,
-        smooth.log.pi0 = FALSE
-      )
-    )
+  } else if (verbose) {
+    message('Building qvalue grid')
   }
 
-  if (verbose & nrow(qvalue_grid) > grid_size & method == 'grid') {
-    message(paste0(
-      "\t", nrow(qvalue_grid) - grid_size, " extra thetas needed for full grid"
-    ))
+  non = pi0.method[pi0.method != 'smoother']
+  qvalue_grid <- expand.grid(
+    transf = transf,
+    adj = adj,
+    pi0.method = non,
+    smooth.log.pi0 = FALSE # only affects model if pi0.method = "smoother"
+  )
+
+  if ('smoother' %in% pi0.method) {
+    qvalue_grid <- rbind(
+      qvalue_grid,
+      expand.grid(
+        transf = transf,
+        adj = adj,
+        pi0.method = "smoother",
+        smooth.log.pi0 = smooth.log.pi0
+      )
+    )
   }
 
   qvalue_grid_reduced <- reduce_qvalue_grid(

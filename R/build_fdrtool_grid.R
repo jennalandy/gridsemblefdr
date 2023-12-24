@@ -81,7 +81,7 @@ reduce_fdrtool_grid <- function(
   if(verbose) {
     message(paste0(
       '\t',length(ok_rows),'/',nrow(fdrtool_grid),
-      ' fdrtool thetas included'
+      ' fdrtool models included'
     ))
   }
 
@@ -90,7 +90,7 @@ reduce_fdrtool_grid <- function(
     for (reason in names(fails_tab)) {
       message(paste0(
         '\t\t', fails_tab[reason],
-        ' thetas dropped for ',
+        ' models dropped for ',
         reason
       ))
     }
@@ -106,12 +106,11 @@ reduce_fdrtool_grid <- function(
 #' @param test_statistics vector, test statistics
 #' @param cutoff.method vector, options for cutoff method hyperparameter.
 #' `cutoff.method` is one of "fndr" (default), "pct0", "locfdr".
-#' @param pct0_range vector c(min, max), range for pct0 hyperparameter, the
+#' @param pct0_range vector c(min, max), range of values for pct0 hyperparameter, the
 #' fraction of data used for fitting null model - only if cutoff.method="pct0".
-#' @param grid_size integer, maximum size of grid to use. Note that this is
-#' *not the final grid size*, combinations may fail when run on the data.
-#' @param method string, one of c('random', 'grid'). 'random' will sample
-#' uniformly within the ranges, 'grid' will select equally spaced values
+#' Default in `fdrtool` package is `pct0 = 0.75`.
+#' @param grid_depth integer, number of evenly-spaced values of continuous parameters
+#' considered within their respective `_range`.
 #' @param parallel boolean, whether to utilize parallelization
 #' @param n_workers integer, number of cores to use if parallel
 #' @param parallel_param BiocParallel object
@@ -127,11 +126,13 @@ reduce_fdrtool_grid <- function(
 #' fdrtool_grid = build_fdrtool_grid(test_statistics)
 build_fdrtool_grid <- function(
   test_statistics, cutoff.method = c('fndr','pct0','locfdr'),
-  pct0_range = c(0.1,1), grid_size = 40, method = 'grid',
+  pct0_range = c(0.4, 1), grid_depth = 5,
   parallel = min(TRUE, n_workers > 1),
   n_workers = max(parallel::detectCores() - 2, 1), parallel_param = NULL,
   verbose = FALSE
 ) {
+  pct0 = seq(pct0_range[1], pct0_range[2], length.out = grid_depth)
+
   if (parallel & is.null(parallel_param) & n_workers > 1) {
     parallel_param = BiocParallel::MulticoreParam(
       workers = n_workers,
@@ -140,43 +141,23 @@ build_fdrtool_grid <- function(
   }
   if (!is.null(parallel_param) & verbose) {
     message('Building fdrtool grid in parallel')
-  } else if (verbose) {  message('Building fdrtool grid') }
+  } else if (verbose) {
+    message('Building fdrtool grid')
+  }
 
-  if (method == 'random') {
-    fdrtool_grid <- data.frame(
-      cutoff.method = sample(cutoff.method, size = grid_size, replace = TRUE),
-      pct0 = stats::runif(
-        n = grid_size, min = pct0_range[1], max = pct0_range[2]
-      )
-    )
-  } else if (method == 'grid') {
-    non <- cutoff.method[cutoff.method != 'pct0']
-    # pct0 method uses pct0 parameter, others dont
-    n_pct = grid_size - length(non)
+  fdrtool_grid <- expand.grid(
+    cutoff.method = cutoff.method[cutoff.method != 'pct0'],
+    pct0 = 0.75 # this value doesn't affect the model
+  )
 
-    fdrtool_grid <- rbind(
+  if ('pct0' %in% cutoff.method) {
+    fdrtool_grid = rbind(
+      fdrtool_grid,
       expand.grid(
         cutoff.method = c('pct0'),
-        pct0 = seq(
-          from = pct0_range[1], to = pct0_range[2], length.out = n_pct
-        )
-      ),
-      expand.grid(
-        cutoff.method = non,
-        pct0 = 0.75
+        pct0 = pct0
       )
     )
-  } else {stop('method must be one of c("random","grid")')}
-
-  if (verbose & nrow(fdrtool_grid) < grid_size & !('pct0' %in% cutoff.method)) {
-    message(paste0(
-      "\tWithout 'pct0' as a cutoff.method option, there are only ",
-      nrow(fdrtool_grid), " possible thetas."
-    ))
-  } else if (verbose & nrow(fdrtool_grid) > grid_size & method == 'grid') {
-    message(paste0(
-      '\t', nrow(fdrtool_grid) - grid_size, " extra thetas needed for full grid"
-    ))
   }
 
   fdrtool_grid_reduced <- reduce_fdrtool_grid(

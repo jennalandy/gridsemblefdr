@@ -6,9 +6,8 @@
 #' @param df integer, degrees of freedom of test statistics t-distribution,
 #' otherwise assumed standard normal
 #' @param ensemble_size integer, number of models to ensemble
-#' @param nsim integer, number of datasets to simulate and perform grid search
+#' @param n_synthetic integer, number of datasets to simulate and perform grid search
 #' over, or 0 for models to be randomly selected.
-#' @param synthetic_size integer, size of synthetic datasets
 #'
 #' @param locfdr_grid data.frame or 'default', rows are possible hyperparameters
 #' for locfdr, or `build_locfdr_grid` will be run with default values, NULL to
@@ -19,9 +18,9 @@
 #' @param qvalue_grid data.frame or 'default', rows are possible hyperparameters
 #' for qvalue, or `build_qvalue_grid` will be run with default values, NULL to
 #' exclude qvalue from gridsemble
-#' @param working_nulltype string, null distribution of working model one of c("Normal","t")
-#' @param standardize logical, whether to divide by standard deviation before fitting
-#' @param standardize_by
+#'
+#' @param synthetic_size integer, size of synthetic datasets. Defaults to
+#' `length(test_statistics)`. Can be reduced for time/memory constraints.
 #'
 #' @param n_workers integer, number of cores to use if parallel
 #' @param parallel boolean, whether to utilize parallelization
@@ -52,32 +51,17 @@ gridsemble <- function(
   test_statistics,
   df = NULL,
   ensemble_size = 10,
-  nsim = 10,
-  synthetic_size = length(test_statistics),
+  n_synthetic = 10,
   locfdr_grid = 'default',
   fdrtool_grid = 'default',
   qvalue_grid = 'default',
-  working_nulltype = "Normal",
-  standardize = FALSE,
-  standardize_by = "sd",
+  synthetic_size = length(test_statistics),
   n_workers = max(parallel::detectCores() - 2, 1),
   parallel = min(TRUE, n_workers > 1),
   verbose = TRUE
 ) {
 
   focus_metric = 'fdrerror'
-
-  if (!(working_nulltype %in% c("Normal","t"))) {
-    stop(
-      "`working_nulltype` must be one of c('Normal','t')"
-    )
-  }
-
-  if (working_nulltype == "t") {
-    if (is.na(df)) {
-      stop("df must be provided when working_nulltype == 't'")
-    }
-  }
 
   if (typeof(locfdr_grid) == "character") {if (locfdr_grid == 'default') {
     locfdr_grid = build_locfdr_grid(
@@ -98,7 +82,7 @@ gridsemble <- function(
     )
   }}
 
-  n_workers = min(n_workers, nsim)
+  n_workers = min(n_workers, n_synthetic)
   if (parallel & n_workers > 1) {
     parallel_param = BiocParallel::MulticoreParam(
       workers = n_workers,
@@ -162,26 +146,23 @@ gridsemble <- function(
   }
 
   # fit working model to test statistics
-  if (nsim > 0) {
+  if (n_synthetic > 0) {
     working_model <- fit_working_model(
       test_statistics,
       df = df,
-      type = working_nulltype,
-      standardize = standardize,
-      standardize_by = standardize_by,
       verbose = verbose
     )
-  } else if (nsim == 0) {
+  } else if (n_synthetic == 0) {
     working_model <- NULL
     if (verbose) {
-      message('No generting model fit with nsim = 0')
+      message('No generting model fit with n_synthetic = 0')
     }
   }
 
   # perform grid search on simulated datasets
   grid_res <- grid_search(
     working_model = working_model,
-    nsim = nsim,
+    nsim = n_synthetic,
     synthetic_size = synthetic_size,
     ensemble_size = ensemble_size,
     df = df,

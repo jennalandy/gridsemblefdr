@@ -7,9 +7,6 @@
 fit_working_model(
   test_statistics,
   df = NULL,
-  type = "Normal",
-  standardize = FALSE,
-  standardize_by = "sd",
   sigmasq0 = 2,
   sigmasq1 = 4,
   pi0 = 0.9,
@@ -25,12 +22,6 @@ fit_working_model(
 \item{test_statistics}{vector, test statistics}
 
 \item{df}{integer, degrees of freedom, required if \code{type = "t"}}
-
-\item{type}{string, type of null distribution, one of c("Normal","t")}
-
-\item{standardize}{logical, whether to divide by standard deviation before fitting}
-
-\item{standardize_by}{}
 
 \item{sigmasq0}{double, initial value for sigmasq0}
 
@@ -48,6 +39,12 @@ fit_working_model(
 
 \item{tol}{double, tolerance for change in sum of squared differences in
 parameters in order to stop algorithm}
+
+\item{type}{string, type of null distribution, one of c("Normal","t")}
+
+\item{standardize}{logical, whether to divide by standard deviation before fitting}
+
+\item{standardize_by}{}
 }
 \value{
 list, named parameters for the working_model densities and values

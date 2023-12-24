@@ -7,9 +7,8 @@
 build_fdrtool_grid(
   test_statistics,
   cutoff.method = c("fndr", "pct0", "locfdr"),
-  pct0_range = c(0.1, 1),
-  grid_size = 40,
-  method = "grid",
+  pct0_range = c(0.4, 1),
+  grid_depth = 5,
   parallel = min(TRUE, n_workers > 1),
   n_workers = max(parallel::detectCores() - 2, 1),
   parallel_param = NULL,
@@ -22,14 +21,12 @@ build_fdrtool_grid(
 \item{cutoff.method}{vector, options for cutoff method hyperparameter.
 \code{cutoff.method} is one of "fndr" (default), "pct0", "locfdr".}
 
-\item{pct0_range}{vector c(min, max), range for pct0 hyperparameter, the
-fraction of data used for fitting null model - only if cutoff.method="pct0".}
+\item{pct0_range}{vector c(min, max), range of values for pct0 hyperparameter, the
+fraction of data used for fitting null model - only if cutoff.method="pct0".
+Default in \code{fdrtool} package is \code{pct0 = 0.75}.}
 
-\item{grid_size}{integer, maximum size of grid to use. Note that this is
-\emph{not the final grid size}, combinations may fail when run on the data.}
-
-\item{method}{string, one of c('random', 'grid'). 'random' will sample
-uniformly within the ranges, 'grid' will select equally spaced values}
+\item{grid_depth}{integer, number of evenly-spaced values of continuous parameters
+considered within their respective \verb{_range}.}
 
 \item{parallel}{boolean, whether to utilize parallelization}
 
