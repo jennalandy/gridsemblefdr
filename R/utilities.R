@@ -25,7 +25,7 @@ parlapply <- function(X, FUN, parallel_param, ...) {
 #' @param test_statistics vector, test statistics
 #'#'
 #' @return vector, tail-end false discovery rates
-#' @noRd
+#' @export
 Fdr_from_fdr <- function(fdr, test_statistics) {
 
   Fdr = vector(length = length(test_statistics))

@@ -65,8 +65,8 @@ ensemble <- function(
 
   fdr <- pi0_and_fdr_means[2:length(pi0_and_fdr_means)]
   fdr_var <- pi0_and_fdr_vars[2:length(pi0_and_fdr_vars)]
-  pi0 <- pi0_and_fdr_means[1]
-  pi0_var <- pi0_and_fdr_vars[1]
+  pi0 <- unname(pi0_and_fdr_means[1])
+  pi0_var <- unname(pi0_and_fdr_vars[1])
 
   return(list(
     fdr = fdr, fdr_var = fdr_var, pi0 = pi0, pi0_var = pi0_var

@@ -80,7 +80,7 @@ reduce_locfdr_grid <- function(
   if(verbose) {
     message(paste0(
       '\t',length(ok_rows),'/',nrow(locfdr_grid),
-      ' locfdr thetas included'
+      ' locfdr models included'
     ))
   }
 
@@ -89,7 +89,7 @@ reduce_locfdr_grid <- function(
     for (reason in names(fails_tab)) {
       message(paste0(
         '\t\t', fails_tab[reason],
-        ' thetas dropped for ',
+        ' models dropped for ',
         reason
       ))
     }
@@ -116,10 +116,8 @@ reduce_locfdr_grid <- function(
 #' 3 is a split normal version of 2.
 #' @param type vector, options for type hyperparameter. `type` is the type of
 #' fitting used for f; 0 is a natural spline, 1 is a polynomial.
-#' @param grid_size integer, maximum size of grid to use. Note that this is
-#' *not the final grid size*, combinations may fail when run on the data.
-#' @param method string, one of c('random', 'grid'). 'random' will sample
-#' uniformly within the ranges, 'grid' will select equally spaced values
+#' @param grid_depth integer, number of evenly-spaced values of continuous parameters
+#' considered within their respective `_range`.
 #'
 #' @param parallel boolean, whether to utilize parallelization
 #' @param n_workers integer, number of cores to use if parallel
@@ -134,48 +132,32 @@ reduce_locfdr_grid <- function(
 #' test_statistics = c(rnorm(800), runif(100, -10, -5), runif(100, 5, 10))
 #' locfdr_grid = build_locfdr_grid(test_statistics)
 build_locfdr_grid <- function(
-  test_statistics, pct_range = c(0, 0.3), pct0_range = c(0, 0.45),
-  nulltype = c(1,2,3), type = c(0,1), grid_size = 40,
-  method = 'grid', parallel_param = NULL, parallel = min(TRUE, n_workers > 1),
+  test_statistics, pct_range = c(0, 0.2), pct0_range = c(0, 0.3),
+  nulltype = c(1,2,3), type = c(0,1), grid_depth = 5,
+  parallel_param = NULL, parallel = min(TRUE, n_workers > 1),
   n_workers = max(parallel::detectCores() - 2, 1), verbose = FALSE
 ) {
+  pct = seq(pct_range[1], pct_range[2], length.out = grid_depth)
+  pct0 = seq(pct0_range[1], pct0_range[2], length.out = grid_depth)
 
   if (parallel & is.null(parallel_param) & n_workers > 1) {
     parallel_param = BiocParallel::MulticoreParam(
       workers = n_workers, tasks = n_workers
     )
   }
+
   if (!is.null(parallel_param) & verbose) {
     message('Building locfdr grid in parallel')
-  } else if (verbose) { message('Building locfdr grid') }
-
-  if (method == 'random') { # select uniformly within ranges
-   locfdr_grid <- data.frame(
-     pct = stats::runif(
-       n = grid_size, min = pct_range[1], max = pct_range[2]
-     ),
-     pct0 = stats::runif(
-       n = grid_size, min = pct0_range[1], max = pct0_range[2]
-     ),
-     nulltype = sample(nulltype, size = grid_size, replace = TRUE),
-     type = sample(type, size = grid_size, replace = TRUE)
-   )
-  } else if (method == 'grid') { # select equally spaced within ranges
-    # calculate number of values for pct and pct0 to each expand grid with
-    nG <- ceiling(sqrt(grid_size/(length(nulltype)*length(type))))
-    locfdr_grid <- expand.grid(
-      pct = seq(from = pct_range[1], to = pct_range[2], length.out = nG),
-      pct0 = seq(from = pct0_range[1], to = pct0_range[2], length.out = nG),
-      nulltype = nulltype,
-      type = type
-    )
+  } else if (verbose) {
+    message('Building locfdr grid')
   }
 
-  if (verbose & nrow(locfdr_grid) > grid_size & method == 'grid') {
-    message(paste0(
-      '\t', nrow(locfdr_grid) - grid_size, " extra thetas needed for full grid"
-    ))
-  }
+  locfdr_grid <- expand.grid(
+    pct = pct,
+    pct0 = pct0,
+    nulltype = nulltype,
+    type = type
+  )
 
   locfdr_grid_reduced <- reduce_locfdr_grid(
     test_statistics = test_statistics,

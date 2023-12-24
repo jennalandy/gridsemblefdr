@@ -6,12 +6,11 @@
 \usage{
 build_locfdr_grid(
   test_statistics,
-  pct_range = c(0, 0.3),
-  pct0_range = c(0, 0.45),
+  pct_range = c(0, 0.2),
+  pct0_range = c(0, 0.3),
   nulltype = c(1, 2, 3),
   type = c(0, 1),
-  grid_size = 40,
-  method = "grid",
+  grid_depth = 5,
   parallel_param = NULL,
   parallel = min(TRUE, n_workers > 1),
   n_workers = max(parallel::detectCores() - 2, 1),
@@ -38,11 +37,8 @@ use in the fdr calculations. 0 is the theoretical null N(0,1),
 \item{type}{vector, options for type hyperparameter. \code{type} is the type of
 fitting used for f; 0 is a natural spline, 1 is a polynomial.}
 
-\item{grid_size}{integer, maximum size of grid to use. Note that this is
-\emph{not the final grid size}, combinations may fail when run on the data.}
-
-\item{method}{string, one of c('random', 'grid'). 'random' will sample
-uniformly within the ranges, 'grid' will select equally spaced values}
+\item{grid_depth}{integer, number of evenly-spaced values of continuous parameters
+considered within their respective \verb{_range}.}
 
 \item{parallel_param}{BiocParallel object}
 
