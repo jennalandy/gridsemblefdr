@@ -1,5 +1,6 @@
 ---
 title: "gridsemblefdr Vignette"
+author: "Jenna Landy"
 output: BiocStyle::html_document
 vignette: >
   %\VignetteIndexEntry{gridsemblefdr}
@@ -14,102 +15,152 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r}
+```{r message = FALSE}
 library(dplyr)
 library(tidyr)
 library(ggplot2)
+library(ggthemes)
 library(gridsemblefdr)
+
+set.seed(321)
+
+color_list = list(
+  "gridsemble" = "#E69F00",
+  "locfdr" = "#D55E00",
+  "fdrtool" = "#009E73",
+  "qvalue" = "#0072B2",
+  "true" = "black"
+)
 ```
 
 ## Overview
 
-`gridsemblefdr` computes local and tail-end false discovery rates using ensemble methods. This method is introduced in the in-progress paper "Ensembling for Unsupervised Learning with Application to False Discovery Rates".
-
-Unsupervised models present a unique challenge for hyperparameter optimization because measures of accuracy used in standard supervised techniques cannot be computed. In practice, this means hyperparameters are chosen differently by each researcher and are often left as the default values in their package of choice. We introduce a novel ensemble framework to address this issue for unsupervised problems with latent labels. This framework selects models to ensemble by their approximate performances, which are estimated using simulated labeled data informed by domain knowledge of the latent label structure. We implement our framework to improve existing false discovery rate methodology, viewing multiple hypothesis testing as an unsupervised classification problem with binary latent labels. Our simulation studies show that an ensemble outperforms three popular methods with their default hyperparameters and that, within an ensemble, combining models chosen based on their approximate performances outperforms an ensemble over a random subset of models. The R package for the false discovery rate implementation of this framework, `gridsemblefdr`, can be installed here.
+`gridsemblefdr` computes local and tail-end false discovery rates using ensemble methods given test statistics that are centered at zero under the null with large magnitude providing evidence against the two-sided null hypotheses. This method is introduced in the in-progress paper "Gridsemble: Selective Ensembling for False Discovery Rates".
 
 ## Quick start guide
 
-Given a vector of test statistics, the `gridsemble` function can be used to compute local and tail-end false discovery rates. Here is an example using `gridsemblefdr` on a simulation study of 1000 t-statistics. You can choose to utilize parallelization (default `parallel = TRUE`) as well as whether to print details of the algorithm (default `verbose = TRUE`).
+Given a vector of test statistics, the `gridsemble` function can be used to compute local and tail-end false discovery rates. Here is an example using `gridsemblefdr` on a simulated set of 1000 test statistics, corresponding to 1000 two-sided hypotheses tests. Parallelization is utilized by default, but can be turned off with `parallel = FALSE`. Progress of the algorithm is displayed by default, but this can be turned off with `verbose = FALSE`.
 
+1\. Simulate test statistics and true hypothesis labels
+
+This dataset is from simulation scheme 1 defined in our paper. Null hypotheses have statistics coming from a $N(0, 3)$, while alternative hypothese have statistics coming from $U(4, 12)$ and $U(-12, -4)$. 80% of hypotheses are null ($\pi_0 = 0.8$).
 ```{r}
-# get some fake data
-set.seed(123)
 test_statistics = c(
-  rnorm(900, 0, 3),   # 90% of values near 0
-  runif(50, -10, -3), # add 5% negative extreme values
-  runif(50, 3, 10)    # add 5% positivive extreme values
+  rnorm(800, 0, 3),   # 90% of values near 0
+  runif(100, -12, -4), # add 5% negative extreme values
+  runif(100, 4, 12)    # add 5% positivive extreme values
 )
 truth = c(
-  rep(FALSE, 900),
-  rep(TRUE, 100)
+  rep(FALSE, 800),
+  rep(TRUE, 200)
 )
-true_pi0 = 0.9
+
+data.frame(
+  t = test_statistics, 
+  truth = factor(
+    ifelse(truth, 'Alternative', 'Null'),
+    levels = c('Null','Alternative')
+  )
+) %>%
+  ggplot(aes(x = t, fill = truth)) +
+  geom_histogram(bins = 20, alpha = 0.7, position = 'identity') +
+  theme_few()
 ```
 
 ```{r}
-# run gridsemble in parallel
-set.seed(234)
+true_pi0 = 1-mean(truth)
+```
+
+
+2\. Run gridsemble with default options
+```{r}
 gridsemble_res <- gridsemble(
-  test_statistics, 
-  verbose = TRUE, 
-  parallel = TRUE
+  test_statistics
 )
 ```
 
+3\. Access Results
+
+`gridsemble` returns a list object containing estimates of local (fdr) and two-sided tail-end (Fdr) false discovery rates, as well as the proportion of test statistics from the null distribution, $\pi_0$.
+
 ```{r}
-# or run gridsemble not in parallel
-set.seed(234)
-gridsemble_res <- gridsemble(
-  test_statistics, 
-  verbose = FALSE, 
-  parallel = FALSE
+gridsemble_fdr <- gridsemble_res$fdr
+gridsemble_Fdr <- gridsemble_res$Fdr
+gridsemble_pi0 <- gridsemble_res$pi0
+```
+
+We can compare estimates between `gridsemble` and benchmark models, which are the three packages `gridsemble` is based on with their default parameters: `locfdr`, `fdrtool`, and `qvalue`. 
+
+## Evaluation
+
+The results of each package with default hyperparameters are stored in the gridsemble output as `default_[package]`. Each benchmark model has it's own notation for the $\pi_0$ estimate; see the respective package's documentation for details.
+
+Below we compare methods just by estimated $\pi_0$, to start. We see that `gridsemble` estimates closest to the true value of 0.8.
+
+```{r}
+list(
+  'true' = true_pi0,
+  'gridsemble' = gridsemble_pi0,
+  'locfdr' = unlist(gridsemble_res$default_locfdr$fp0['mlest','p0']),
+  'fdrtool' = unname(gridsemble_res$default_fdrtool$param[,'eta0']),
+  'qvalue' = gridsemble_res$default_qvalue$pi0
 )
 ```
 
-Local and tail-end false discovery rates, as well as the proportion of test statistics from the null distribution, pi0, can be accessed from the `gridsemble_res` object.
+Here we compare methods by estimated $Fdr$. For each $t$, true Fdr is the probability a test is null given it's statistic is as or more extreme than $t$, estimated empirically with the simulated data using the true hypothesis labels. We see that all methods overestimate Fdr, but `gridsemble` tends to be closest to the truth.
 
 ```{r}
-fdr <- gridsemble_res$fdr
-Fdr <- gridsemble_res$Fdr
-pi0 <- gridsemble_res$pi0
+true_Fdr = sapply(test_statistics, function(t) {
+  # empirical Pr(hypotheses i null | t_i more extreme than t)
+  mean(truth[abs(test_statistics) >= abs(t)] == 0)
+})
 ```
 
-We can compare pi0 predictions between gridsemble and locfdr with default parameters. The results of each package with default hyperparameters are stored in the gridsemble output as `default_[package]`.
 
-```{r fig.width = 8}
-cat(paste0(
-  'estimated gridsemble pi0 = ', round(pi0, 4),
-  '\ndefault locfdr pi0 = ', round(gridsemble_res$default_locfdr$fp0['mlest','p0'], 4),
-  '\ncompared to true pi0 = ', true_pi0
-))
+```{r}
+data.frame(
+  t = test_statistics,
+  true = true_Fdr,
+  gridsemble = gridsemble_Fdr,
+  locfdr = Fdr_from_fdr(gridsemble_res$default_locfdr$fdr, test_statistics),
+  fdrtool = Fdr_from_fdr(gridsemble_res$default_fdrtool$lfdr, test_statistics),
+  qvalue = Fdr_from_fdr(gridsemble_res$default_qvalue$lfdr, test_statistics)
+) %>%
+  pivot_longer(2:5) %>%
+  mutate(Method = as.factor(name)) %>%
+  ggplot(aes(x = t, y = value, color = Method)) +
+  geom_line() +
+  scale_color_manual(
+    breaks = names(color_list),
+    values = unlist(color_list)
+  ) +
+  theme_few() +
+  labs(y = 'Fdr')
 ```
+
 
 ## Options
 
 ### Number of Simulations and Ensemble Size
 
-By default, `gridsemblefdr` will build `nsim = 10` simulated datasets to compute approximate metrics, and choose the top `ensemble_size = 10` set of hyperparameters from each to ensemble over. This can easily be changed by the user.
+By default, `gridsemblefdr` will use `n_synthetic = 10` synthetic datasets to estimate model performances, and will choose the top `ensemble_size = 10` models to ensemble This can easily be changed by the user.
 
 ```{r}
 gridsemble_res <- gridsemble(
   test_statistics, 
-  nsim = 5, 
+  n_synthetic = 5, 
   ensemble_size = 20,
   verbose = FALSE
 )
-cat(paste0(
-  'estimated gridsemble pi0 = ', round(gridsemble_res$pi0, 4),
-  '\ncompared to true pi0 = ', true_pi0
-))
+
+gridsemble_res$pi0
 ```
 
-### Hyperparameter Grids
+### Grids of Model Options
 
-The hyperparameter sets considered are set to the default grid values in the functions `build_locfdr_grid`, `build_fdrtool_grid`, and `build_qvalue_grid`. 
+The models considered are held in a data frame, or a grid, returned by the functions `build_locfdr_grid`, `build_fdrtool_grid`, and `build_qvalue_grid`. 
 
-If a user wants a more personalized set of hyperparameters considered, they can build their own grids of options with these functions. Options for categorical variables are specified as a vector of unspecified length. Ranges for continuous variables are specified as a vector of two values: `c(min, max)`.
-
-Grids can be built such that continuous hyperprameters are chosen as equally-spaced values (`method = 'grid'`), or with uniformly-sampled values (`method = 'random'`).
+If a user wants a more personalized set of models considered, they can build their own grids with these functions. Options for categorical variables are specified as a vector of unspecified length. Ranges for continuous variables are specified as a vector of two values: `c(min, max)`. The parameter `grid_depth` determines how many values are considered within each range of continuous variables.
 
 ```{r}
 my_locfdr_grid <- build_locfdr_grid(
@@ -117,13 +168,15 @@ my_locfdr_grid <- build_locfdr_grid(
   pct_range = c(0.001, 0.003),
   pct0_range = c(1/3,1/4),
   nulltype = c(1,2),
-  type = c(0)
+  type = c(0),
+  grid_depth = 10
 )
 
 my_fdrtool_grid <- build_fdrtool_grid(
   test_statistics,
   cutoff.method = c('fndr','pct0'),
-  pct0_range = c(1/3,1/4)
+  pct0_range = c(1/3,1/4),
+  grid_depth = 10
 )
 
 my_qvalue_grid <- build_qvalue_grid(
@@ -131,7 +184,8 @@ my_qvalue_grid <- build_qvalue_grid(
   transf = c('probit','logit'),
   adj_range = c(0.5, 1.5),
   pi0.method = c('bootstrap'),
-  smooth.log.pi0 = c('FALSE')
+  smooth.log.pi0 = c('FALSE'),
+  grid_depth = 10
 )
 
 gridsemble_res <- gridsemble(
@@ -141,40 +195,34 @@ gridsemble_res <- gridsemble(
   qvalue_grid = my_qvalue_grid,
   verbose = FALSE
 )
-cat(paste0(
-  'estimated gridsemble pi0 = ', round(gridsemble_res$pi0, 4),
-  '\ncompared to true pi0 = ', true_pi0
-))
+
+gridsemble_res$pi0
 ```
 
-To exclude one of the three package from the ensemble entirely, set the grid value to `NULL`. 
+To exclude one of the three package from consideration entirely, set the grid value to `NULL`. 
 
 ```{r}
-gridsemble_noqvalue_res <- gridsemble(
+gridsemble_nofdrtool_res <- gridsemble(
   test_statistics,
   locfdr_grid = my_locfdr_grid,
   fdrtool_grid = NULL,
   qvalue_grid = my_qvalue_grid,
   verbose = FALSE
 )
-cat(paste0(
-  'estimated gridsemble pi0 = ', round(gridsemble_noqvalue_res$pi0, 4),
-  '\ncompared to true pi0 = ', true_pi0
-))
+
+gridsemble_res$pi0
 ```
 
 ### Size of Simulated Datasets
 
-By default, the simulated datasets are the same size as the real data. If this is too large given a user's computational limitations, the size of simulated datasets can be specified with `sim_size`.
+By default, the simulated datasets are the same size as the real data. If this is too large given a user's computational limitations, the size of simulated datasets can be specified with `synthetic_size`.
 
 ```{r}
 gridsemble_res <- gridsemble(
   test_statistics, 
-  sim_size = 100,
+  synthetic_size = 100,
   verbose = FALSE
 )
-cat(paste0(
-  'estimated gridsemble pi0 = ', round(gridsemble_res$pi0, 4),
-  '\ncompared to true pi0 = ', true_pi0
-))
+
+gridsemble_res$pi0
 ```
