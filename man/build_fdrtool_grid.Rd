@@ -8,7 +8,7 @@ build_fdrtool_grid(
   test_statistics,
   cutoff.method = c("fndr", "pct0", "locfdr"),
   pct0_range = c(0.4, 1),
-  grid_depth = 5,
+  grid_depth = 20,
   parallel = min(TRUE, n_workers > 1),
   n_workers = max(parallel::detectCores() - 2, 1),
   parallel_param = NULL,

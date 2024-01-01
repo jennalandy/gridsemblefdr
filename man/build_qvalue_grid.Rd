@@ -11,7 +11,7 @@ build_qvalue_grid(
   pi0.method = c("bootstrap", "smoother"),
   smooth.log.pi0 = c(TRUE, FALSE),
   df = NULL,
-  grid_depth = 5,
+  grid_depth = 20,
   parallel_param = NULL,
   parallel = min(TRUE, n_workers > 1),
   n_workers = max(parallel::detectCores() - 2, 1),
