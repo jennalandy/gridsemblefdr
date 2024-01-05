@@ -44,7 +44,7 @@ check_locfdr_row <- function(
 #' @param verbose boolean
 #'
 #' @return data.frame, each row is a possible set of hyperparameters for locfdr
-#' @noRd
+#' @export
 reduce_locfdr_grid <- function(
   test_statistics,
   locfdr_grid,

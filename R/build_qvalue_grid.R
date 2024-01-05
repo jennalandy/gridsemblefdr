@@ -50,7 +50,7 @@ check_qvalue_row <- function(
 #' @importFrom magrittr %>%
 #'
 #' @return data.frame, each row is a possible set of hyperparameters for qvalue
-#' @noRd
+#' @export
 reduce_qvalue_grid <- function(
   test_statistics,
   qvalue_grid,
