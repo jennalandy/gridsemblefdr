@@ -45,7 +45,7 @@ check_fdrtool_row <- function(
 #' @param verbose boolean
 #'
 #' @return reduced fdrtool_grid: dataframe, rows are hyperparameters for fdrtool
-#' @noRd
+#' @export
 reduce_fdrtool_grid <- function(
   test_statistics,
   fdrtool_grid,
