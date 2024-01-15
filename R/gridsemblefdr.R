@@ -3,8 +3,10 @@
 #' false discovery rates.
 #'
 #' @param test_statistics vector, test statistics
-#' @param df integer, degrees of freedom of test statistics t-distribution,
-#' otherwise assumed standard normal
+#' @param df integer, degrees of freedom of test statistics null t-distribution,
+#' otherwise assumed standard normal. Ignored if `to_pval_function` is provided.
+#' @param to_pval_function function, converts test statistics vector to a
+#' p-value vector. Default assumes t-distribution with given df under the null.
 #' @param ensemble_size integer, number of models to ensemble
 #' @param n_synthetic integer, number of datasets to simulate and perform grid search
 #' over, or 0 for models to be randomly selected.
@@ -50,6 +52,7 @@
 gridsemble <- function(
   test_statistics,
   df = NULL,
+  to_pval_function = function(test_statistics) {p_from_t(test_statistics, df = df)},
   ensemble_size = 10,
   n_synthetic = 10,
   locfdr_grid = 'default',
@@ -62,6 +65,9 @@ gridsemble <- function(
 ) {
 
   focus_metric = 'fdrerror'
+  p_values = to_pval_function(
+    test_statistics = test_statistics
+  )
 
   if (typeof(locfdr_grid) == "character") {if (locfdr_grid == 'default') {
     locfdr_grid = build_locfdr_grid(
@@ -77,8 +83,8 @@ gridsemble <- function(
   }}
   if (typeof(qvalue_grid) == "character") {if (qvalue_grid == 'default') {
     qvalue_grid = build_qvalue_grid(
-      test_statistics, df = df, parallel = parallel,
-      n_workers = n_workers, verbose = verbose
+      test_statistics, to_pval_function = to_pval_function,
+      parallel = parallel, n_workers = n_workers, verbose = verbose
     )
   }}
 
@@ -91,11 +97,6 @@ gridsemble <- function(
   } else {
     parallel_param = NULL
   }
-
-  p_values = p_from_t(
-    test_statistics = test_statistics,
-    df = df
-  )
 
   methods = c()
   if (!is.null(locfdr_grid)) {
@@ -149,7 +150,6 @@ gridsemble <- function(
   if (n_synthetic > 0) {
     working_model <- fit_working_model(
       test_statistics,
-      df = df,
       verbose = verbose
     )
   } else if (n_synthetic == 0) {
@@ -165,7 +165,7 @@ gridsemble <- function(
     nsim = n_synthetic,
     synthetic_size = synthetic_size,
     ensemble_size = ensemble_size,
-    df = df,
+    to_pval_function = to_pval_function,
     locfdr_grid = locfdr_grid,
     qvalue_grid = qvalue_grid,
     fdrtool_grid = fdrtool_grid,
@@ -182,12 +182,12 @@ gridsemble <- function(
   # ensemble over top performing grid search methods
   ensemble_res = ensemble(
     test_statistics = test_statistics,
+    to_pval_function = to_pval_function,
     focus_metric = focus_metric,
     top_grid = top_grid,
     locfdr_grid = locfdr_grid,
     fdrtool_grid = fdrtool_grid,
     qvalue_grid = qvalue_grid,
-    df = df,
     parallel_param = parallel_param,
     verbose = verbose
   )

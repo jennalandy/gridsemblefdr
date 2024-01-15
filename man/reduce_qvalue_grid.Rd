@@ -6,8 +6,8 @@
 \usage{
 reduce_qvalue_grid(
   test_statistics,
+  to_pval_function,
   qvalue_grid,
-  df = NULL,
   parallel_param = NULL,
   verbose = FALSE
 )
@@ -15,9 +15,10 @@ reduce_qvalue_grid(
 \arguments{
 \item{test_statistics}{vector, test statistics}
 
-\item{qvalue_grid}{data.frame, rows are possible hyperparameters for qvalue}
+\item{to_pval_function}{function, converts test statistics vector to a
+p-value vector.}
 
-\item{df}{integer, degrees of freedom of test statistics, if known}
+\item{qvalue_grid}{data.frame, rows are possible hyperparameters for qvalue}
 
 \item{parallel_param}{BiocParallel object}
 

@@ -7,6 +7,10 @@
 gridsemble(
   test_statistics,
   df = NULL,
+  to_pval_function = function(test_statistics) {
+     p_from_t(test_statistics, df = df)
+
+    },
   ensemble_size = 10,
   n_synthetic = 10,
   locfdr_grid = "default",
@@ -21,8 +25,11 @@ gridsemble(
 \arguments{
 \item{test_statistics}{vector, test statistics}
 
-\item{df}{integer, degrees of freedom of test statistics t-distribution,
-otherwise assumed standard normal}
+\item{df}{integer, degrees of freedom of test statistics null t-distribution,
+otherwise assumed standard normal. Ignored if \code{to_pval_function} is provided.}
+
+\item{to_pval_function}{function, converts test statistics vector to a
+p-value vector. Default assumes t-distribution with given df under the null.}
 
 \item{ensemble_size}{integer, number of models to ensemble}
 

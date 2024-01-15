@@ -8,8 +8,13 @@ test_that("Normal fit works", {
 })
 
 test_that("simulate from Normal fit works", {
+  df = 30
+
   working_model = fit_working_model(t)
-  sim = simulate_from_working_model(100, working_model)
+  sim = simulate_from_working_model(
+    100, working_model,
+    to_pval_function = function(test_statistics) {p_from_t(test_statistics, df = df)}
+  )
 
   expect_equal(sd(sim$t), sd(t), tolerance = 0.5)
   expect_equal(mean(sim$t), mean(t), tolerance = 0.5)
