@@ -1,7 +1,6 @@
 #' @title Fit working model using EM algorithm
 #'
 #' @param test_statistics vector, test statistics
-#' @param df integer, degrees of freedom, required if `type = "t"`
 #' @param type string, type of null distribution, one of c("Normal","t")
 #' @param standardize logical, whether to divide by standard deviation before fitting
 #' @param standardize_by
@@ -23,7 +22,6 @@
 #' @export
 fit_working_model <- function(
   test_statistics,
-  df = NULL,
 
   sigmasq0 = 2,
   sigmasq1 = 4,
@@ -140,12 +138,13 @@ fit_working_model_z <- function(
 #'
 #' @param n integer, sample size
 #' @param working_model list, result of fit_working_model()
-#' @param df integer, degrees of freedom of test statistics, if known
+#' @param to_pval_function function, converts test statistics vector to a
+#' p-value vector.
 #'
 #' @importFrom stats quantile
 #' @return data.frame, n simulated t-statistic and truth pairs
 #' @noRd
-simulate_from_working_model <- function(n, working_model, df = NULL) {
+simulate_from_working_model <- function(n, working_model, to_pval_function) {
 
   n0 <- max(round(working_model$parameters$pi0*n), 0)
   n1 <- max(n-n0, 0)
@@ -176,9 +175,8 @@ simulate_from_working_model <- function(n, working_model, df = NULL) {
       rep(1, n1)
     )
   )
-  this_dat$p = p_from_t(
-    test_statistics = this_dat$t,
-    df = df
+  this_dat$p = to_pval_function(
+    test_statistics = this_dat$t
   )
 
   this_dat$true_Fdr = get_true_Fdr(

@@ -2,10 +2,10 @@
 #' @description Run qvalue with a specific set of parameters
 #'
 #' @param test_statistics vector, test statistics
+#' @param to_pval_function function, converts test statistics vector to a
+#' p-value vector.
 #' @param qvalue_grid data.frame, each row is a set of hyperparameters
 #' @param row integer, row of qvalue_grid
-#' @param df integer, degrees of freedom of test statistics t-distribution,
-#' otherwise assumed standard normal
 #' @param returnFdr boolean, whether to calculate Fdr form fdr
 #' @param verbose boolean
 #'
@@ -21,15 +21,14 @@
 #' @noRd
 run_qvalue_row <- function(
   test_statistics,
+  to_pval_function,
   qvalue_grid,
   row,
-  df = NULL,
   returnFdr = TRUE,
   verbose = FALSE
 ) {
-  p <- p_from_t(
-    test_statistics = test_statistics,
-    df = df
+  p <- to_pval_function(
+    test_statistics = test_statistics
   )
 
   res <- NULL

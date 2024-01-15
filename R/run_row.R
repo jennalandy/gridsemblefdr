@@ -1,8 +1,8 @@
 #' Run grid row
 #'
 #' @param test_statistics vector, test statistics
-#' @param df integer, degrees of freedom of test statistics t-distribution,
-#' otherwise assumed standard normal
+#' @param to_pval_function function, converts test statistics vector to a
+#' p-value vector.
 #' @param grids list, grids named by method
 #' @param method string, one of c('locfdr','fdrtool','qvalue')
 #' @param row integer, which row of method grid to consider
@@ -19,10 +19,10 @@
 #' @noRd
 run_row <- function(
     test_statistics,
+    to_pval_function,
     grids,
     method,
     row,
-    df = NULL,
     returnFdr = TRUE,
     verbose = FALSE
 ) {
@@ -44,9 +44,9 @@ run_row <- function(
   } else if (method == 'qvalue') {
     row_res <- run_qvalue_row(
       test_statistics = test_statistics,
+      to_pval_function = to_pval_function,
       qvalue_grid = grid,
       row = row,
-      df = df,
       returnFdr = returnFdr,
       verbose = verbose
     )

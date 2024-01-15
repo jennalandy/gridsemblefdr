@@ -89,6 +89,12 @@ gridsemble_Fdr <- gridsemble_res$Fdr
 gridsemble_pi0 <- gridsemble_res$pi0
 ```
 
+`gridsemble` also returns the top grid of models included in the final ensemble. We can investigate how many models each package contributes to this ensemble.
+```{r}
+table(gridsemble_res$top_grid$method)
+```
+
+
 We can compare estimates between `gridsemble` and benchmark models, which are the three packages `gridsemble` is based on with their default parameters: `locfdr`, `fdrtool`, and `qvalue`. 
 
 ## Evaluation
@@ -126,7 +132,7 @@ data.frame(
   fdrtool = Fdr_from_fdr(gridsemble_res$default_fdrtool$lfdr, test_statistics),
   qvalue = Fdr_from_fdr(gridsemble_res$default_qvalue$lfdr, test_statistics)
 ) %>%
-  pivot_longer(2:5) %>%
+  pivot_longer(2:6) %>%
   mutate(Method = as.factor(name)) %>%
   ggplot(aes(x = t, y = value, color = Method)) +
   geom_line() +
@@ -226,3 +232,31 @@ gridsemble_res <- gridsemble(
 
 gridsemble_res$pi0
 ```
+
+
+### Provide custom test statistic to p-value conversion function
+
+If a t-distributed (or standard normal, since we're not providing df) null is not appropriate for converting test statistics to p-values, a custom `to_pval_function` can be provided. Here we define a function to convert statistics to p-values based on a $Normal(\mu = 0, \sigma = 3)$ null distribution, which is the true null in our data generating function.
+
+With this more appropriate conversion function, we see that gridsemble now includes models from `qvalue`.
+
+```{r}
+my_to_pval_function = function(test_statistics) {
+  one_sided <- unlist(lapply(test_statistics, function(z) {
+    stats::pnorm(-1*abs(z), mean = 0, sd = 3)
+  }))
+  2*one_sided
+}
+
+set.seed(234)
+gridsemble_res <- gridsemble(
+  test_statistics, 
+  to_pval_function = my_to_pval_function,
+  verbose = TRUE
+)
+
+table(gridsemble_res$top_grid$method)
+
+gridsemble_res$pi0
+```
+

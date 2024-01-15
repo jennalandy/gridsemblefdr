@@ -30,7 +30,8 @@ get_true_Fdr <- function(test_statistics, truth)  {
 #' @description run grid search on a given dataset
 #'
 #' @param this_dat list, result of simulate_from_working_model()
-#' @param df integer, degrees of freedom of test statistics, if known, or NULL
+#' @param to_pval_function function, converts test statistics vector to a
+#' p-value vector.
 #'
 #' @param method_list vector, methods to consider
 #' @param row_list vector, rows of each method grid to consider
@@ -48,7 +49,7 @@ get_true_Fdr <- function(test_statistics, truth)  {
 #' @noRd
 single_grid_search <- function(
   this_dat,
-  df,
+  to_pval_function,
 
   method_list,
   row_list,
@@ -69,14 +70,14 @@ single_grid_search <- function(
     function(i) {
       row_res = run_row(
         test_statistics = this_dat$t,
+        to_pval_function = to_pval_function,
         grids = list(
           'locfdr' = locfdr_grid,
           'fdrtool' = fdrtool_grid,
           'qvalue' = qvalue_grid
         ),
         method = method_list[i],
-        row = row_list[i],
-        df = df
+        row = row_list[i]
       )
       if (!is.null(row_res)) {
         # if not null, record pi0 estimate and metrics
@@ -147,6 +148,8 @@ get_method_row_list <- function(
 #' @param ensemble_size integer, number of models chosen to ensemble over
 #'
 #' @param df integer, degrees of freedom of test statistics, if known, or NULL
+#' @param to_pval_function function, converts test statistics vector to a
+#' p-value vector. Default assumes t-distribution with given df under the null.
 #' @param locfdr_grid data.frame, rows are possible hyperparameters for locfdr
 #' @param fdrtool_grid data.frame, rows are possible hyperparameters for fdrtool
 #' @param qvalue_grid data.frame, rows are possible hyperparameters for qvalue
@@ -175,6 +178,7 @@ get_method_row_list <- function(
 grid_search <- function(
   working_model, nsim, synthetic_size, ensemble_size,
   df = NULL,
+  to_pval_function = function(test_statistics) {p_from_t(test_statistics, df = df)},
   locfdr_grid = NULL,
   fdrtool_grid = NULL,
   qvalue_grid = NULL,
@@ -221,7 +225,7 @@ grid_search <- function(
   generated_dat <- list()
   for (sim in seq_len(nsim)) {
     generated_dat[[sim]] <- simulate_from_working_model(
-      synthetic_size, working_model, df = df
+      synthetic_size, working_model, to_pval_function = to_pval_function
     )
   }
 
@@ -229,16 +233,17 @@ grid_search <- function(
   all_grids <- do.call(rbind, parlapply(
     X = seq_len(nsim), parallel_param = parallel_param,
     FUN = function(
-      generated_dat, sim, nsim, synthetic_size, focus_metric, working_model, df,
+      generated_dat, sim, nsim, synthetic_size, focus_metric, working_model,
       method_list, row_list, fdrtool_grid, locfdr_grid, qvalue_grid, verbose,
-      simulate_from_working_model, p_from_t, get_true_Fdr, metrics,
-      run_fdrtool_row, run_locfdr_row, run_qvalue_row
+      simulate_from_working_model, get_true_Fdr, metrics,
+      run_fdrtool_row, run_locfdr_row, run_qvalue_row, to_pval_function
     ){
       if(verbose) { message(paste0('\tSimulation ',sim, '/', nsim)) }
 
       # metrics on a single generated dataset
       this_score <- single_grid_search(
-        this_dat = generated_dat[[sim]], df = df,
+        this_dat = generated_dat[[sim]],
+        to_pval_function = to_pval_function,
         method_list = method_list, row_list = row_list,
         fdrtool_grid = fdrtool_grid, locfdr_grid = locfdr_grid,
         qvalue_grid = qvalue_grid, verbose = verbose
@@ -249,12 +254,13 @@ grid_search <- function(
     generated_dat = generated_dat, synthetic_size = synthetic_size, nsim = nsim,
     simulate_from_working_model = simulate_from_working_model,
     working_model = working_model, focus_metric = focus_metric,
-    p_from_t = p_from_t, df = df, get_true_Fdr = get_true_Fdr,
+    get_true_Fdr = get_true_Fdr,
     method_list = methods_rows$methods, row_list = methods_rows$rows,
     metrics = metrics, run_fdrtool_row = run_fdrtool_row,
     run_locfdr_row = run_locfdr_row, run_qvalue_row = run_qvalue_row,
     fdrtool_grid = fdrtool_grid, locfdr_grid = locfdr_grid,
-    qvalue_grid = qvalue_grid, verbose = verbose
+    qvalue_grid = qvalue_grid, to_pval_function = to_pval_function,
+    verbose = verbose
   ))
 
   method <- sim <- NULL

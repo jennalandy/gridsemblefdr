@@ -1,12 +1,13 @@
 #' Ensemble
 #'
 #' @param test_statistics vector, test statistics
+#' @param to_pval_function function, converts test statistics vector to a
+#' p-value vector.
 #' @param top_grid data.frame, specifies packages and row numbers within that
 #' grid of the best methods used in the ensemble
 #' @param locfdr_grid data.frame, rows are possible hyperparameters for locfdr
 #' @param fdrtool_grid data.frame, rows are possible hyperparameters for fdrtool
 #' @param qvalue_grid data.frame, rows are possible hyperparameters for qvalue
-#' @param df integer, degrees of freedom of test statistics, if known
 #'
 #' @param focus_metric string, one of one of c('fdrerror'),
 #' which metric to optimize in the grid search
@@ -25,7 +26,8 @@
 #' @importFrom stats var
 #' @noRd
 ensemble <- function(
-  test_statistics, top_grid, locfdr_grid, fdrtool_grid, qvalue_grid, df = NULL,
+  test_statistics, to_pval_function, top_grid,
+  locfdr_grid, fdrtool_grid, qvalue_grid,
   focus_metric = 'fdrerror', large_abs_metric = FALSE, parallel_param = NULL,
   verbose = TRUE
 ) {
@@ -42,7 +44,8 @@ ensemble <- function(
     X = seq_len(nrow(top_grid)), parallel_param = NULL,
     FUN = function(i) {
       i_fdr <- run_row(
-        test_statistics = test_statistics, df = df,
+        test_statistics = test_statistics,
+        to_pval_function = to_pval_function,
         grids = list(
           'locfdr' = locfdr_grid,
           'fdrtool' = fdrtool_grid,

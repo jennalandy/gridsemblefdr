@@ -6,7 +6,7 @@ test_statistics <- c(
 
 test_that("run_locfdr_row works", {
   locfdr_out <- run_locfdr_row(
-    t = test_statistics,
+    test_statistics = test_statistics,
     locfdr_grid = data.frame(
       pct = c(0),
       pct0 = c(1/3),
@@ -39,8 +39,11 @@ test_that("run_locfdr_row works", {
 })
 
 test_that("run_qvalue_row works", {
+  df = 30
+
   qvalue_out <- run_qvalue_row(
-    t = test_statistics,
+    test_statistics = test_statistics,
+    to_pval_function = function(test_statistics) {p_from_t(test_statistics, df = df)},
     qvalue_grid = data.frame(
       transf = c('probit'),
       adj = c(0.8),
@@ -52,7 +55,8 @@ test_that("run_qvalue_row works", {
 
   if (is.null(qvalue_out)) {
     qvalue_out <- run_qvalue_row(
-      t = test_statistics,
+      test_statistics = test_statistics,
+      to_pval_function = function(test_statistics) {p_from_t(test_statistics, df = df)},
       qvalue_grid = data.frame(
         transf = c('probit'),
         adj = c(0.8),

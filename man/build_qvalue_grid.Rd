@@ -6,11 +6,15 @@
 \usage{
 build_qvalue_grid(
   test_statistics,
+  df = NULL,
+  to_pval_function = function(test_statistics) {
+     p_from_t(test_statistics, df = df)
+
+    },
   transf = c("probit", "logit"),
   adj_range = c(0.5, 2),
   pi0.method = c("bootstrap", "smoother"),
   smooth.log.pi0 = c(TRUE, FALSE),
-  df = NULL,
   grid_depth = 20,
   parallel_param = NULL,
   parallel = min(TRUE, n_workers > 1),
@@ -20,6 +24,12 @@ build_qvalue_grid(
 }
 \arguments{
 \item{test_statistics}{vector, test statistics}
+
+\item{df}{integer, degrees of freedom of test statistics null t-distribution,
+otherwise assumed standard normal. Ignored if \code{to_pval_function} is provided.}
+
+\item{to_pval_function}{function, converts test statistics vector to a
+p-value vector. Default assumes t-distribution with given df under the null.}
 
 \item{transf}{vector, options for transf hyperparameter. \code{transf} is
 a transformation is applied to the p-values so that a local FDR estimate can
@@ -38,8 +48,6 @@ of pi_0, the proportion of true null tests, one of c("smoother","bootstrap").}
 If \code{smooth.log.pi0} is TRUE and pi0.method = "smoother", pi_0 will be e
 stimated by applying a smoother to a scatterplot of log(pi_0) estimates
 against the tuning parameter lambda.}
-
-\item{df}{integer, degrees of freedom of test statistics, if known}
 
 \item{grid_depth}{integer, number of evenly-spaced values of continuous parameters
 considered within their respective \verb{_range}.}
