@@ -31,7 +31,9 @@ test_that("get_MSE works", {
 test_that("metrics works", {
   my_fdr = runif(n = length(test_statistics))
   my_true_fdr = runif(n = length(test_statistics))
-  my_metrics = metrics(my_fdr, my_true_fdr)
+  my_Fdr = c(0,0,0)
+  my_true_Fdr = c(0,0,0)
+  my_metrics = metrics(my_fdr, my_true_fdr, my_Fdr, my_true_Fdr)
 
   expect_type(my_metrics, 'list')
 })

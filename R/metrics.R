@@ -6,15 +6,18 @@
 #' @return labeled list of metrics
 #' @noRd
 metrics <- function(
-  fdr, true_fdr
+  fdr, true_fdr,
+  Fdr, true_Fdr
 ) {
   if (length(fdr) > 0) {
     list(
-      'fdrerror' = get_MSE(estimate = fdr, true = true_fdr)
+      'fdrerror' = get_MSE(estimate = fdr, true = true_fdr),
+      'Fdrerror' = get_MSE(estimate = Fdr, true = true_Fdr)
     )
   } else {
     list(
-      'fdrerror' = NA
+      'fdrerror' = NA,
+      'Fdrerror' = NA
     )
   }
 }

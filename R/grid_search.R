@@ -83,14 +83,18 @@ single_grid_search <- function(
         # if not null, record pi0 estimate and metrics
         this_metrics <- metrics(
           fdr = row_res$fdr,
-          true_fdr = this_dat$true_fdr
+          true_fdr = this_dat$true_fdr,
+          Fdr = row_res$Fdr,
+          true_Fdr = this_dat$true_Fdr
         )
         this_metrics$pi0 <- row_res$pi0
       } else {
         # o.w. record placeholder (NA) metrics and pi0 estimate
         this_metrics <- metrics(
           fdr = NULL,
-          true_fdr = this_dat$true_fdr
+          true_fdr = this_dat$true_fdr,
+          Fdr = NULL,
+          true_Fdr = this_dat$true_Fdr
         )
         this_metrics$pi0 <- NA
       }
