@@ -9,6 +9,7 @@ build_fdrtool_grid(
   cutoff.method = c("fndr", "pct0", "locfdr"),
   pct0_range = c(0.4, 1),
   grid_depth = 20,
+  drop_pi0_1 = TRUE,
   parallel = min(TRUE, n_workers > 1),
   n_workers = max(parallel::detectCores() - 2, 1),
   parallel_param = NULL,
@@ -27,6 +28,8 @@ Default in \code{fdrtool} package is \code{pct0 = 0.75}.}
 
 \item{grid_depth}{integer, number of evenly-spaced values of continuous parameters
 considered within their respective \verb{_range}.}
+
+\item{drop_pi0_1}{boolean, whether to discard models that estimate pi0 = 1}
 
 \item{parallel}{boolean, whether to utilize parallelization}
 

@@ -16,6 +16,7 @@ build_qvalue_grid(
   pi0.method = c("bootstrap", "smoother"),
   smooth.log.pi0 = c(TRUE, FALSE),
   grid_depth = 20,
+  drop_pi0_1 = TRUE,
   parallel_param = NULL,
   parallel = min(TRUE, n_workers > 1),
   n_workers = max(parallel::detectCores() - 2, 1),
@@ -51,6 +52,8 @@ against the tuning parameter lambda.}
 
 \item{grid_depth}{integer, number of evenly-spaced values of continuous parameters
 considered within their respective \verb{_range}.}
+
+\item{drop_pi0_1}{boolean, whether to discard models that estimate pi0 = 1}
 
 \item{parallel_param}{BiocParallel object}
 

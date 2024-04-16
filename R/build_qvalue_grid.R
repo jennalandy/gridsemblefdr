@@ -7,6 +7,7 @@
 #' p-value vector.
 #' @param qvalue_grid data.frame, rows are possible hyperparameters for locfdr
 #' @param row integer, row of qvalue_grid considered
+#' @param drop_pi0_1 boolean, whether to discard models that estimate pi0 = 1
 #'
 #' @return boolean, whether the hyperparameter combination ran without error
 #' @noRd
@@ -14,7 +15,8 @@ check_qvalue_row <- function(
   test_statistics,
   to_pval_function,
   qvalue_grid,
-  row
+  row,
+  drop_pi0_1
 ) {
   # for each row, attempt to run qvalue
   run_i <- run_qvalue_row(
@@ -30,6 +32,8 @@ check_qvalue_row <- function(
   if (!is.null(run_i)) {
     if (run_i$pi0 > 1) {
       return('pi0 > 1')
+    } else if (drop_pi0_1 & run_i$pi0 == 1) {
+      return('pi0 == 1')
     }  else {
       return(TRUE)
     }
@@ -46,6 +50,7 @@ check_qvalue_row <- function(
 #' @param to_pval_function function, converts test statistics vector to a
 #' p-value vector.
 #' @param qvalue_grid data.frame, rows are possible hyperparameters for qvalue
+#' @param drop_pi0_1 boolean, whether to discard models that estimate pi0 = 1
 #' @param parallel_param BiocParallel object
 #' @param verbose boolean
 #'
@@ -57,6 +62,7 @@ reduce_qvalue_grid <- function(
   test_statistics,
   to_pval_function,
   qvalue_grid,
+  drop_pi0_1 = TRUE,
   parallel_param = NULL,
   verbose = FALSE
 ) {
@@ -69,7 +75,8 @@ reduce_qvalue_grid <- function(
         test_statistics = test_statistics,
         to_pval_function = to_pval_function,
         qvalue_grid = qvalue_grid,
-        row = i
+        row = i,
+        drop_pi0_1 = drop_pi0_1
       )
       if (check == TRUE) {
         return(i)
@@ -136,6 +143,7 @@ reduce_qvalue_grid <- function(
 #' considered within their respective `_range`.
 #' @param method string, one of c('random', 'grid'). 'random' will sample
 #' uniformly within the ranges, 'grid' will select equally spaced values
+#' @param drop_pi0_1 boolean, whether to discard models that estimate pi0 = 1
 #'
 #' @param parallel boolean, whether to utilize parallelization
 #' @param n_workers integer, number of cores to use if parallel
@@ -157,6 +165,7 @@ build_qvalue_grid <- function(
   transf = c('probit', 'logit'), adj_range = c(0.5, 2),
   pi0.method = c('bootstrap','smoother'), smooth.log.pi0 = c(TRUE, FALSE),
   grid_depth = 20,
+  drop_pi0_1 = TRUE,
   parallel_param = NULL, parallel = min(TRUE, n_workers > 1),
   n_workers = max(parallel::detectCores() - 2, 1), verbose = FALSE
 ) {
@@ -199,6 +208,7 @@ build_qvalue_grid <- function(
     test_statistics = test_statistics,
     to_pval_function = to_pval_function,
     qvalue_grid = qvalue_grid,
+    drop_pi0_1 = drop_pi0_1,
     parallel_param = parallel_param, verbose = verbose
   )
 

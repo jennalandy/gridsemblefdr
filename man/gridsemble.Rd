@@ -19,7 +19,8 @@ gridsemble(
   synthetic_size = length(test_statistics),
   n_workers = max(parallel::detectCores() - 2, 1),
   parallel = min(TRUE, n_workers > 1),
-  verbose = TRUE
+  verbose = TRUE,
+  drop_pi0_1 = TRUE
 )
 }
 \arguments{

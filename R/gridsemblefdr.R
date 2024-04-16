@@ -61,7 +61,8 @@ gridsemble <- function(
   synthetic_size = length(test_statistics),
   n_workers = max(parallel::detectCores() - 2, 1),
   parallel = min(TRUE, n_workers > 1),
-  verbose = TRUE
+  verbose = TRUE,
+  drop_pi0_1 = TRUE
 ) {
 
   focus_metric = 'fdrerror'
@@ -71,19 +72,19 @@ gridsemble <- function(
 
   if (typeof(locfdr_grid) == "character") {if (locfdr_grid == 'default') {
     locfdr_grid = build_locfdr_grid(
-      test_statistics, parallel = parallel,
+      test_statistics, drop_pi0_1 = drop_pi0_1, parallel = parallel,
       n_workers = n_workers, verbose = verbose
     )
   }}
   if (typeof(fdrtool_grid) == "character") {if (fdrtool_grid == 'default') {
     fdrtool_grid = build_fdrtool_grid(
-      test_statistics, parallel = parallel,
+      test_statistics, drop_pi0_1 = drop_pi0_1, parallel = parallel,
       n_workers = n_workers, verbose = verbose
     )
   }}
   if (typeof(qvalue_grid) == "character") {if (qvalue_grid == 'default') {
     qvalue_grid = build_qvalue_grid(
-      test_statistics, to_pval_function = to_pval_function,
+      test_statistics, drop_pi0_1 = drop_pi0_1, to_pval_function = to_pval_function,
       parallel = parallel, n_workers = n_workers, verbose = verbose
     )
   }}

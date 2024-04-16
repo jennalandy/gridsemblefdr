@@ -8,6 +8,7 @@ reduce_qvalue_grid(
   test_statistics,
   to_pval_function,
   qvalue_grid,
+  drop_pi0_1 = TRUE,
   parallel_param = NULL,
   verbose = FALSE
 )
@@ -19,6 +20,8 @@ reduce_qvalue_grid(
 p-value vector.}
 
 \item{qvalue_grid}{data.frame, rows are possible hyperparameters for qvalue}
+
+\item{drop_pi0_1}{boolean, whether to discard models that estimate pi0 = 1}
 
 \item{parallel_param}{BiocParallel object}
 
