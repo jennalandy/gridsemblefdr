@@ -5,13 +5,15 @@
 #' @param test_statistics vector, test statistics
 #' @param fdrtool_grid data.frame, rows are possible hyperparameters for fdrtool
 #' @param row integer, row of fdrtool_grid considered
+#' @param drop_pi0_1 boolean, whether to discard models that estimate pi0 = 1
 #'
 #' @return boolean, whether the hyperparameter combination run without error
 #' @noRd
 check_fdrtool_row <- function(
   test_statistics,
   fdrtool_grid,
-  row
+  row,
+  drop_pi0_1 = TRUE
 ) {
 
   # for each row, attempt to run fdrtool
@@ -27,6 +29,8 @@ check_fdrtool_row <- function(
   if (!is.null(run_i)) {
     if (run_i$pi0 > 1) {
       return('pi0 > 1')
+    }  else if (drop_pi0_1 & run_i$pi0 == 1) {
+      return('pi0 == 1')
     }  else {
       return(TRUE)
     }
@@ -41,6 +45,7 @@ check_fdrtool_row <- function(
 #'
 #' @param test_statistics vector, test statistics
 #' @param fdrtool_grid data.frame, rows are possible hyperparameters for fdrtool
+#' @param drop_pi0_1 boolean, whether to discard models that estimate pi0 = 1
 #' @param parallel_param BiocParallel object
 #' @param verbose boolean
 #'
@@ -49,6 +54,7 @@ check_fdrtool_row <- function(
 reduce_fdrtool_grid <- function(
   test_statistics,
   fdrtool_grid,
+  drop_pi0_1 = TRUE,
   parallel_param = NULL,
   verbose = FALSE
 ) {
@@ -60,7 +66,8 @@ reduce_fdrtool_grid <- function(
       check = check_fdrtool_row(
         test_statistics = test_statistics,
         fdrtool_grid = fdrtool_grid,
-        row = i
+        row = i,
+        drop_pi0_1 = drop_pi0_1
       )
 
       if (check == TRUE) {
@@ -111,6 +118,8 @@ reduce_fdrtool_grid <- function(
 #' Default in `fdrtool` package is `pct0 = 0.75`.
 #' @param grid_depth integer, number of evenly-spaced values of continuous parameters
 #' considered within their respective `_range`.
+#' @param drop_pi0_1 boolean, whether to discard models that estimate pi0 = 1
+#'
 #' @param parallel boolean, whether to utilize parallelization
 #' @param n_workers integer, number of cores to use if parallel
 #' @param parallel_param BiocParallel object
@@ -127,6 +136,7 @@ reduce_fdrtool_grid <- function(
 build_fdrtool_grid <- function(
   test_statistics, cutoff.method = c('fndr','pct0','locfdr'),
   pct0_range = c(0.4, 1), grid_depth = 20,
+  drop_pi0_1 = TRUE,
   parallel = min(TRUE, n_workers > 1),
   n_workers = max(parallel::detectCores() - 2, 1), parallel_param = NULL,
   verbose = FALSE
@@ -162,6 +172,7 @@ build_fdrtool_grid <- function(
 
   fdrtool_grid_reduced <- reduce_fdrtool_grid(
     test_statistics = test_statistics, fdrtool_grid = fdrtool_grid,
+    drop_pi0_1 = drop_pi0_1,
     parallel_param = parallel_param, verbose = verbose
   )
 

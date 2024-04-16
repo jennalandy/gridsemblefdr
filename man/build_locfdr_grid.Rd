@@ -13,6 +13,7 @@ build_locfdr_grid(
   grid_depth = 5,
   parallel_param = NULL,
   parallel = min(TRUE, n_workers > 1),
+  drop_pi0_1 = TRUE,
   n_workers = max(parallel::detectCores() - 2, 1),
   verbose = FALSE
 )
@@ -43,6 +44,8 @@ considered within their respective \verb{_range}.}
 \item{parallel_param}{BiocParallel object}
 
 \item{parallel}{boolean, whether to utilize parallelization}
+
+\item{drop_pi0_1}{boolean, whether to discard models that estimate pi0 = 1}
 
 \item{n_workers}{integer, number of cores to use if parallel}
 

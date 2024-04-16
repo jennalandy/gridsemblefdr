@@ -5,13 +5,15 @@
 #' @param test_statistics vector, test statistics
 #' @param locfdr_grid data.frame, rows are possible hyperparameters for locfdr
 #' @param row integer, row of locfdr_grid considered
+#' @param drop_pi0_1 boolean, whether to discard models that estimate pi0 = 1
 #'
 #' @return boolean, whether the hyperparameter combination ran without error
 #' @noRd
 check_locfdr_row <- function(
   test_statistics,
   locfdr_grid,
-  row
+  row,
+  drop_pi0_1 = TRUE
 ) {
   # for each row, attempt to run fdrtool
   run_i <- run_locfdr_row(
@@ -26,6 +28,8 @@ check_locfdr_row <- function(
   if (!is.null(run_i)) {
     if (run_i$pi0 > 1) {
       return('pi0 > 1')
+    } else if (drop_pi0_1 & run_i$pi0 == 1) {
+      return('pi0 == 1')
     } else {
       return(TRUE)
     }
@@ -40,6 +44,7 @@ check_locfdr_row <- function(
 #'
 #' @param test_statistics vector, test statistics
 #' @param locfdr_grid data.frame, rows are possible hyperparameters for locfdr
+#' @param drop_pi0_1 boolean, whether to discard models that estimate pi0 = 1
 #' @param parallel_param BiocParallel object
 #' @param verbose boolean
 #'
@@ -48,6 +53,7 @@ check_locfdr_row <- function(
 reduce_locfdr_grid <- function(
   test_statistics,
   locfdr_grid,
+  drop_pi0_1 = TRUE,
   parallel_param = NULL,
   verbose = FALSE
 ) {
@@ -59,7 +65,8 @@ reduce_locfdr_grid <- function(
       check = check_locfdr_row(
         test_statistics,
         locfdr_grid,
-        row = i
+        row = i,
+        drop_pi0_1 = drop_pi0_1
       )
 
       if (check == TRUE) {
@@ -118,6 +125,7 @@ reduce_locfdr_grid <- function(
 #' fitting used for f; 0 is a natural spline, 1 is a polynomial.
 #' @param grid_depth integer, number of evenly-spaced values of continuous parameters
 #' considered within their respective `_range`.
+#' @param drop_pi0_1 boolean, whether to discard models that estimate pi0 = 1
 #'
 #' @param parallel boolean, whether to utilize parallelization
 #' @param n_workers integer, number of cores to use if parallel
@@ -135,6 +143,7 @@ build_locfdr_grid <- function(
   test_statistics, pct_range = c(0, 0.2), pct0_range = c(0, 0.3),
   nulltype = c(1,2,3), type = c(0,1), grid_depth = 5,
   parallel_param = NULL, parallel = min(TRUE, n_workers > 1),
+  drop_pi0_1 = TRUE,
   n_workers = max(parallel::detectCores() - 2, 1), verbose = FALSE
 ) {
   pct = seq(pct_range[1], pct_range[2], length.out = grid_depth)
@@ -162,6 +171,7 @@ build_locfdr_grid <- function(
   locfdr_grid_reduced <- reduce_locfdr_grid(
     test_statistics = test_statistics,
     locfdr_grid = locfdr_grid,
+    drop_pi0_1 = drop_pi0_1,
     parallel_param = parallel_param,
     verbose = verbose
   )

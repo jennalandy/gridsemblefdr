@@ -7,6 +7,7 @@
 reduce_fdrtool_grid(
   test_statistics,
   fdrtool_grid,
+  drop_pi0_1 = TRUE,
   parallel_param = NULL,
   verbose = FALSE
 )
@@ -15,6 +16,8 @@ reduce_fdrtool_grid(
 \item{test_statistics}{vector, test statistics}
 
 \item{fdrtool_grid}{data.frame, rows are possible hyperparameters for fdrtool}
+
+\item{drop_pi0_1}{boolean, whether to discard models that estimate pi0 = 1}
 
 \item{parallel_param}{BiocParallel object}
 
