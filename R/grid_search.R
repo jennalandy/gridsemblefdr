@@ -29,7 +29,7 @@ get_true_Fdr <- function(test_statistics, truth)  {
 #' Single Grid Search
 #' @description run grid search on a given dataset
 #'
-#' @param this_dat list, result of simulate_from_working_model()
+#' @param this_dat list, result of simulate_from_synthetic_generator()
 #' @param to_pval_function function, converts test statistics vector to a
 #' p-value vector.
 #'
@@ -145,7 +145,7 @@ get_method_row_list <- function(
 #' @description simulate data and run grid search to determine which
 #' models to ensemble over on the real dataset
 #'
-#' @param working_model list, result of fit_working_model()
+#' @param synthetic_generator list, result of fit_synthetic_generator()
 #' @param nsim integer, number of datasets to simulate.
 #' If 0, no datasets are simulated and model(s) are randomly selected.
 #' @param synthetic_size integer, sample size of each synthetic dataset
@@ -180,7 +180,7 @@ get_method_row_list <- function(
 #' @importFrom rlang sym
 #' @noRd
 grid_search <- function(
-  working_model, nsim, synthetic_size, ensemble_size,
+  synthetic_generator, nsim, synthetic_size, ensemble_size,
   df = NULL,
   to_pval_function = function(test_statistics) {p_from_t(test_statistics, df = df)},
   locfdr_grid = NULL,
@@ -190,7 +190,8 @@ grid_search <- function(
   parallel = min(TRUE, n_workers > 1),
   n_workers =  max(parallel::detectCores() - 2, 1),
   parallel_param = NULL,
-  verbose = TRUE
+  verbose = TRUE,
+  type = 'asymmetric'
 ) {
 
   n_workers = min(n_workers, nsim)
@@ -219,17 +220,17 @@ grid_search <- function(
       sample(seq_len(nrow(all_grids)), size = ensemble_size),
     ]
     return(list(
-      'working_model' = NA,
+      'synthetic_generator' = NA,
       'top_grid' = top_grid,
       'all_grids' = all_grids
     ))
   }
 
-  # simulate data from working_model
+  # simulate data from synthetic_generator
   generated_dat <- list()
   for (sim in seq_len(nsim)) {
-    generated_dat[[sim]] <- simulate_from_working_model(
-      synthetic_size, working_model, to_pval_function = to_pval_function
+    generated_dat[[sim]] <- simulate_from_synthetic_generator(
+      synthetic_size, synthetic_generator, to_pval_function = to_pval_function
     )
   }
 
@@ -237,9 +238,9 @@ grid_search <- function(
   all_grids <- do.call(rbind, parlapply(
     X = seq_len(nsim), parallel_param = parallel_param,
     FUN = function(
-      generated_dat, sim, nsim, synthetic_size, focus_metric, working_model,
+      generated_dat, sim, nsim, synthetic_size, focus_metric, synthetic_generator,
       method_list, row_list, fdrtool_grid, locfdr_grid, qvalue_grid, verbose,
-      simulate_from_working_model, get_true_Fdr, metrics,
+      simulate_from_synthetic_generator, get_true_Fdr, metrics,
       run_fdrtool_row, run_locfdr_row, run_qvalue_row, to_pval_function
     ){
       if(verbose) { message(paste0('\tSimulation ',sim, '/', nsim)) }
@@ -256,8 +257,8 @@ grid_search <- function(
       return(this_score)
     },
     generated_dat = generated_dat, synthetic_size = synthetic_size, nsim = nsim,
-    simulate_from_working_model = simulate_from_working_model,
-    working_model = working_model, focus_metric = focus_metric,
+    simulate_from_synthetic_generator = simulate_from_synthetic_generator,
+    synthetic_generator = synthetic_generator, focus_metric = focus_metric,
     get_true_Fdr = get_true_Fdr,
     method_list = methods_rows$methods, row_list = methods_rows$rows,
     metrics = metrics, run_fdrtool_row = run_fdrtool_row,
@@ -283,4 +284,112 @@ grid_search <- function(
     'top_grid' = sorted[sorted$best,],
     'all_grids' = all_grids
   ))
+}
+
+
+
+#' Oracle Grid Search
+#' @description if the user has access to ground truth, this function
+#' computes true fdr and Fdr MSE for each model in the grid
+#'
+#' @param synthetic_generator list, result of fit_synthetic_generator()
+#' @param nsim integer, number of datasets to simulate.
+#' If 0, no datasets are simulated and model(s) are randomly selected.
+#' @param synthetic_size integer, sample size of each synthetic dataset
+#' @param ensemble_size integer, number of models chosen to ensemble over
+#'
+#' @param df integer, degrees of freedom of test statistics, if known, or NULL
+#' @param to_pval_function function, converts test statistics vector to a
+#' p-value vector. Default assumes t-distribution with given df under the null.
+#' @param locfdr_grid data.frame, rows are possible hyperparameters for locfdr
+#' @param fdrtool_grid data.frame, rows are possible hyperparameters for fdrtool
+#' @param qvalue_grid data.frame, rows are possible hyperparameters for qvalue
+#'
+#' @param focus_metric string, one of one of c('fdrerror'),
+#' which metric to optimize in the grid search
+#'
+#' @param parallel boolean, whether to utilize parallelization
+#' @param n_workers integer, number of cores to use if parallel
+#' @param parallel_param `BiocParallel` object
+#'
+#' @param verbose boolean
+#'
+#' @return
+#' \itemize{
+#'    \item top_grid - data.frame, each row corresponds to a model
+#'    to ensemble over. Each row references a method (locfdr, fdrtool,
+#'    or qvalue) and row numbers in the respective grid
+#'    \item all_grids - data.frame, simulation metrics across all
+#'    simulations and all models.
+#' }
+#'
+#' @importFrom dplyr arrange summarise_all group_by select
+#' @importFrom rlang sym
+#' @export
+oracle_grid_search <- function(
+    test_statistics, true_Fdr, true_fdr = NULL,
+    df = NULL,
+    to_pval_function = function(test_statistics) {p_from_t(test_statistics, df = df)},
+    locfdr_grid = 'default',
+    fdrtool_grid = 'default',
+    qvalue_grid = 'default',
+    focus_metric = 'fdrerror',
+    parallel = min(TRUE, n_workers > 1),
+    n_workers =  max(parallel::detectCores() - 2, 1),
+    parallel_param = NULL,
+    drop_pi0_1 = TRUE,
+    verbose = TRUE
+) {
+
+  if (!is.null(parallel_param) & verbose) {
+    message('Running grid search in parallel')
+  } else if (verbose) { message('Running grid search') }
+
+  if (typeof(locfdr_grid) == "character") {if (locfdr_grid == 'default') {
+    locfdr_grid = build_locfdr_grid(
+      test_statistics, drop_pi0_1 = drop_pi0_1, parallel = parallel,
+      n_workers = n_workers, verbose = verbose
+    )
+  }}
+  if (typeof(fdrtool_grid) == "character") {if (fdrtool_grid == 'default') {
+    fdrtool_grid = build_fdrtool_grid(
+      test_statistics, drop_pi0_1 = drop_pi0_1, parallel = parallel,
+      n_workers = n_workers, verbose = verbose
+    )
+  }}
+  if (typeof(qvalue_grid) == "character") {if (qvalue_grid == 'default') {
+    qvalue_grid = build_qvalue_grid(
+      test_statistics, drop_pi0_1 = drop_pi0_1, to_pval_function = to_pval_function,
+      parallel = parallel, n_workers = n_workers, verbose = verbose
+    )
+  }}
+
+  methods_rows <- get_method_row_list(
+    locfdr_grid = locfdr_grid,
+    fdrtool_grid = fdrtool_grid,
+    qvalue_grid = qvalue_grid
+  )
+  method_list = methods_rows$methods
+  row_list = methods_rows$rows
+
+  dat <- list(
+    t = test_statistics,
+    true_fdr = true_fdr,
+    true_Fdr = true_Fdr
+  )
+
+  oracle_score <- single_grid_search(
+    this_dat = dat,
+    to_pval_function = to_pval_function,
+    method_list = method_list, row_list = row_list,
+    fdrtool_grid = fdrtool_grid, locfdr_grid = locfdr_grid,
+    qvalue_grid = qvalue_grid, verbose = verbose
+  )
+
+  if (focus_metric == 'fdrerror' & all(is.na(oracle_score[,focus_metric]))) {
+    focus_metric = 'Fdrerror'
+  }
+  sorted <- dplyr::arrange(oracle_score, !!rlang::sym(focus_metric))
+
+  return(sorted)
 }

@@ -1,18 +1,18 @@
 t = c(rnorm(900,0,1), runif(50, -5,-2), runif(50, 2, 5))
 
 test_that("Normal fit works", {
-  working_model = fit_working_model(t)
+  synthetic_generator = fit_synthetic_generator(t)
 
-  expect_equal(names(working_model), c('parameters','thetas','iters'))
-  expect_equal(names(working_model$parameters), c('sigmasq0','sigmasq1','pi0'))
+  expect_equal(names(synthetic_generator), c('parameters','thetas','iters'))
+  expect_equal(names(synthetic_generator$parameters), c('sigmasq0','sigmasq1','pi0'))
 })
 
 test_that("simulate from Normal fit works", {
   df = 30
 
-  working_model = fit_working_model(t)
-  sim = simulate_from_working_model(
-    100, working_model,
+  synthetic_generator = fit_synthetic_generator(t)
+  sim = simulate_from_synthetic_generator(
+    100, synthetic_generator,
     to_pval_function = function(test_statistics) {p_from_t(test_statistics, df = df)}
   )
 

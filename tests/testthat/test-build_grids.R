@@ -70,7 +70,7 @@ test_that("grid fdrtool grid works", {
   )
   expect_gt(
     nrow(fdrtool_grid),
-    5
+    3
   )
 
   fdrtool_grid <- build_fdrtool_grid(

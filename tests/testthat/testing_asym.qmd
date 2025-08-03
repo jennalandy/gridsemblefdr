@@ -1,0 +1,106 @@
+
+
+```{r}
+library(tidyverse)
+t <- c(
+  rnorm(800, 0, 1),
+  rnorm(200, 2, 1)
+)
+truth <- c(
+  rep(0, 800),
+  rep(1, 200)
+)
+data.frame(
+  t = t, truth = truth
+) %>%
+  ggplot(aes(x = t, fill = as.factor(truth))) +
+  geom_histogram(position = 'dodge')
+ggsave("tmp.png")
+
+true_fdr <- 0.8*dnorm(t) / (0.8*dnorm(t) + 0.2*dnorm(t, 2, 1))
+plot(t, true_fdr)
+```
+
+
+```{r}
+source("../gridsemblefdr_asym_working_model/R/generating_model.R")
+working_model <- fit_working_model(t, type = 'asymmetric')
+working_model$parameters
+```
+
+```{r}
+source("../gridsemblefdr_asym_working_model/R/grid_search.R")
+
+to_pval_function <- function(test_statistics) {
+  sapply(test_statistics, function(t) {
+    2*(1-pnorm(abs(t), 0, sd = 1))
+  })
+}
+
+sim <- simulate_from_working_model(1000, working_model, to_pval_function, type = 'asymmetric')
+
+data.frame(
+  t = sim$t, truth = sim$truth
+) %>%
+  ggplot(aes(x = t, fill = as.factor(truth))) +
+  geom_histogram(position = 'dodge')
+ggsave("tmp.png")
+
+data.frame(
+  t = sim$t, true_fdr = sim$true_fdr
+) %>%
+  ggplot(aes(x = t, y = true_fdr)) +
+  geom_point()
+
+data.frame(
+  t = sim$t, true_fdr = sim$true_Fdr
+) %>%
+  ggplot(aes(x = t, y = true_fdr)) +
+  geom_point()
+```
+
+
+```{r}
+# install.packages("../../", repos = NULL, type = 'source')
+library(gridsemblefdr)
+gridsemble_asym_res <- gridsemble(t, type= 'asymmetric')
+hist(gridsemble_asym_res$fdr)
+plot(t, gridsemble_asym_res$fdr, col = truth+1)
+plot(true_fdr, gridsemble_asym_res$fdr, col = truth+1)
+plot(true_fdr, gridsemble_asym_res$default_qvalue$lfdr, col = truth+1)
+
+gridsemble_asym_res$top_grid
+
+sqrt(mean((true_fdr - gridsemble_asym_res$fdr)**2))
+sqrt(mean((true_fdr - gridsemble_asym_res$default_qvalue$lfdr)**2))
+
+gridsemble_sim_res <- gridsemble(t)
+hist(gridsemble_sim_res$fdr)
+plot(t, gridsemble_sim_res$fdr, col = truth+1)
+
+sqrt(mean((true_fdr - gridsemble_sim_res$fdr)**2))
+sqrt(mean((true_fdr - gridsemble_sim_res$default_qvalue$lfdr)**2))
+plot(true_fdr, gridsemble_sim_res$fdr, col = truth+1)
+
+plot(
+  gridsemble_sim_res$fdr,
+  gridsemble_asym_res$fdr,
+  col = truth + 1
+)
+abline(a = 0, b = 1)
+
+
+plot(
+  gridsemble_asym_res$default_qvalue$lfdr,
+  true_fdr,
+  col = truth + 1
+)
+abline(a = 0, b = 1)
+
+plot(
+  gridsemble_asym_res$fdr,
+  true_fdr,
+  col = truth + 1
+)
+abline(a = 0, b = 1)
+```

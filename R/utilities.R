@@ -39,7 +39,7 @@ Fdr_from_fdr <- function(fdr, test_statistics) {
 }
 
 #' P-value from t-statistic
-#' @description Get one-sided p-value from test statistic
+#' @description Get two-sided p-value from test statistic
 #'
 #' @param test_statistics vector, test statistics
 #' @param df integer, degrees of freedom of test statistics t-distribution,

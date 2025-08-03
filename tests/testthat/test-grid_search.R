@@ -31,13 +31,13 @@ default_qvalue_grid <- build_qvalue_grid(
 
 
 test_that("grid_search works", {
-  working_model <- fit_working_model(
+  synthetic_generator <- fit_synthetic_generator(
     test_statistics = test_statistics,
     verbose = FALSE
   )
 
   gs1 <- grid_search(
-    working_model = working_model,
+    synthetic_generator = synthetic_generator,
     nsim = 10,
     synthetic_size = length(test_statistics),
     ensemble_size = 1,
@@ -56,7 +56,7 @@ test_that("grid_search works", {
   expect_true(sum(unlist(gs1$all_grids$fdrerror), na.rm = TRUE) > 0)
 
   gs2 <- grid_search(
-    working_model = working_model,
+    synthetic_generator = synthetic_generator,
     nsim = 2,
     synthetic_size = length(test_statistics),
     ensemble_size = 3,
@@ -71,7 +71,7 @@ test_that("grid_search works", {
 
 
   gs3 <- grid_search(
-    working_model = working_model,
+    synthetic_generator = synthetic_generator,
     nsim = 1,
     synthetic_size = length(test_statistics),
     ensemble_size = 1,

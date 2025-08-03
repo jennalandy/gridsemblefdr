@@ -1,6 +1,8 @@
-#' Gridsemble
-#' @description use ensemble methods to estimate local (fdr) and tail-end (Fdr)
-#' false discovery rates.
+#' fdrSAFE
+#' @description Selective ensemble approach to estimate local (fdr) and tail-end
+#' (Fdr) false discovery rates. fdrSAFE uses synthetic data generated to estimate
+#' fdr model performances, then ensembles a selective subset of high-performing
+#' models to estimate local (fdr) and tail-end (Fdr) false discovery rates.
 #'
 #' @param test_statistics vector, test statistics
 #' @param df integer, degrees of freedom of test statistics null t-distribution,
@@ -13,13 +15,13 @@
 #'
 #' @param locfdr_grid data.frame or 'default', rows are possible hyperparameters
 #' for locfdr, or `build_locfdr_grid` will be run with default values, NULL to
-#' exclude locfdr from gridsemble
+#' exclude locfdr from fdrSAFE
 #' @param fdrtool_grid data.frame or 'default', rows are possible
 #' hyperparameters for fdrtool, or `build_fdrtool_grid` will be run with default
-#' values, NULL to exclude fdrtool from gridsemble
+#' values, NULL to exclude fdrtool from fdrSAFE
 #' @param qvalue_grid data.frame or 'default', rows are possible hyperparameters
 #' for qvalue, or `build_qvalue_grid` will be run with default values, NULL to
-#' exclude qvalue from gridsemble
+#' exclude qvalue from fdrSAFE
 #'
 #' @param synthetic_size integer, size of synthetic datasets. Defaults to
 #' `length(test_statistics)`. Can be reduced for time/memory constraints.
@@ -40,16 +42,16 @@
 #'      their estimated metrics on each simulated dataset
 #'      \item `all_grids`: data.frame, all hyperparameter sets considered
 #'      and their estimated metrics on simulated data
-#'      \item `working_model`: list, parameters of working model
+#'      \item `synthetic_generator`: list, parameters of working model
 #' }
 #' @export
 #' @examples
 #' set.seed(123)
 #' test_statistics = c(rnorm(800), runif(100, -10, -5), runif(100, 5, 10))
-#' res = gridsemble(test_statistics)
+#' res = fdrSAFE(test_statistics)
 #' res$pi0
 #' res$fdr
-gridsemble <- function(
+fdrSAFE <- function(
   test_statistics,
   df = NULL,
   to_pval_function = function(test_statistics) {p_from_t(test_statistics, df = df)},
@@ -62,7 +64,8 @@ gridsemble <- function(
   n_workers = max(parallel::detectCores() - 2, 1),
   parallel = min(TRUE, n_workers > 1),
   verbose = TRUE,
-  drop_pi0_1 = TRUE
+  drop_pi0_1 = TRUE,
+  type = 'asymmetric'
 ) {
 
   focus_metric = 'fdrerror'
@@ -149,12 +152,13 @@ gridsemble <- function(
 
   # fit working model to test statistics
   if (n_synthetic > 0) {
-    working_model <- fit_working_model(
+    synthetic_generator <- fit_synthetic_generator(
       test_statistics,
-      verbose = verbose
+      verbose = verbose,
+      type = type
     )
   } else if (n_synthetic == 0) {
-    working_model <- NULL
+    synthetic_generator <- NULL
     if (verbose) {
       message('No generting model fit with n_synthetic = 0')
     }
@@ -162,7 +166,7 @@ gridsemble <- function(
 
   # perform grid search on simulated datasets
   grid_res <- grid_search(
-    working_model = working_model,
+    synthetic_generator = synthetic_generator,
     nsim = n_synthetic,
     synthetic_size = synthetic_size,
     ensemble_size = ensemble_size,
@@ -174,7 +178,8 @@ gridsemble <- function(
     parallel = parallel,
     n_workers =  n_workers,
     parallel_param = parallel_param,
-    verbose = verbose
+    verbose = verbose,
+    type = type
   )
 
   top_grid = grid_res$top_grid
@@ -210,7 +215,7 @@ gridsemble <- function(
     'default_fdrtool' = default_fdrtool,
     'default_qvalue' = default_qvalue,
     'all_grids' = all_grids,
-    'working_model' = working_model,
+    'synthetic_generator' = synthetic_generator,
     'locfdr_grid' = locfdr_grid,
     'fdrtool_grid' = fdrtool_grid,
     'qvalue_grid' = qvalue_grid

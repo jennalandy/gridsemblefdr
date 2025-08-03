@@ -1,0 +1,567 @@
+---
+title: "fdrSAFE Vignette"
+author: "Jenna Landy"
+output: BiocStyle::pdf_document
+cache: TRUE
+vignette: >
+  %\VignetteIndexEntry{fdrSAFE}
+  %\VignetteEngine{knitr::knitr}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r}
+# remove.packages("fdrSAFE")
+# devtools::document()
+# devtools::build(vignettes = FALSE)
+# devtools::install()
+```
+
+```{r message = FALSE}
+library(fdrSAFE)
+
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(ggthemes)
+
+set.seed(111)
+
+color_list = list(
+  "fdrSAFE" = "#E69F00",
+  "locfdr" = "#D55E00",
+  "fdrtool" = "#009E73",
+  "qvalue" = "#0072B2",
+  "true" = "black"
+)
+```
+
+## Overview
+
+`fdrSAFE` computes local and tail-end false discovery rates using ensemble methods given test statistics that are centered at zero under the null with large magnitude providing evidence against the two-sided null hypotheses. This method is introduced in the paper "fdrSAFE: Selective Aggregation for Local False Discovery Rates".
+
+## Quick start guide
+
+Given a vector of test statistics, the `fdrSAFE` function can be used to compute local and tail-end false discovery rates. Here is an example using `fdrSAFE` on a simulated set of 1000 test statistics, corresponding to 1000 two-sided hypotheses tests. Parallelization is utilized by default, but can be turned off with `parallel = FALSE`. Progress of the algorithm is displayed by default, but this can be turned off with `verbose = FALSE`.
+
+1\. Simulate test statistics and true hypothesis labels
+
+This dataset is from simulation scheme 2 defined in our paper. Null hypotheses have statistics coming from a $N(0, 1)$, while alternative hypothese have most (2/3) statistics coming from $U(1.5, 4.5)$ and the rest (1/3) from $U(-6, -2.5)$. 80% of hypotheses are null ($\pi_0 = 0.8$).
+
+```{r}
+test_statistics = c(
+  rnorm(800, 0, 1),   # 80% of values near 0
+  runif(66, -6, -2.5), # add 6.6% negative extreme values
+  runif(134, 1.5, 4.5)    # add 13.4% positivive extreme values
+)
+truth = c(
+  rep(FALSE, 800),
+  rep(TRUE, 200)
+)
+true_pi0 = 1-mean(truth)
+
+data.frame(
+  t = test_statistics, 
+  truth = factor(
+    ifelse(truth, 'Alternative', 'Null'),
+    levels = c('Null','Alternative')
+  )
+) %>%
+  ggplot(aes(x = t, fill = truth)) +
+  geom_histogram(bins = 20, alpha = 0.7, position = 'identity') +
+  theme_few()
+```
+
+For evaluation purposes, we can also compute the true local and tail-end false discovery rates.
+
+```{r}
+null = function(t) {dnorm(t, 0, 1)}
+alt = function(t) {dunif(t, -6, -2.5) * 1/3 + dunif(t, 1.5, 4.5) * 2/3}
+mix = function(t) {
+  true_pi0 * null(t) + (1-true_pi0) * alt(t)
+}
+true_fdr = sapply(test_statistics, function(t) {
+  null(t) * true_pi0 / mix(t)
+})
+true_Fdr = sapply(test_statistics, function(t) {
+  # empirical Pr(hypotheses i null | t_i more extreme than t)
+  mean(truth[abs(test_statistics) >= abs(t)] == 0)
+})
+```
+
+2\. Run fdrSAFE with default options Uncomment parallel = FALSE if multiple cores are not available or R session is crashing
+
+```{r}
+fdrSAFE_res <- fdrSAFE(
+  test_statistics#, parallel = FALSE
+)
+```
+
+3\. Access Results
+
+`fdrSAFE` returns a list object containing estimates of local (fdr) and two-sided tail-end (Fdr) false discovery rates, as well as the proportion of test statistics from the null distribution, $\pi_0$.
+
+```{r}
+fdrSAFE_fdr <- fdrSAFE_res$fdr
+fdrSAFE_Fdr <- fdrSAFE_res$Fdr
+fdrSAFE_pi0 <- fdrSAFE_res$pi0
+```
+
+`fdrSAFE` also returns the top grid of models included in the final ensemble. We can investigate how many models each package contributes to this ensemble.
+
+```{r}
+table(fdrSAFE_res$top_grid$method)
+```
+
+We can compare estimates between `fdrSAFE` and benchmark models, which are the three packages `fdrSAFE` is based on with their default parameters: `locfdr`, `fdrtool`, and `qvalue`. Each packages' default results are found as `fdrSAFE_res$default_<package>`.
+
+## Evaluation
+
+The results of each package with default hyperparameters are stored in the fdrSAFE output as `default_[package]`. Each benchmark model has it's own notation for the $\pi_0$ estimate; see the respective package's documentation for details.
+
+Below we compare methods just by estimated $\pi_0$, to start. We see that `fdrSAFE` estimates closest to the true value of 0.8.
+
+```{r}
+data.frame(
+  'true' = true_pi0,
+  'fdrSAFE' = fdrSAFE_pi0,
+  'locfdr' = unlist(fdrSAFE_res$default_locfdr$fp0['mlest','p0']),
+  'fdrtool' = unname(fdrSAFE_res$default_fdrtool$param[,'eta0']),
+  'qvalue' = fdrSAFE_res$default_qvalue$pi0
+)
+```
+
+Here we compare methods by estimated $fdr$. We see that `fdrSAFE` tends to be closest to the truth without severely overestimating fdr. This is mirrored by `fdrSAFE` having the lowest fdr MSE. And importantly, it is close to the truth for small fdr values / extreme test statistics.
+
+```{r}
+fdr_dat <- data.frame(
+  t = test_statistics,
+  true = true_fdr,
+  fdrSAFE = fdrSAFE_fdr,
+  locfdr = fdrSAFE_res$default_locfdr$fdr,
+  fdrtool = fdrSAFE_res$default_fdrtool$lfdr,
+  qvalue = fdrSAFE_res$default_qvalue$lfdr
+) 
+```
+
+```{r echo = FALSE}
+fdr_dat %>%
+  pivot_longer(2:6) %>%
+  mutate(Method = as.factor(name)) %>%
+  ggplot(aes(x = t, y = value, color = Method)) +
+  geom_line() +
+  scale_color_manual(
+    breaks = names(color_list),
+    values = unlist(color_list)
+  ) +
+  theme_few() +
+  labs(y = 'fdr')
+```
+
+```{r, echo = FALSE}
+fdr_dat %>%
+  mutate(
+    fdrSAFE_fdr_MSE = (fdrSAFE - true)**2,
+    locfdr_fdr_MSE = (locfdr - true)**2,
+    fdrtool_fdr_MSE = (fdrtool - true)**2,
+    qvalue_fdr_MSE = (qvalue - true)**2
+  ) %>%
+  select(ends_with("MSE")) %>%
+  colMeans()
+```
+
+Here we compare methods by estimated $Fdr$. For each $t$, true Fdr is the probability a test is null given it's statistic is as or more extreme than $t$, estimated empirically with the simulated data using the true hypothesis labels. We see that `fdrSAFE` tends to be closest to the truth. This is mirrored by `fdrSAFE` having the lowest Fdr MSE.
+
+```{r}
+Fdr_dat <- data.frame(
+  t = test_statistics,
+  true = true_Fdr,
+  fdrSAFE = fdrSAFE_Fdr,
+  locfdr = Fdr_from_fdr(fdrSAFE_res$default_locfdr$fdr, test_statistics),
+  fdrtool = Fdr_from_fdr(fdrSAFE_res$default_fdrtool$lfdr, test_statistics),
+  qvalue = Fdr_from_fdr(fdrSAFE_res$default_qvalue$lfdr, test_statistics)
+) 
+```
+
+```{r echo = FALSE}
+Fdr_dat %>%
+  pivot_longer(2:6) %>%
+  mutate(Method = as.factor(name)) %>%
+  ggplot(aes(x = t, y = value, color = Method)) +
+  geom_line() +
+  scale_color_manual(
+    breaks = names(color_list),
+    values = unlist(color_list)
+  ) +
+  theme_few() +
+  labs(y = 'Fdr')
+```
+
+```{r echo = FALSE}
+Fdr_dat %>%
+  mutate(
+    fdrSAFE_Fdr_MSE = (fdrSAFE - true)**2,
+    locfdr_Fdr_MSE = (locfdr - true)**2,
+    fdrtool_Fdr_MSE = (fdrtool - true)**2,
+    qvalue_Fdr_MSE = (qvalue - true)**2
+  ) %>%
+  select(ends_with("MSE")) %>%
+  colMeans()
+```
+
+## Options
+
+### Number of Simulations and Ensemble Size
+
+By default, `fdrSAFE` will use `n_synthetic = 10` synthetic datasets to estimate model performances, and will choose the top `ensemble_size = 10` models to ensemble This can easily be changed by the user.
+
+```{r}
+fdrSAFE_res <- fdrSAFE(
+  test_statistics, 
+  n_synthetic = 5, 
+  ensemble_size = 20,
+  verbose = FALSE
+)
+
+fdrSAFE_res$pi0
+```
+
+### Grids of Model Options
+
+The models considered are held in a data frame, or a grid, returned by the functions `build_locfdr_grid`, `build_fdrtool_grid`, and `build_qvalue_grid`.
+
+If a user wants a more personalized set of models considered, they can build their own grids with these functions. Options for categorical variables are specified as a vector of unspecified length. Ranges for continuous variables are specified as a vector of two values: `c(min, max)`. The parameter `grid_depth` determines how many values are considered within each range of continuous variables.
+
+```{r}
+my_locfdr_grid <- build_locfdr_grid(
+  test_statistics,
+  pct_range = c(0.001, 0.003),
+  pct0_range = c(1/3,1/4),
+  nulltype = c(1,2),
+  type = c(0),
+  grid_depth = 10
+)
+
+my_fdrtool_grid <- build_fdrtool_grid(
+  test_statistics,
+  cutoff.method = c('fndr','pct0'),
+  pct0_range = c(1/3,1/4),
+  grid_depth = 10
+)
+
+my_qvalue_grid <- build_qvalue_grid(
+  test_statistics,
+  transf = c('probit','logit'),
+  adj_range = c(0.5, 1.5),
+  pi0.method = c('bootstrap'),
+  smooth.log.pi0 = c('FALSE'),
+  grid_depth = 10
+)
+
+fdrSAFE_res <- fdrSAFE(
+  test_statistics,
+  locfdr_grid = my_locfdr_grid,
+  fdrtool_grid = my_fdrtool_grid,
+  qvalue_grid = my_qvalue_grid,
+  verbose = FALSE
+)
+
+fdrSAFE_res$pi0
+```
+
+To exclude one of the three package from consideration entirely, set the grid value to `NULL`.
+
+```{r}
+fdrSAFE_nofdrtool_res <- fdrSAFE(
+  test_statistics,
+  fdrtool_grid = NULL,
+  verbose = FALSE
+)
+
+fdrSAFE_res$pi0
+```
+
+### Size of Simulated Datasets
+
+By default, the simulated datasets are the same size as the real data. If this is too large given a user's computational limitations, the size of simulated datasets can be specified with `synthetic_size`.
+
+```{r}
+fdrSAFE_res <- fdrSAFE(
+  test_statistics, 
+  synthetic_size = 100,
+  verbose = FALSE
+)
+
+fdrSAFE_res$pi0
+```
+
+### Provide custom test statistic to p-value conversion function
+
+If a t-distributed (or standard normal, since we're not providing df) null is not appropriate for converting test statistics to p-values, a custom `to_pval_function` can be provided. Here we define a function to convert statistics to p-values based on a $t_{(3)}$ as an example.
+
+```{r}
+my_to_pval_function = function(test_statistics) {
+  one_sided <- unlist(lapply(test_statistics, function(z) {
+    stats::pt(-1*abs(z), df = 3)
+  }))
+  2*one_sided
+}
+
+fdrSAFE_res <- fdrSAFE(
+  test_statistics, 
+  to_pval_function = my_to_pval_function,
+  verbose = TRUE
+)
+
+table(fdrSAFE_res$top_grid$method)
+
+fdrSAFE_res$pi0
+```
+
+## Advanced tutorial: understanding how fdrSAFE works
+
+### Synthetic Generator
+
+The synthetic generator is a mixture model fit to the observed test-statistics $\mathbf u$ such that both test statistics and hypothesis labels can be generated for model evaluation on synthetic data. Below is the form of the synthetic generator:
+
+$$
+\begin{aligned}
+  &f_G(u|\phi) = \pi_0 f_{G,0}(u | \sigma_0) + (1-\pi_0)f_{G,1}(u | \pi_{1n},\sigma_{1n}, \sigma_{1p})\\
+  &f_{G,0}(u|\sigma_0) = N(u; 0, \sigma_0)\\
+  &f_{G,1}(u|\pi_{1n},\sigma_{1n}, \sigma_{1p}) = \pi_{1n} \cdot \frac{2u^2}{\sigma_{1n}^2}N(u; 0, \sigma_{1n})I(u < 0) + (1 - \pi_{1n}) \cdot \frac{2u^2}{\sigma_{1p}^2}N(u; 0, \sigma_{1p})I(u > 0)
+\end{aligned}
+$$
+
+The first component, $f_{G0}(u|\sigma_0)$, corresponds to statistics under the null hypothesis, and is Normal and centered at zero with standard deviation $\sigma_0$. The second, $f_{G1}(u|\pi_{1n},\sigma_{1n}, \sigma_{1p})$, corresponding to statistics under the alternative hypothesis, is a mixture of two Non-Local Half-Normals centered at 0 and with separate standard deviations for the negative and positive sides, $\sigma_{1n}$ and $\sigma_{1p}$. Mixing parameter $\pi_{1n}$ controls the proportion of alternative test statistics that are negative. This allows for asymmetry in not-null test statistics, both in terms of mass and distribution shape, while keeping density strictly away from zero. The full synthetic generator mixture is completed by the mixture weight $\pi_0$, the proportion of null tests. For conciseness, $\phi = (\pi_0, \sigma_0,\pi_{1n},\sigma_{1n}, \sigma_{1p})$, and $f_{G}(u|\phi)$ is the implied marginal.
+
+fdrSAFE results report the fit synthetic generator in `fdrSAFE_res$synthetic_generator$parameters`. In this case, the synthetic generator is able to produce synthetic datasets that are similar in shape to the original data--similar spread, more positive test statistics than negative with $\pi_{1n} < 0.5$, and a wider spread of negative test statistics than positive with $\sigma^2_{1n} > \sigma^2_{1p}$.
+
+```{r}
+fdrSAFE_res <- fdrSAFE(
+  test_statistics,
+  verbose = FALSE
+)
+data.frame(fdrSAFE_res$synthetic_generator$parameters)
+```
+
+Internally, fdrSAFE calls `simulate_from_synthetic_generator` to generate the synthetic datasets. We can call this now to visually compare the synthetic and real datasets, for both the standard and extreme test statistic distributions.
+
+```{r}
+generated = simulate_from_synthetic_generator(
+  n = length(test_statistics), 
+  synthetic_generator = fdrSAFE_res$synthetic_generator
+)
+
+data.frame(
+  real = test_statistics, generated = generated$t
+) %>%
+  pivot_longer(1:2) %>%
+  ggplot(aes(x = value, color = name, lty = name)) +
+  geom_density() +
+  theme_few()
+```
+
+If we add a more extreme range to the test-statistics and rerun fdrSAFE, the synthetic generator has adapted with wider alternative variances, and much larger for the negative statistics than the positive.
+
+```{r}
+test_statistics_extreme = c(
+  rnorm(800, 0, 1),   # 80% of values near 0
+  runif(66, -20, -2.5), # add 6.6% negative extreme values
+  runif(134, 1.5, 10)    # add 13.4% positivive extreme values
+)
+truth_extreme = c(
+  rep(FALSE, 800),
+  rep(TRUE, 200)
+)
+null = function(t) {dnorm(t, 0, 1)}
+alt = function(t) {dunif(t, -20, -2.5) * 1/3 + dunif(t, 1.5, 10) * 2/3}
+mix = function(t) {
+  true_pi0 * null(t) + (1-true_pi0) * alt(t)
+}
+true_fdr_extreme = sapply(test_statistics, function(t) {
+  null(t) * true_pi0 / mix(t)
+})
+true_Fdr_extreme = sapply(test_statistics, function(t) {
+  # empirical Pr(hypotheses i null | t_i more extreme than t)
+  mean(truth[abs(test_statistics) >= abs(t)] == 0)
+})
+```
+
+```{r}
+fdrSAFE_extreme_res <- fdrSAFE(
+  test_statistics_extreme,
+  verbose = FALSE
+)
+data.frame(fdrSAFE_extreme_res$synthetic_generator$parameters)
+```
+
+```{r}
+generated_extreme = simulate_from_synthetic_generator(
+  n = length(test_statistics_extreme), 
+  synthetic_generator = fdrSAFE_extreme_res$synthetic_generator
+)
+
+data.frame(
+  real = test_statistics_extreme, generated = generated_extreme$t
+) %>%
+  pivot_longer(1:2) %>%
+  ggplot(aes(x = value, color = name, lty = name)) +
+  geom_density() +
+  theme_few()
+```
+
+While there is variation between real and generated test statistics for both datasets, we would expect the models to perform more similarly between generated and real standard test statistics than across real standard and extreme test statistics. This is the premise of fdrSAFE's model selection procedure: the synthetic datasets are *close enough* to the real ones that we are able to get an idea of what models perform well in the given setting. This is validated in Section \@ref(oracle).
+
+fdrSAFE has selected models from fdrtool and locfdr for the extreme dataset, and models frmm qvalue for the standard dataset.
+
+```{r}
+table(fdrSAFE_extreme_res$top_grid$method)
+table(fdrSAFE_res$top_grid$method)
+```
+
+### Model subset selection
+
+`fdrSAFE_res$all_grids` holds the estimated model performance for each model on each synthetic dataset, where a model is defined by a package ("method" column) and a set of parameters (mapped to by the "row" column), and synthetic datasets are indexed by the "sim" column. The fdrSAFE objective estimator is obtained by averaging fdrerror across synthetic datasets for each model. Importantly, these are metrics on synthetic data only, not on the observed data.
+
+```{r}
+head(fdrSAFE_res$all_grids)
+```
+
+Exact model specifications can be found in each package's respective grid. Note that these grids do not hold estimated metrics, only parameter values.
+
+```{r}
+head(fdrSAFE_res$locfdr_grid)
+```
+
+`fdrSAFE_res$top_grid` reports the subset of models used in the final ensemble. This is a subset of `fdrSAFE_res$all_grids` after averaging across synthetic datasets and ordering by the fdrSAFE objective estimate. Importantly, these are still metrics on synthetic data only, not on the observed data.
+
+```{r}
+fdrSAFE_res$top_grid
+```
+
+### Oracle model performance, if ground truth is available {#oracle}
+
+We provide the function `oracle_grid_search` to repeat the grid search procedure but with models evaluated on the real dataset. This is only an option if true local or tail-end false discovery rates are available, i.e., only when the true hypothesis labels or generating distributions are known.
+
+```{r}
+oracle_grid = oracle_grid_search(
+  test_statistics, true_fdr = true_fdr, true_Fdr = true_Fdr,
+  locfdr_grid = fdrSAFE_res$locfdr_grid,
+  fdrtool_grid = fdrSAFE_res$fdrtool_grid,
+  qvalue_grid = fdrSAFE_res$qvalue_grid
+)
+head(oracle_grid)
+```
+
+Here, we combine the oracle performance data with the estimated performances from fdrSAFE. We plot the true vs estimated fdr MSE, and color models by whether they were selected for the final ensemble.
+
+There is a high correlation between estimated and true model performance, and importantly, the models selected by fdrSAFE for ensemble show excellent model performance on the real data. This plot also gives the scale for how bad an fdr model can get if chosen arbitrarily.
+
+```{r echo = FALSE, warning = FALSE}
+oracle_with_est <- oracle_grid %>%
+  mutate(true_fdr_MSE = fdrerror) %>%
+  dplyr::select(-fdrerror, -Fdrerror, -pi0) %>%
+  merge(
+    fdrSAFE_res$all_grids %>%
+      group_by(method, row) %>%
+      summarize(estimated_fdr_MSE = mean(fdrerror), .groups = 'keep') %>%
+      ungroup(),
+    by = c('method','row')
+  ) %>%
+  left_join(
+    fdrSAFE_res$top_grid %>%
+      dplyr::select(method, row) %>%
+      mutate(selected = TRUE),
+    by = c('method','row')
+  ) %>%
+  mutate(
+    selected = ifelse(is.na(selected), FALSE, TRUE)
+  ) %>%
+  arrange(selected) 
+
+correlation = cor(oracle_with_est$true_fdr_MSE, oracle_with_est$estimated_fdr_MSE, use = "complete.obs")
+
+oracle_with_est %>%
+  ggplot(aes(x = true_fdr_MSE, y = estimated_fdr_MSE, color = selected)) +
+  geom_point(alpha = 0.5) +
+  theme_few() +
+  ggtitle(paste("Alignment of Model Performance to Estimate\nStandard Dataset\nCorrelation =", round(correlation, 3)))
+```
+
+We can run the grid search on the extreme test statistics as well...
+
+```{r}
+oracle_grid_extreme = oracle_grid_search(
+  test_statistics_extreme, true_fdr = true_fdr_extreme, true_Fdr = true_Fdr_extreme,
+  locfdr_grid = fdrSAFE_extreme_res$locfdr_grid,
+  fdrtool_grid = fdrSAFE_extreme_res$fdrtool_grid,
+  qvalue_grid = fdrSAFE_extreme_res$qvalue_grid
+)
+```
+
+And again there is a high correlation between estimated and true model performance, and importantly, and the models selected by fdrSAFE for ensemble show excellent model performance on the real data.
+
+```{r echo = FALSE, warning = FALSE}
+oracle_with_est_extreme <- oracle_grid_extreme %>%
+  mutate(true_fdr_MSE = fdrerror) %>%
+  dplyr::select(-fdrerror, -Fdrerror, -pi0) %>%
+  merge(
+    fdrSAFE_extreme_res$all_grids %>%
+      group_by(method, row) %>%
+      summarize(estimated_fdr_MSE = mean(fdrerror)) %>%
+      ungroup(),
+    by = c('method','row')
+  )  %>%
+  left_join(
+    fdrSAFE_extreme_res$top_grid %>%
+      dplyr::select(method, row) %>%
+      mutate(selected = TRUE),
+    by = c('method','row')
+  ) %>%
+  mutate(
+    selected = ifelse(is.na(selected), FALSE, TRUE)
+  ) %>%
+  arrange(selected) 
+
+correlation_extreme = cor(oracle_with_est_extreme$true_fdr_MSE, oracle_with_est_extreme$estimated_fdr_MSE, use = "complete.obs")
+
+oracle_with_est_extreme %>%
+  ggplot(aes(x = true_fdr_MSE, y = estimated_fdr_MSE, color = selected)) +
+  geom_point(alpha = 0.5) +
+  theme_few() +
+  ggtitle(paste("Alignment of Model Performance to Estimate\nExtreme Dataset\nCorrelation =", round(correlation_extreme, 3)))
+```
+
+Importantly, fdrSAFE was able to properly identify high-performing models in these two settings even though they are very different settings and models perform differently between them. Below is a plot of the true fdr MSE between the standard versus extreme test-statistic datasets.
+
+Model performances are not well correlated between the two datasets -- in fact some of the models that perform the best on the standard dataset perform the worst on the extreme dataset, and vise versa. This shows how single models on their own do not have robust near-optimality, as different models will perform best in different scenarios. This highlights the need for our synthetic data-based model selection procedure.
+
+```{r echo = FALSE}
+oracles_combined <- oracle_grid %>%
+  mutate(
+    standard_true_fdr_MSE = fdrerror
+  ) %>%
+  select(-Fdrerror, -fdrerror, -pi0) %>%
+  merge(
+    oracle_grid_extreme %>%
+      mutate(
+        extreme_true_fdr_MSE = fdrerror
+      ) %>%
+      select(-Fdrerror, -fdrerror, -pi0)
+  ) 
+
+correlation_across = cor(oracles_combined$standard_true_fdr_MSE, oracles_combined$extreme_true_fdr_MSE, use = "complete.obs")
+
+oracles_combined %>%
+  ggplot(aes(x = standard_true_fdr_MSE, y = extreme_true_fdr_MSE)) +
+  geom_point(alpha = 0.5) +
+  theme_few() +
+  ggtitle(paste("Correlation =", round(correlation_across, 3)))
+```
+
